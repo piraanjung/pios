@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>บันทึกการบำรุงรักษาระบบผลิตน้ำประปา</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#eef5f7;--sf:#fff;--tx:#12303a;--mu:#5d7882;--bd:#d3e2e7;--pr:#0b6e8a;--pr2:#0a4f66;--ok:#1f8a5b;--wn:#c47a00;--er:#c0392b;--soft:#e3f1f5;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 'Noto Sans Thai',system-ui,sans-serif}
+header{background:linear-gradient(120deg,#0a4f66,#0b6e8a);color:#fff;padding:20px 16px 56px}
+.w{max-width:1080px;margin:0 auto}
+header h1{margin:0;font-size:22px}header p{margin:4px 0 0;opacity:.85;font-size:13px}
+nav{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+nav button{border:0;background:rgba(255,255,255,.14);color:#fff;padding:8px 16px;border-radius:20px;font:inherit;cursor:pointer}
+nav button.on{background:#fff;color:#0a4f66;font-weight:700}
+main{margin-top:-36px;padding:0 16px 40px}
+.g{display:grid;gap:12px}.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}.g2{grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
+.c{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px;background-color:var(--bg)}
+:root:not([data-theme="dark"]) .c{background:#fff}
+.st b{font-size:30px;display:block;line-height:1.1}.st span{color:var(--mu);font-size:13px}.st{border-left:5px solid var(--pr)}
+.st.ok{border-color:var(--ok)}.st.wn{border-color:var(--wn)}.st.er{border-color:var(--er)}
+h2{font-size:16px;margin:0 0 12px}
+.bar{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:13px}.bar i{flex:0 0 150px;font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar div{flex:1;background:var(--soft);border-radius:6px;height:14px}.bar u{display:block;height:100%;background:var(--pr);border-radius:6px;min-width:2px}.bar em{width:28px;text-align:right;font-style:normal;color:var(--mu)}
+.col{display:flex;align-items:flex-end;gap:10px;height:140px}.col div{flex:1;text-align:center;font-size:12px;color:var(--mu);display:flex;flex-direction:column;justify-content:flex-end;height:100%}.col u{display:block;background:var(--pr);border-radius:6px 6px 0 0;min-height:2px}
+label{display:block;font-size:13px;color:var(--mu);margin-bottom:10px}
+input,select,textarea{width:100%;margin-top:3px;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+:root:not([data-theme="dark"]) input,:root:not([data-theme="dark"]) select,:root:not([data-theme="dark"]) textarea{background:#fff}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--pr);outline-offset:1px}
+.f{display:grid;gap:0 12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 10px}.chips button{border:1px solid var(--bd);background:var(--soft);color:var(--tx);border-radius:16px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+.btn{background:var(--pr);color:#fff;border:0;padding:10px 20px;border-radius:8px;font:inherit;font-weight:700;cursor:pointer}
+.btn.s{background:var(--soft);color:var(--tx);font-weight:500}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--bd);vertical-align:top}th{color:var(--mu);font-weight:500}
+.tag{padding:2px 9px;border-radius:12px;font-size:12px;white-space:nowrap;background:var(--soft)}
+.tag.เสร็จสิ้น{color:var(--ok)}.tag.กำลังดำเนินการ{color:var(--wn)}.tag.รอดำเนินการ{color:var(--er)}
+.tb{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tb>*{flex:1;min-width:140px;margin:0}
+.x{background:none;border:0;color:var(--er);cursor:pointer;font:inherit}
+.due{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);font-size:13px}.due small{color:var(--mu);display:block}
+.emp{color:var(--mu);text-align:center;padding:20px}.th{width:44px;height:44px;object-fit:cover;border-radius:6px;margin:4px 4px 0 0}#mode{font-weight:700}header .w{position:relative}header h1{padding-right:96px}.gb{position:absolute;top:0;right:0;border:0;background:rgba(255,255,255,.18);color:#fff;padding:7px 14px;border-radius:20px;font:inherit;cursor:pointer;min-height:36px}
+.md{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}.md.on{display:flex}.mb{background:var(--bg);color:var(--tx);width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}@media(min-width:720px){.md{align-items:center}.mb{border-radius:16px}}
+.ls{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.ls span{background:var(--soft);border-radius:16px;padding:3px 4px 3px 12px;font-size:13px}.ls b{cursor:pointer;color:var(--er);padding:2px 8px;font-weight:400}.ad{display:flex;gap:6px}.ad input{margin:0}.ad .btn{width:auto;margin:0;padding:8px 16px}
+.v{display:none}.v.on{display:block}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--pr2);color:#fff;padding:10px 18px;border-radius:8px;display:none}
+@media(pointer:coarse){input,select,textarea{font-size:16px;min-height:44px}.btn{min-height:46px}.chips button{padding:7px 13px;font-size:13px}.x{padding:10px}nav button{min-height:44px}}
+@media(max-width:720px){header{padding:16px 12px 52px}header h1{font-size:19px}main{padding:0 10px 40px}nav button{flex:1;padding:8px 6px;font-size:14px}.bar i{flex-basis:105px}.col{gap:6px}.c{padding:13px}.btn{width:100%;margin-bottom:8px}.tb .btn{width:auto}
+table{min-width:0}thead{display:none}table,tbody,tr,td{display:block;width:100%}tr{border:1px solid var(--bd);border-radius:10px;margin-bottom:10px;padding:6px 8px}td{border:0;padding:3px 0}
+td:nth-child(1)::before{content:"วันที่: ";color:var(--mu)}td:nth-child(2)::before{content:"หมวด: ";color:var(--mu)}td:nth-child(3)::before{content:"สถานที่: ";color:var(--mu)}td:nth-child(4)::before{content:"ประเภท: ";color:var(--mu)}td:nth-child(6)::before{content:"สถานะ: ";color:var(--mu)}td:nth-child(7)::before{content:"ค่าใช้จ่าย: ";color:var(--mu)}td.emp::before{content:none}}
+@media print{header nav,.tb,.x,.btn{display:none}}
+:root{color-scheme:light;--tx:#000;--mu:#1b1b1b}
+body,input,select,textarea,label,td,th,h1,h2,small,.c,.st span,.mb,.chips button,.emp,.due small,.ls span{color:#000}
+header,header h1,header p{color:#000}header{background:linear-gradient(120deg,#bfe4ef,#8cd0e4)}
+nav button{background:rgba(255,255,255,.6);color:#000}nav button.on{background:#fff;color:#000;box-shadow:0 0 0 2px #0b6e8a}
+.gb{background:rgba(255,255,255,.75);color:#000}
+.btn{background:#7cc9de;color:#000;border:1px solid #0b6e8a}.btn.s{background:#e3f1f5;color:#000}
+.tag{color:#000!important;border:1px solid #0b6e8a}.tag.เสร็จสิ้น{background:#c9f0dc}.tag.กำลังดำเนินการ{background:#ffe9b8}.tag.รอดำเนินการ{background:#ffd2cc}
+.x,.ls b{color:#000;text-decoration:underline}
+#toast{background:#7cc9de;color:#000;border:1px solid #0b6e8a}
+</style></head><body>
+<header><div class="w"><h1>💧 บันทึกการบำรุงรักษาระบบผลิตน้ำประปาผิวดิน</h1><p>ติดตามงานตรวจเช็ค ล้างทำความสะอาด และซ่อมแซม ตั้งแต่แพสูบน้ำดิบจนถึงหอถังสูง<span id="mode"></span></p>
+<nav><button data-v="d" class="on">แดชบอร์ด</button><button data-v="a">บันทึกงานใหม่</button><button data-v="l">รายการทั้งหมด</button></nav><button id="gear" class="gb">⚙️ ตั้งค่า</button></div></header>
+<main><div class="w">
+<section id="d" class="v on">
+<div class="g g4" id="stats"></div>
+<div class="g g2" style="margin-top:12px"><div class="c"><h2>จำนวนงานแยกตามหมวด</h2><div id="bycat"></div></div>
+<div class="g"><div class="c"><h2>งานรายเดือน (6 เดือนล่าสุด)</h2><div class="col" id="bymon"></div></div>
+<div class="c"><h2>งานที่ถึงกำหนดครั้งถัดไป</h2><div id="due"></div></div></div></div>
+</section>
+<section id="a" class="v"><div class="c"><h2 id="ft">บันทึกงานบำรุงรักษา</h2>
+<div class="f">
+<label>วันที่ปฏิบัติงาน<input type="date" id="date"></label>
+<label>หมวดงาน<select id="cat"></select></label>
+<label id="siteL">สถานที่<select id="site"></select></label>
+<label>รายการ/รหัสอุปกรณ์ (เช่น ปั๊มตัวที่ 1, ถังที่ 2)<input id="item" list="dl-item" placeholder="ระบุชื่อหรือรหัส"><datalist id="dl-item"></datalist><div class="chips" id="itc" style="margin:6px 0 0"></div></label>
+<label>ประเภทงาน<select id="type"><option>ตรวจเช็คตามรอบ</option><option>ล้างทำความสะอาด</option><option>ซ่อมแซม</option><option>เปลี่ยนอะไหล่/วัสดุ</option><option>หล่อลื่น/ทาสี</option></select></label>
+<label>สถานะ<select id="status"><option>เสร็จสิ้น</option><option>กำลังดำเนินการ</option><option>รอดำเนินการ</option></select></label>
+<label>ผู้ปฏิบัติงาน<input id="tech" list="dl-tech" placeholder="แตะชื่อด้านล่าง หรือพิมพ์ชื่อ (หลายคนคั่นด้วย ,)"><datalist id="dl-tech"></datalist><div class="chips" id="wkc" style="margin:6px 0 0"></div></label>
+<label>ค่าใช้จ่าย (บาท)<input type="number" id="cost" min="0" placeholder="0"></label>
+<label>กำหนดบำรุงรักษาครั้งถัดไป<input type="date" id="next"></label>
+<label>เลขที่ใบสั่งงาน<input id="wo" placeholder="เช่น WO-2569-001"></label>
+<label>แรงดันไฟฟ้า (V)<input type="number" id="volt" step="any"></label>
+<label>กระแสไฟฟ้า (A)<input type="number" id="amp" step="any"></label>
+<label>แรงดันน้ำ (bar)<input type="number" id="press" step="any"></label>
+<label>ชั่วโมงเดินเครื่อง / เลขมิเตอร์<input type="number" id="hrs" step="any"></label>
+<label id="photoL" style="display:none">แนบรูปถ่าย (สูงสุด 4 รูป)<input type="file" id="photos" accept="image/*" multiple></label>
+</div>
+<div style="font-size:13px;color:var(--mu);margin-bottom:6px">รายการตรวจสอบที่พบบ่อย (แตะเพื่อเพิ่มในรายละเอียด)</div><div class="chips" id="chips"></div>
+<label>รายละเอียดงาน/ผลการตรวจ/ปัญหาที่พบ<textarea id="note" rows="4"></textarea></label>
+<button class="btn" id="save">บันทึกข้อมูล</button> <button class="btn s" id="reset">ล้างฟอร์ม</button>
+</div></section>
+<section id="l" class="v"><div class="c"><div class="tb"><input id="q" placeholder="ค้นหา..."><select id="fc"></select><select id="fs"><option value="">ทุกสถานะ</option><option>เสร็จสิ้น</option><option>กำลังดำเนินการ</option><option>รอดำเนินการ</option></select><button class="btn s" id="csv">ส่งออก CSV</button><button class="btn" id="bk">💾 สำรองข้อมูล</button><button class="btn s" id="rs">♻️ กู้คืนข้อมูล</button><input type="file" id="rf" accept=".json,application/json" style="display:none"><button class="btn s" id="prt" onclick="try{print()}catch(e){}">พิมพ์</button></div>
+<div class="tw"><table><thead><tr><th>วันที่</th><th>หมวดงาน</th><th>สถานที่/รายการ</th><th>ประเภท</th><th>รายละเอียด</th><th>สถานะ</th><th>ค่าใช้จ่าย</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></div></section>
+</div></main><div class="md" id="md"><div class="mb"><h2>⚙️ ตั้งค่ารายการตัวเลือก</h2><div id="sets"></div><button class="btn s" id="mc" style="margin-top:10px">ปิด</button></div></div><div class="md" id="cf"><div class="mb" style="max-width:380px"><p id="cft" style="font-size:16px;margin:0 0 14px"></p><div style="display:flex;gap:8px"><button class="btn s" id="cfn" style="margin:0">ยกเลิก</button><button class="btn" id="cfy" style="margin:0">ยืนยัน</button></div></div></div><div id="toast"></div>
+<script>
+const CATS={
+"ปั๊มสูบน้ำหอยโข่ง":{site:1,chk:["ตรวจเสียง/ความสั่นสะเทือน","ตรวจแกนเพลาและซีลกันรั่ว","อัดจาระบีลูกปืน","วัดกระแสไฟฟ้า","ตรวจแรงดันด้านดูด/ส่ง","ตรวจการรั่วซึมของท่อ"]},
+"ตู้ควบคุมเครื่องสูบน้ำ":{site:1,chk:["ทำความสะอาดภายในตู้","ขันแน่นขั้วต่อสาย","ตรวจแมกเนติก/รีเลย์","วัดแรงดันไฟฟ้า","ตรวจหลอดไฟ/สวิตช์/มิเตอร์","ตรวจระบบสายดิน"]},
+"คลองกวนช้า":{chk:["ล้างตะกอนสะสม","ล้างแผ่นกั้นและตะแกรง","ตรวจผนังคอนกรีต","ตรวจวาล์วระบายตะกอน"]},
+"ถังตกตะกอน":{chk:["ระบายและล้างตะกอนก้นถัง","ขัดล้างผนังและรางน้ำล้น","ตรวจแผ่นเอียง/Tube Settler","ตรวจเครื่องกวาดตะกอน"]},
+"ถังกรองทราย":{chk:["ล้างย้อน (Backwash)","ตรวจระดับและความหนาทราย","เติม/เปลี่ยนทรายกรอง","ตรวจหัวกรอง/ระบบกระจายน้ำ","ตรวจวาล์วและแอร์โบลเวอร์"]},
+"ถังเก็บน้ำใส":{chk:["ระบายและล้างถัง","ขัดล้างผนังและพื้น","ตรวจรอยร้าว/รั่วซึม","ตรวจฝาและช่องระบายอากาศ"]},
+"หอถังสูง":{chk:["ล้างทำความสะอาดถัง","ตรวจโครงสร้างและรอยสนิม","ตรวจบันไดและราวกันตก","ตรวจระบบทุ่นลอย/ระดับน้ำ","ตรวจสายล่อฟ้า/ไฟเตือนอากาศยาน"]},
+"ซ่อมแซมท่อส่งน้ำดิบ/น้ำดี":{chk:["ซ่อมท่อแตก/รั่ว","เปลี่ยนข้อต่อ/ประกับซ่อมท่อ","ตรวจแรงดันหลังซ่อม","ล้างท่อและฆ่าเชื้อหลังซ่อม"]},
+"ประตูน้ำประธาน":{chk:["เปิด-ปิดทดสอบ","อัดจาระบีก้านวาล์ว","เปลี่ยนซีลกันรั่ว","ตรวจรอยสนิม/ทาสี"]},
+"ประตูน้ำย่อย":{chk:["เปิด-ปิดทดสอบ","ตรวจการรั่วซึม","ซ่อม/เปลี่ยนวาล์ว","ตรวจบ่อวาล์วและฝา"]}};
+const SITES=["โรงผลิตน้ำประปา","แพสูบน้ำดิบ","โรงน้ำดิบ"];
+const $=i=>document.getElementById(i),K="waterworks-records-v1";
+let R=[],DB=null,UID=null,ASSETS=null,NAMES={};try{R=JSON.parse(localStorage.getItem(K)||"null")}catch(e){}
+const rd=r=>{const a=[r.v&&esc(r.v)+" V",r.a&&esc(r.a)+" A",r.pr&&esc(r.pr)+" bar",r.h&&"มิเตอร์/ชม. "+esc(r.h)].filter(Boolean);return a.length?`<br><small>ค่าวัด: ${a.join(" | ")}</small>`:""};
+if(!R){const t=new Date(),f=(d)=>{const x=new Date(t);x.setDate(x.getDate()+d);return x.toISOString().slice(0,10)};
+R=[{c:"ปั๊มสูบน้ำหอยโข่ง",s:"แพสูบน้ำดิบ",i:"ปั๊มตัวที่ 1",t:"หล่อลื่น/ทาสี",st:"เสร็จสิ้น",d:f(-12),n:"อัดจาระบีลูกปืน วัดกระแสไฟฟ้า ปกติ",p:"ช่างสมชาย",$:350,x:f(48)},
+{c:"ถังกรองทราย",s:"",i:"ถังกรองที่ 2",t:"ล้างทำความสะอาด",st:"เสร็จสิ้น",d:f(-30),n:"ล้างย้อน ตรวจระดับทราย",p:"ทีมกรอง",$:0,x:f(5)},
+{c:"ประตูน้ำย่อย",s:"",i:"ประตูน้ำซอย 4",t:"ซ่อมแซม",st:"กำลังดำเนินการ",d:f(-2),n:"ก้านวาล์วฝืด รอเปลี่ยนซีล",p:"ช่างวิชัย",$:1200,x:f(14)},
+{c:"ซ่อมแซมท่อส่งน้ำดิบ/น้ำดี",s:"",i:"ท่อเมนหน้าตลาด",t:"ซ่อมแซม",st:"รอดำเนินการ",d:f(0),n:"ท่อ PVC รั่ว รอประสานจุดปิดน้ำ",p:"",$:0,x:""},
+{c:"ตู้ควบคุมเครื่องสูบน้ำ",s:"โรงผลิตน้ำประปา",i:"ตู้ MCC-1",t:"ตรวจเช็คตามรอบ",st:"เสร็จสิ้น",d:f(-45),n:"ขันแน่นขั้วต่อสาย ทำความสะอาดภายในตู้",p:"ช่างไฟ",$:0,x:f(-3)}]}
+const save=()=>{if(DB)return;try{localStorage.setItem(K,JSON.stringify(R))}catch(e){}};
+const mn=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const fd=s=>{if(!s)return"-";const d=new Date(s);return d.getDate()+" "+mn[d.getMonth()]+" "+(d.getFullYear()+543)};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x==b));document.querySelectorAll(".v").forEach(v=>v.classList.toggle("on",v.id==b.dataset.v));render()});
+const co=Object.keys(CATS);
+$("cat").innerHTML=co.map(c=>`<option>${c}</option>`).join("");
+const DEF={tech:[],item:[],site:[...SITES],type:["ตรวจเช็คตามรอบ","ล้างทำความสะอาด","ซ่อมแซม","เปลี่ยนอะไหล่/วัสดุ","หล่อลื่น/ทาสี"]};
+const dflt=()=>JSON.parse(JSON.stringify(DEF));let S=dflt();try{const x=JSON.parse(localStorage.getItem(K+"-set")||"null");if(x)S={...S,...x}}catch(e){}
+const opt=a=>a.map(s=>`<option>${esc(s)}</option>`).join("");
+function fillSel(){const sv=$("site").value,tv=$("type").value;$("site").innerHTML=opt(S.site);$("type").innerHTML=opt(S.type);if(S.site.includes(sv))$("site").value=sv;if(S.type.includes(tv))$("type").value=tv;$("dl-tech").innerHTML=opt(S.tech);$("dl-item").innerHTML=opt(S.item);chipRow()}
+function chipRow(){const cur=$("tech").value.split(",").map(x=>x.trim()).filter(Boolean);
+$("wkc").innerHTML=S.tech.map((v,i)=>`<button type="button" data-w="${i}" style="${cur.includes(v)?"background:#7cc9de;color:#000;border-color:#0b6e8a;font-weight:700":""}">${esc(v)}</button>`).join("");
+$("itc").innerHTML=S.item.map((v,i)=>`<button type="button" data-t="${i}">${esc(v)}</button>`).join("")}
+$("wkc").onclick=e=>{const b=e.target.closest("button");if(!b)return;e.preventDefault();const v=S.tech[+b.dataset.w],a=$("tech").value.split(",").map(x=>x.trim()).filter(Boolean),k=a.indexOf(v);if(k<0)a.push(v);else a.splice(k,1);$("tech").value=a.join(", ");chipRow()};
+$("itc").onclick=e=>{const b=e.target.closest("button");if(!b)return;e.preventDefault();$("item").value=S.item[+b.dataset.t]};
+$("tech").oninput=chipRow;
+const SL={tech:"ผู้ปฏิบัติงาน",item:"รายการ/รหัสอุปกรณ์",site:"สถานที่ (ปั๊ม/ตู้ควบคุม)",type:"ประเภทงาน"};
+function sets(){$("sets").innerHTML=Object.keys(SL).map(k=>`<div class="c" style="margin-bottom:10px"><b>${SL[k]}</b><div class="ls">${S[k].map((v,i)=>`<span>${esc(v)}${DB&&!(OD[k]&&OD[k][i])?"":`<b data-k="${k}" data-i="${i}" role="button" aria-label="ลบ">✕</b>`}</span>`).join("")||'<small style="color:var(--mu)">ยังไม่มีรายการ</small>'}</div><div class="ad"><input id="in-${k}" placeholder="เพิ่ม${SL[k]}"><button class="btn" data-a="${k}">เพิ่ม</button></div></div>`).join("");
+$("sets").querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>addS(b.dataset.a));
+$("sets").querySelectorAll("input").forEach(i=>i.onkeydown=e=>{if(e.key==="Enter")addS(i.id.slice(3))});
+$("sets").querySelectorAll(".ls b").forEach(b=>b.onclick=async()=>{const k=b.dataset.k,i=+b.dataset.i;if(!await ask("ลบ \""+S[k][i]+"\" ออกจากรายการใช่หรือไม่?"))return;if(DB){const id=OD[k]&&OD[k][i];if(id)DB.collection("opts").doc(id).delete().catch(te);return}S[k].splice(i,1);saveS()})}
+function ask(m){return new Promise(r=>{$("cft").textContent=m;const d=$("cf"),f=v=>{d.classList.remove("on");r(v)};d.classList.add("on");$("cfy").onclick=()=>f(true);$("cfn").onclick=()=>f(false);d.onclick=e=>{if(e.target===d)f(false)}})}
+let OD={};const te=e=>toast("บันทึกการตั้งค่าไม่สำเร็จ: "+((e&&(e.code||e.message))||"ไม่ทราบสาเหตุ"));
+function addS(k){const v=$("in-"+k).value.trim();if(!v)return;if(S[k].includes(v))return toast("มีรายการนี้แล้ว");
+if(DB){DB.collection("opts").add({k,v,ts:Date.now()}).then(()=>{const i=$("in-"+k);if(i)i.value=""}).catch(te);return}
+S[k].push(v);saveS()}
+let SQ=Promise.resolve();
+function saveS(){fillSel();sets();try{localStorage.setItem(K+"-set",JSON.stringify(S))}catch(e){}
+if(!DB)return;const snap=JSON.stringify(S);SQ=SQ.then(()=>DB.doc("settings/lists").set({json:snap})).catch(e=>toast("บันทึกการตั้งค่าไม่สำเร็จ: "+((e&&(e.code||e.message))||"ไม่ทราบสาเหตุ")))}
+$("gear").onclick=()=>{sets();$("md").classList.add("on")};$("mc").onclick=()=>$("md").classList.remove("on");$("md").onclick=e=>{if(e.target===$("md"))$("md").classList.remove("on")};
+fillSel();
+$("fc").innerHTML='<option value="">ทุกหมวดงาน</option>'+co.map(c=>`<option>${c}</option>`).join("");
+function catCh(){const c=CATS[$("cat").value];$("siteL").style.display=c.site?"":"none";
+$("chips").innerHTML=c.chk.map(x=>`<button type="button">${x}</button>`).join("");
+$("chips").querySelectorAll("button").forEach(b=>b.onclick=()=>{const n=$("note");n.value+=(n.value?"\n":"")+"• "+b.textContent})}
+$("cat").onchange=catCh;catCh();$("date").value=today();
+function clr(){["item","tech","cost","next","note","wo","volt","amp","press","hrs","photos"].forEach(i=>$(i).value="");$("date").value=today();$("status").selectedIndex=0;chipRow()}
+$("reset").onclick=clr;
+$("save").onclick=async()=>{if(!$("date").value)return toast("กรุณาเลือกวันที่");
+const c=$("cat").value,b=$("save");b.disabled=true;const ph=[];
+try{if(ASSETS)for(const f of [...$("photos").files].slice(0,4))ph.push((await ASSETS.upload(f)).url)}catch(e){toast("อัปโหลดรูปไม่สำเร็จ")}
+const r={c,s:CATS[c].site?$("site").value:"",i:$("item").value,t:$("type").value,st:$("status").value,d:$("date").value,n:$("note").value,p:$("tech").value,$:+$("cost").value||0,x:$("next").value,w:$("wo").value,v:$("volt").value,a:$("amp").value,pr:$("press").value,h:$("hrs").value,ph,u:UID||"",ts:Date.now()};
+try{if(DB)await DB.collection("records").add(r);else{R.unshift(r);save()}}catch(e){b.disabled=false;return toast("บันทึกไม่สำเร็จ (อาจไม่มีสิทธิ์เขียน)")}
+b.disabled=false;clr();toast("บันทึกข้อมูลแล้ว");document.querySelector('[data-v="l"]').click()};
+function dash(){const now=new Date(),ym=now.toISOString().slice(0,7),td=today();
+const mo=R.filter(r=>r.d.startsWith(ym)).length,pend=R.filter(r=>r.st!=="เสร็จสิ้น").length;
+const lastBy={};R.forEach(r=>{const k=r.c+"|"+r.i;if(r.x&&(!lastBy[k]||r.d>lastBy[k].d))lastBy[k]=r});
+const dues=Object.values(lastBy).filter(r=>r.x).sort((a,b)=>a.x<b.x?-1:1);
+const over=dues.filter(r=>r.x<td).length,cost=R.filter(r=>r.d.startsWith(ym)).reduce((a,r)=>a+r.$,0);
+$("stats").innerHTML=`<div class="c st"><b>${R.length}</b><span>งานทั้งหมดที่บันทึก</span></div><div class="c st ok"><b>${mo}</b><span>งานในเดือนนี้ (ค่าใช้จ่าย ${cost.toLocaleString()} บาท)</span></div><div class="c st wn"><b>${pend}</b><span>งานค้าง (รอ/กำลังดำเนินการ)</span></div><div class="c st er"><b>${over}</b><span>เกินกำหนดบำรุงรักษา</span></div>`;
+const cnt=co.map(c=>[c,R.filter(r=>r.c===c).length]),mx=Math.max(1,...cnt.map(x=>x[1]));
+$("bycat").innerHTML=cnt.map(([c,n])=>`<div class="bar"><i title="${c}">${c}</i><div><u style="width:${n/mx*100}%"></u></div><em>${n}</em></div>`).join("");
+const ms=[];for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1),k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");ms.push([mn[d.getMonth()],R.filter(r=>r.d.startsWith(k)).length])}
+const m2=Math.max(1,...ms.map(x=>x[1]));
+$("bymon").innerHTML=ms.map(([l,n])=>`<div>${n}<u style="height:${n/m2*100}px"></u>${l}</div>`).join("");
+$("due").innerHTML=dues.slice(0,6).map(r=>{const ov=r.x<td;return`<div class="due"><span>${esc(r.c)}<small>${esc(r.i||r.s||"")}</small></span><span style="color:#000;font-weight:${ov?700:400};text-align:right">${fd(r.x)}<small>${ov?"เกินกำหนด":""}</small></span></div>`}).join("")||'<div class="emp">ยังไม่มีกำหนดครั้งถัดไป</div>'}
+function list(){const q=$("q").value.toLowerCase(),fc=$("fc").value,fs=$("fs").value;
+const rs=R.map((r,ix)=>({r,ix})).filter(({r})=>(!fc||r.c===fc)&&(!fs||r.st===fs)&&(!q||JSON.stringify(r).toLowerCase().includes(q))).sort((a,b)=>a.r.d<b.r.d?1:-1);
+$("rows").innerHTML=rs.map(({r,ix})=>`<tr><td>${fd(r.d)}</td><td>${esc(r.c)}${r.w?`<br><small>ใบสั่งงาน ${esc(r.w)}</small>`:""}</td><td>${esc([r.s,r.i].filter(Boolean).join(" / "))}</td><td>${esc(r.t)}</td><td style="white-space:pre-line">${esc(r.n)}${rd(r)}${r.p?`<br><small>ผู้ปฏิบัติ: ${esc(r.p)}</small>`:""}${r.u&&NAMES[r.u]?`<br><small>บันทึกโดย ${esc(NAMES[r.u])}</small>`:""}<br>${(r.ph||[]).map(u=>`<a href="${esc(u)}" target="_blank"><img class="th" src="${esc(u)}" alt="รูปถ่าย"></a>`).join("")}</td><td><span class="tag ${r.st}">${r.st}</span></td><td>${r.$?r.$.toLocaleString():"-"}</td><td><button class="x" data-i="${ix}">ลบ</button></td></tr>`).join("")||'<tr><td colspan="8" class="emp">ไม่พบรายการ — ไปที่ "บันทึกงานใหม่" เพื่อเพิ่มข้อมูล</td></tr>';
+$("rows").querySelectorAll(".x").forEach(b=>b.onclick=async()=>{if(!await ask("ลบรายการนี้ใช่หรือไม่?"))return;const r=R[+b.dataset.i];try{if(DB&&r._id)await DB.collection("records").doc(r._id).delete();else{R.splice(+b.dataset.i,1);save();render()}}catch(e){toast("ลบไม่ได้ (ไม่มีสิทธิ์)")}})}
+["q","fc","fs"].forEach(i=>$(i).oninput=list);
+$("csv").onclick=async()=>{const h=["วันที่","หมวดงาน","สถานที่","รายการ","ประเภท","สถานะ","รายละเอียด","ผู้ปฏิบัติ","ค่าใช้จ่าย","ครั้งถัดไป","ใบสั่งงาน","แรงดันไฟฟ้า V","กระแส A","แรงดันน้ำ bar","ชั่วโมง/มิเตอร์","รูปถ่าย"];
+const l=[h,...R.map(r=>[r.d,r.c,r.s,r.i,r.t,r.st,r.n,r.p,r.$,r.x,r.w,r.v,r.a,r.pr,r.h,(r.ph||[]).join(" ")])].map(a=>a.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+const bl=new Blob(["\ufeff"+l],{type:"text/csv;charset=utf-8"});
+try{const dl=window.claude&&await claude.use("downloads");if(dl){await dl.save({filename:"maintenance.csv",data:bl});return toast("ส่งออกไฟล์แล้ว")}}
+catch(e){if(e&&e.code==="declined")return;try{await navigator.clipboard.writeText("\ufeff"+l);return toast("คัดลอกข้อมูล CSV แล้ว นำไปวางใน Excel/Google Sheets ได้")}catch(x){}}
+const a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download="maintenance.csv";a.click()};
+$("bk").onclick=async()=>{const d={app:"waterworks-maintenance",ver:1,exported:new Date().toISOString(),records:R.map(r=>{const c={...r};delete c._id;return c}),settings:S};
+const t=JSON.stringify(d,null,1),fn="backup-"+today()+".json",bl=new Blob([t],{type:"application/json"});
+try{const dl=window.claude&&await claude.use("downloads");if(dl){await dl.save({filename:fn,data:bl});return toast("สำรองข้อมูลแล้ว ("+d.records.length+" รายการ)")}}
+catch(e){if(e&&e.code==="declined")return;try{await navigator.clipboard.writeText(t);return toast("คัดลอกข้อมูลสำรองแล้ว นำไปวางเก็บในไฟล์ข้อความ .json")}catch(x){}}
+const a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=fn;a.click();toast("สำรองข้อมูลแล้ว")};
+$("rs").onclick=()=>$("rf").click();
+$("rf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;let d;try{d=JSON.parse(await f.text())}catch(x){return toast("ไฟล์ไม่ถูกต้อง")}
+if(!d||!Array.isArray(d.records))return toast("ไม่ใช่ไฟล์สำรองของระบบนี้");
+if(!await ask("กู้คืน "+d.records.length+" รายการ? ข้อมูลเดิมจะไม่ถูกลบ รายการที่ซ้ำจะถูกข้าม"))return;
+const key=r=>[r.d,r.c,r.i,r.t,r.n,r.ts].join("|"),have=new Set(R.map(key));let n=0;
+try{for(const r of d.records){if(have.has(key(r)))continue;have.add(key(r));if(DB)await DB.collection("records").add(r);else R.unshift(r);n++}
+if(d.settings)for(const k of ["tech","item","site","type"])for(const v of (d.settings[k]||[])){if(S[k].includes(v))continue;if(DB)await DB.collection("opts").add({k,v,ts:Date.now()});else S[k].push(v)}
+if(!DB){save();saveS()}}catch(x){return toast("กู้คืนไม่สำเร็จ")}
+toast("กู้คืนแล้ว "+n+" รายการ");render()};
+function render(){dash();list()}render();
+function upd(){$("photoL").style.display=ASSETS?"":"none";$("prt").style.display=DB?"none":"";$("mode").textContent=DB?" • โหมดใช้งานร่วมกันหลายคน":" • บันทึกในเครื่องนี้เท่านั้น"}upd();
+(async()=>{try{
+const db=await claude.use("db");if(!db)return;
+const u=await claude.use("user");
+try{UID=await u.id()}catch(e){}
+try{ASSETS=await claude.use("assets")}catch(e){}
+DB=db;R=[];render();upd();
+db.collection("opts").onSnapshot(s=>{const n=dflt();n.tech=[];n.item=[];const o={tech:[],item:[],site:[],type:[]};
+const ds=s.docs.map(d=>({id:d.id,...d.data()})).filter(d=>n[d.k]&&d.v).sort((a,b)=>(a.ts||0)-(b.ts||0));
+ds.forEach(d=>{if(!n[d.k].includes(d.v)){n[d.k].push(d.v);o[d.k][n[d.k].length-1]=d.id}});
+S=n;OD=o;fillSel();if($("md").classList.contains("on"))sets()},e=>toast("โหลดรายการตั้งค่าไม่ได้: "+((e&&(e.code||e.message))||"")));
+db.collection("records").onSnapshot(async s=>{R=s.docs.map(d=>({...d.data(),_id:d.id}));
+const ids=[...new Set(R.map(r=>r.u).filter(Boolean))];
+try{const p=await u.profiles(ids);ids.forEach(i=>NAMES[i]=(p[i]&&p[i].name)||"")}catch(e){}
+render()},e=>toast("เชื่อมต่อฐานข้อมูลไม่ได้"));
+}catch(e){}})();
+</script></body></html>
