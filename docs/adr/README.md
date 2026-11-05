@@ -14,6 +14,7 @@
 | [0006](0006-git-hygiene-and-gitignore-policy.md) | การจัดระเบียบ Git Repository, `.gitignore` และการล้างไฟล์ความลับ/ไฟล์ขยะออกจาก Git Index | 2026-11-05 | **Accepted** |
 | [0007](0007-comprehensive-testing-strategy-and-qa-pyramid.md) | การออกแบบสถาปัตยกรรมการทดสอบระบบแบบครบวงจร (Comprehensive Testing Strategy & QA Pyramid) | 2026-11-05 | **Accepted** |
 | [0008](0008-standardized-api-response-envelope.md) | การกำหนดมาตรฐานโครงสร้างการตอบกลับของ API (Standardized API Response Envelope Pattern) | 2026-11-05 | **Accepted** |
+| [0009](0009-standardizing-typography-with-kanit-font.md) | การกำหนดมาตรฐานระบบตัวอักษรของโปรเจกต์ด้วยฟอนต์ Kanit (Standardizing Typography with Kanit Font) | 2026-11-05 | **Proposed** |
 
 ---
 

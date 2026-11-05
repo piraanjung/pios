@@ -71,9 +71,15 @@ flowchart LR
 | **Welfare (สวัสดิการชุมชน)** | **Danger / Rose Gradient** | `bg-gradient-danger`, `btn-danger` | `badge bg-gradient-danger` |
 | **Kiosk & SmartUtility** | **Dark (Slate-Navy Gradient)** | `bg-gradient-dark`, `btn-dark` | `badge bg-gradient-dark` |
 
-### Typography & Thai Localization
-- **Font Stack:** `"Open Sans", "Sarabun", sans-serif`
-- **Heading Scales:** ใช้ `font-weight-bolder` (`700`) สำหรับหัวข้อการ์ดและยอดเงินสำคัญ และใช้ `text-sm` / `text-xs text-secondary mb-0` สำหรับคำอธิบายรองและรหัสอ้างอิง
+### Typography & Thai Localization (ADR-0009: Kanit Font Standard)
+- **Primary Font Family:** `"Kanit", "Open Sans", sans-serif`
+- **Google Fonts Specification:** `family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap`
+- **Weight Hierarchy:**
+  - `700 (Bold / Bolder)`: สำหรับตัวเลขสถิติสำคัญ (`.stat-card h5.font-weight-bolder`), หัวข้อยอดเงินคงเหลือ
+  - `600 (Semi-Bold)`: สำหรับหัวข้อหน้าเว็บ (`pageTitle`), การ์ดเฮดเดอร์ (`card-header h6`), ป้ายชื่อ อปท. (`.tenant-badge`)
+  - `500 (Medium)`: สำหรับปุ่มกด (`.btn`), ป้ายสถานะ (`.badge`), ลิงก์นำทาง Sidebar, หัวตาราง DataTables (`<th>`)
+  - `400 (Regular)`: สำหรับเนื้อหาตาราง (`<td>`), ฟิลด์กรอกข้อมูล (`.form-control`, `.form-select`), ข้อความทั่วไป
+  - `300 (Light)`: สำหรับคำอธิบายรอง (`.text-xs.text-secondary`), หมายเหตุ, ข้อมูล Metadata ขนาดเล็ก
 
 ---
 
