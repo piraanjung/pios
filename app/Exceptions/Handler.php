@@ -44,4 +44,50 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    /**
+     * Render an exception into an HTTP response.
+     */
+    public function render($request, Throwable $e)
+    {
+        if ($request->expectsJson() || $request->is('api/*')) {
+            if ($e instanceof ValidationException) {
+                return \App\Shared\Http\ApiResponse::error(
+                    message: $e->getMessage() ?: 'ข้อมูลที่ส่งมาไม่ถูกต้อง',
+                    statusCode: $e->status,
+                    errors: $e->errors()
+                );
+            }
+
+            if ($e instanceof AuthenticationException) {
+                return \App\Shared\Http\ApiResponse::error(
+                    message: 'กรุณายืนยันตัวตนก่อนเข้าใช้งาน (Unauthenticated)',
+                    statusCode: 401
+                );
+            }
+
+            if ($e instanceof AuthorizationException) {
+                return \App\Shared\Http\ApiResponse::error(
+                    message: $e->getMessage() ?: 'ไม่มีสิทธิ์เข้าถึงข้อมูลส่วนนี้ (Forbidden)',
+                    statusCode: 403
+                );
+            }
+
+            if ($e instanceof ModelNotFoundException) {
+                return \App\Shared\Http\ApiResponse::error(
+                    message: 'ไม่พบข้อมูลที่ระบุในระบบ (Resource Not Found)',
+                    statusCode: 404
+                );
+            }
+
+            if ($e instanceof HttpExceptionInterface) {
+                return \App\Shared\Http\ApiResponse::error(
+                    message: $e->getMessage() ?: 'เกิดข้อผิดพลาดในการประมวลผล',
+                    statusCode: $e->getStatusCode()
+                );
+            }
+        }
+
+        return parent::render($request, $e);
+    }
 }

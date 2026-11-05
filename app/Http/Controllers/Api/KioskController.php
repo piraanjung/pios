@@ -18,6 +18,7 @@ use App\Models\KeptKaya\KpUserWastePreference;
 use App\Models\Kiosk;
 use App\Models\KpBankAccount;
 use App\Models\User;
+use App\Shared\Http\ApiResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -150,10 +151,10 @@ class KioskController extends Controller
         // 1. รับข้อมูลจาก Mobile App (สอดรับกับ FormData ที่ส่งมาจากตัวตู้ AIroBacT)
         $userId      = $request->input('userId') ?? auth()->id();
         if (!$userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่พบข้อมูล User ID กรุณาระบุตัวตนก่อนทำรายการ'
-            ], 422);
+            return ApiResponse::error(
+                message: 'ไม่พบข้อมูล User ID กรุณาระบุตัวตนก่อนทำรายการ',
+                statusCode: 422
+            );
         }
 
         $totalPoints = $request->input('totalPoints');
@@ -167,18 +168,18 @@ class KioskController extends Controller
 
         // ดักจับตรวจสอบความถูกต้องเบื้องต้น ป้องกันการส่งคิวขยะว่างเปล่ามาถล่มระบบ
         if (empty($items) || !is_array($items)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่พบข้อมูลรายการขยะในตระกร้า หรือโครงสร้างข้อมูลผิดพลาด'
-            ], 400);
+            return ApiResponse::error(
+                message: 'ไม่พบข้อมูลรายการขยะในตระกร้า หรือโครงสร้างข้อมูลผิดพลาด',
+                statusCode: 400
+            );
         }
 
         $user = User::find($userId);
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่พบบัญชีผู้ใช้งานในระบบ'
-            ], 404);
+            return ApiResponse::error(
+                message: 'ไม่พบบัญชีผู้ใช้งานในระบบ',
+                statusCode: 404
+            );
         }
 
         $resultData = DB::transaction(function () use ($request, $user, $userId, $items, $totalPoints, $totalAmount, $machineId) {
@@ -302,11 +303,14 @@ class KioskController extends Controller
             $recycleAcc->increment('points', $totalPoints);
 
             return [
-                'success' => true,
-                'trans_no' => $transNo
+                'trans_no' => $transNo,
             ];
         });
-        return response()->json($resultData);
+
+        return ApiResponse::success(
+            data: $resultData,
+            message: 'บันทึกรายการฝากขยะสำเร็จ'
+        );
     }
 
     public function uploadKioskImage(Request $request)

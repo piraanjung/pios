@@ -48,6 +48,15 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // Standard API Response Macros (ADR-0008)
+        \Illuminate\Support\Facades\Response::macro('apiSuccess', function ($data = null, string $message = 'ดำเนินการสำเร็จ', int $status = 200, array $meta = []) {
+            return \App\Shared\Http\ApiResponse::success($data, $message, $status, $meta);
+        });
+
+        \Illuminate\Support\Facades\Response::macro('apiError', function (string $message = 'เกิดข้อผิดพลาดในการประมวลผล', int $status = 400, $errors = null, array $meta = []) {
+            return \App\Shared\Http\ApiResponse::error($message, $status, $errors, $meta);
+        });
+
         // ส่งตัวแปร $orgInfos ไปยัง Layout หลักอัตโนมัติ
         View::composer('layouts.admin1', function ($view) {
             $orgInfos = [];

@@ -29,9 +29,12 @@ class KioskTransactionApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'status' => 'online',
+                'success' => true,
+                'data'    => [
+                    'status' => 'online',
+                ],
             ])
-            ->assertJsonStructure(['status', 'message', 'timestamp']);
+            ->assertJsonStructure(['success', 'message', 'data', 'errors', 'meta']);
     }
 
     public function test_kiosk_transaction_rejects_missing_user_id(): void

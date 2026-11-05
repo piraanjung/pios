@@ -41,11 +41,10 @@ Route::post('/testpost', function (Request $request) {
 });
 
 Route::get('/health-check', function () {
-    return response()->json([
-        'status' => 'online',
-        'message' => 'AiroBact Server is ready',
-        'timestamp' => now()
-    ], 200);
+    return \App\Shared\Http\ApiResponse::success(
+        data: ['status' => 'online'],
+        message: 'AiroBact Server is ready'
+    );
 });
 
 Route::get('/keptkaya/kp_items_recycle_info', [KeptkayaController::class, 'kp_items_recycle_info']);

@@ -13,6 +13,7 @@
 | [0005](0005-soft-ui-dashboard-pro-design-system-standardization.md) | การจัดทำมาตรฐานระบบ UI/UX อ้างอิงตาม Soft UI Dashboard PRO Laravel | 2026-11-05 | **Accepted** |
 | [0006](0006-git-hygiene-and-gitignore-policy.md) | การจัดระเบียบ Git Repository, `.gitignore` และการล้างไฟล์ความลับ/ไฟล์ขยะออกจาก Git Index | 2026-11-05 | **Accepted** |
 | [0007](0007-comprehensive-testing-strategy-and-qa-pyramid.md) | การออกแบบสถาปัตยกรรมการทดสอบระบบแบบครบวงจร (Comprehensive Testing Strategy & QA Pyramid) | 2026-11-05 | **Accepted** |
+| [0008](0008-standardized-api-response-envelope.md) | การกำหนดมาตรฐานโครงสร้างการตอบกลับของ API (Standardized API Response Envelope Pattern) | 2026-11-05 | **Accepted** |
 
 ---
 
