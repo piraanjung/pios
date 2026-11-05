@@ -71,6 +71,10 @@ Route::get('/kiosk_login', function () {
     return view('kiosk/kiosk_login');
 });
 
+Route::get('/preview/soft-ui-pro', function () {
+    return view('preview.soft-ui-pro');
+});
+
 Route::post('/api/check_member', [KioskApiController::class, 'checkMember']);
 Route::post('/api/save_session', [KioskApiController::class, 'saveSession']);
 Route::get('/kiosk', [KioskApiController::class, 'index']);

@@ -32,7 +32,7 @@ export default defineConfig({
     {
       name: 'mobile-liff',
       use: {
-        ...devices['iPhone 14'],
+        ...devices['Pixel 7'],
         viewport: { width: 390, height: 844 },
       },
     },

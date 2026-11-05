@@ -67,3 +67,10 @@ my_file.txt
 * copy.*
 * copy *.*
 *copy2.*
+
+# =========================================================================
+# 6. Test Reports & Artifacts
+# =========================================================================
+/playwright-report/
+/test-results/
+database/database.sqlite
