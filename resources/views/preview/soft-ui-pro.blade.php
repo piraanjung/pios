@@ -93,8 +93,8 @@
                 <td><span class="text-xs font-weight-bold text-success">฿1,750.00</span></td>
                 <td><x-soft-ui.badge color="success">ใช้งานปกติ</x-soft-ui.badge></td>
                 <td>
-                    <button class="btn btn-link text-secondary mb-0"><i class="fas fa-eye text-xs"></i></button>
-                    <button class="btn btn-link text-dark mb-0"><i class="fas fa-edit text-xs"></i></button>
+                    <button class="btn btn-link text-secondary mb-0" aria-label="ดูรายละเอียด"><i class="fas fa-eye text-xs"></i></button>
+                    <button class="btn btn-link text-dark mb-0" aria-label="แก้ไขข้อมูล"><i class="fas fa-edit text-xs"></i></button>
                 </td>
             </tr>
             <tr>
@@ -112,8 +112,8 @@
                 <td><span class="text-xs font-weight-bold text-success">฿6,200.00</span></td>
                 <td><x-soft-ui.badge color="success">ใช้งานปกติ</x-soft-ui.badge></td>
                 <td>
-                    <button class="btn btn-link text-secondary mb-0"><i class="fas fa-eye text-xs"></i></button>
-                    <button class="btn btn-link text-dark mb-0"><i class="fas fa-edit text-xs"></i></button>
+                    <button class="btn btn-link text-secondary mb-0" aria-label="ดูรายละเอียด"><i class="fas fa-eye text-xs"></i></button>
+                    <button class="btn btn-link text-dark mb-0" aria-label="แก้ไขข้อมูล"><i class="fas fa-edit text-xs"></i></button>
                 </td>
             </tr>
             <tr>
@@ -131,8 +131,8 @@
                 <td><span class="text-xs font-weight-bold text-muted">฿0.00</span></td>
                 <td><x-soft-ui.badge color="warning">รอยืนยันตัวตน</x-soft-ui.badge></td>
                 <td>
-                    <button class="btn btn-link text-secondary mb-0"><i class="fas fa-eye text-xs"></i></button>
-                    <button class="btn btn-link text-dark mb-0"><i class="fas fa-edit text-xs"></i></button>
+                    <button class="btn btn-link text-secondary mb-0" aria-label="ดูรายละเอียด"><i class="fas fa-eye text-xs"></i></button>
+                    <button class="btn btn-link text-dark mb-0" aria-label="แก้ไขข้อมูล"><i class="fas fa-edit text-xs"></i></button>
                 </td>
             </tr>
         </x-soft-ui.datatable>

@@ -30,6 +30,7 @@
 
     <!-- Fonts & Icons (ADR-0009 Kanit) -->
     @include('layouts.partials.head-fonts')
+    <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
     <link href="{{ asset('soft-ui/assets/css/nucleo-icons.css') }}" rel="stylesheet" />
     <link href="{{ asset('soft-ui/assets/css/nucleo-svg.css') }}" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/fontawesome-free/css/all.min.css') }}" />
@@ -59,7 +60,7 @@
     <!-- Sidebar Navigation -->
     <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-white" id="sidenav-main">
         <div class="sidenav-header text-center">
-            <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-hidden="true" id="iconSidenav"></i>
+            <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none" aria-label="ปิดแถบเมนูนำทาง" role="button" tabindex="0" id="iconSidenav"></i>
             <a class="navbar-brand m-0 d-flex align-items-center justify-content-center" href="{{ url('/home') }}">
                 <img src="{{ asset('logo/ko_envsogo.png') }}" class="navbar-brand-img h-100" alt="main_logo">
                 <span class="ms-2 font-weight-bold text-dark">PIOS Smart City</span>
@@ -121,7 +122,7 @@
                             </a>
                         </li>
                         <li class="nav-item d-xl-none ps-3 d-flex align-items-center">
-                            <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav">
+                            <a href="javascript:;" class="nav-link text-body p-0" id="iconNavbarSidenav" aria-label="เปิดปิดเมนูนำทาง" role="button">
                                 <div class="sidenav-toggler-inner">
                                     <i class="sidenav-toggler-line"></i>
                                     <i class="sidenav-toggler-line"></i>
