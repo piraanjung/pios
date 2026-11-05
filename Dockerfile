@@ -1,5 +1,5 @@
-# 1. ใช้ PHP 8.2 พร้อม Apache
-FROM php:8.2-apache
+# 1. ใช้ PHP 8.3 พร้อม Apache
+FROM php:8.3-apache
 
 # 2. ติดตั้งส่วนเสริมที่ Laravel ต้องใช้
 RUN apt-get update && apt-get install -y \
