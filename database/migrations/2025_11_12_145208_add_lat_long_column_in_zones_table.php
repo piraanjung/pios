@@ -14,8 +14,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('zones', function (Blueprint $table) {
-            $table->string('lat');
-            $table->string('long');
+            $table->string('lat')->nullable();
+            $table->string('long')->nullable();
         });
     }
 

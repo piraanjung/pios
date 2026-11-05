@@ -8,11 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('welfare_contributions', function (Blueprint $table) {
+        $targetTable = Schema::hasTable('kp_welfare_payouts') ? 'kp_welfare_payouts' : (Schema::hasTable('welfare_payouts') ? 'welfare_payouts' : null);
+
+        Schema::create('welfare_contributions', function (Blueprint $table) use ($targetTable) {
             $table->id();
             $table->unsignedBigInteger('org_id_fk');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('payout_id')->nullable()->constrained('welfare_payouts')->onDelete('cascade');
+            if ($targetTable) {
+                $table->foreignId('payout_id')->nullable()->constrained($targetTable)->onDelete('cascade');
+            } else {
+                $table->unsignedBigInteger('payout_id')->nullable();
+            }
             $table->decimal('amount', 10, 2)->default(60.00);
             $table->enum('payment_method', ['auto_wallet', 'cash', 'transfer', 'pending_deduct'])->default('pending_deduct');
             $table->enum('status', ['pending', 'paid', 'exempted'])->default('pending');

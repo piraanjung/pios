@@ -40,6 +40,13 @@ return new class extends Migration
                 $table->index(['org_id_fk', 'type']);
             });
         }
+
+        // 3. Ensure line_user_id on users table if not exists
+        if (Schema::hasTable('users') && !Schema::hasColumn('users', 'line_user_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('line_user_id', 100)->nullable()->after('line_id')->index();
+            });
+        }
     }
 
     /**
@@ -47,6 +54,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (Schema::hasTable('users') && Schema::hasColumn('users', 'line_user_id')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('line_user_id');
+            });
+        }
         Schema::dropIfExists('welfare_fund_ledgers');
 
         if (Schema::hasTable('kp_bank_accounts')) {

@@ -28,8 +28,11 @@ class OnboardCitizenAction
                 'phone'         => $dto->phone,
                 'email'         => $dto->email,
                 'address'       => $dto->address,
-                'zone_id'       => $dto->zoneId,
-                'subzone_id'    => $dto->subzoneId,
+                'zone_id'       => $dto->zoneId ?: 1,
+                'subzone_id'    => $dto->subzoneId ?: 1,
+                'tambon_code'   => '350805',
+                'district_code' => '3508',
+                'province_code' => '35',
                 'line_user_id'  => $dto->lineUserId,
                 'password'      => Hash::make(Str::random(16)),
                 'status'        => 1,
@@ -49,40 +52,55 @@ class OnboardCitizenAction
 
             // 2. KeptKaya / Recycle Bank Profile & Unified Master Ledger (ADR-0004)
             if ($dto->enableRecycleBank || $dto->enableWelfare) {
-                $userPref = KpUserWastePreference::create([
-                    'org_id_fk'            => $dto->orgId,
+                $prefData = [
                     'user_id'              => $user->id,
                     'is_waste_bank'        => $dto->enableRecycleBank ? 1 : 0,
-                    'is_recycle_bank'      => $dto->enableRecycleBank ? 1 : 0,
                     'is_annual_collection' => 0,
                     'address'              => $dto->address,
-                    'zone_id'              => $dto->zoneId,
-                    'subzone_id'           => $dto->subzoneId,
-                ]);
+                    'zone_id'              => $dto->zoneId ?: 1,
+                    'subzone_id'           => $dto->subzoneId ?: 1,
+                ];
+                if (\Illuminate\Support\Facades\Schema::hasColumn('kp_user_waste_preferences', 'org_id')) {
+                    $prefData['org_id'] = $dto->orgId;
+                } elseif (\Illuminate\Support\Facades\Schema::hasColumn('kp_user_waste_preferences', 'org_id_fk')) {
+                    $prefData['org_id_fk'] = $dto->orgId;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('kp_user_waste_preferences', 'is_recycle_bank')) {
+                    $prefData['is_recycle_bank'] = $dto->enableRecycleBank ? 1 : 0;
+                }
+                $userPref = KpUserWastePreference::create($prefData);
 
                 $accountNo = sprintf('ACC-%04d-%06d', $dto->orgId, $user->id);
                 $memberNumber = sprintf('MBR-%04d-%06d', $dto->orgId, $user->id);
 
-                $bankAccount = KPBankAccount::create([
-                    'org_id_fk'     => $dto->orgId,
+                $accountData = [
                     'user_id'       => $user->id,
-                    'user_pref_id'  => $userPref->id,
                     'account_no'    => $accountNo,
                     'member_number' => $memberNumber,
                     'balance'       => 0.00,
                     'points'        => 0,
                     'status'        => 'active',
-                ]);
+                ];
+                if (\Illuminate\Support\Facades\Schema::hasColumn('kp_bank_accounts', 'org_id_fk')) {
+                    $accountData['org_id_fk'] = $dto->orgId;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('kp_bank_accounts', 'user_pref_id')) {
+                    $accountData['user_pref_id'] = $userPref->id;
+                }
+                $bankAccount = KPBankAccount::create($accountData);
             }
 
             // 3. Food Waste Profile
             $foodWastePref = null;
             if ($dto->enableFoodWaste) {
-                $foodWastePref = FoodWasteUserPreference::create([
-                    'org_id_fk'         => $dto->orgId,
-                    'user_id'           => $user->id,
-                    'is_foodwaste_bank' => true,
-                ]);
+                $fwData = ['user_id' => $user->id];
+                if (\Illuminate\Support\Facades\Schema::hasColumn('foodwaste_user_preferences', 'org_id_fk')) {
+                    $fwData['org_id_fk'] = $dto->orgId;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('foodwaste_user_preferences', 'is_foodwaste_bank')) {
+                    $fwData['is_foodwaste_bank'] = true;
+                }
+                $foodWastePref = FoodWasteUserPreference::create($fwData);
             }
 
             return [

@@ -13,13 +13,20 @@ return new class extends Migration
     {
         Schema::table('kp_tbank_items', function (Blueprint $table) {
             // 1. ✅ สร้าง Column ขึ้นมาก่อน (ต้องเป็น unsignedBigInteger และ nullable เพราะเราใช้ set null)
-            $table->unsignedBigInteger('ef_id_fk')->nullable()->after('org_id_fk'); // ใส่ after เพื่อจัดตำแหน่ง (Option)
+            if (!Schema::hasColumn('kp_tbank_items', 'ef_id_fk')) {
+                $column = $table->unsignedBigInteger('ef_id_fk')->nullable();
+                if (Schema::hasColumn('kp_tbank_items', 'org_id_fk')) {
+                    $column->after('org_id_fk');
+                }
+            }
 
             // 2. ✅ จากนั้นค่อยผูก Foreign Key
-            $table->foreign('ef_id_fk')
-                ->references('id')
-                ->on('emission_factors')
-                ->onDelete('set null');
+            if (Schema::hasTable('emission_factors')) {
+                $table->foreign('ef_id_fk')
+                    ->references('id')
+                    ->on('emission_factors')
+                    ->onDelete('set null');
+            }
         });
     }
 

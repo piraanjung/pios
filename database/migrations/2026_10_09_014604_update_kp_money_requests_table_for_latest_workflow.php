@@ -10,6 +10,10 @@ return new class extends Migration {
             // 1. Foreign Key ไปยัง Batch วันศุกร์
             if (!Schema::hasColumn('kp_money_requests', 'batch_id_fk')) {
                 $table->unsignedBigInteger('batch_id_fk')->nullable()->after('user_id');
+                if (Schema::hasTable('kp_withdraw_batches')) {
+                    $table->foreign('batch_id_fk')->references('id')->on('kp_withdraw_batches')->onDelete('set null');
+                }
+            } else if (Schema::hasTable('kp_withdraw_batches') && \Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
                 $table->foreign('batch_id_fk')->references('id')->on('kp_withdraw_batches')->onDelete('set null');
             }
 

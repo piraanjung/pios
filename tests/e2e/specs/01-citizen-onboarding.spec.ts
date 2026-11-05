@@ -7,14 +7,15 @@ test.describe('E2E Journey 01: การลงทะเบียนประช�
     expect(health.status()).toBe(200);
 
     // 2. ส่งคำขอบันทึกข้อมูลประชาชนผ่าน Vertical Slice API
+    const uniqueSuffix = Date.now().toString().slice(-6) + Math.floor(Math.random() * 1000);
     const citizenPayload = {
       org_id_fk: 1,
       firstname: 'ธนากร',
       lastname: 'พัฒนาเมือง',
       prefix: 'นาย',
-      id_card: '1100500998877',
-      phone: '0819998888',
-      email: 'thanakorn@envsogo.test',
+      id_card: `11005${uniqueSuffix}`.slice(0, 13),
+      phone: `081${uniqueSuffix}`.slice(0, 10),
+      email: `thanakorn_${uniqueSuffix}@envsogo.test`,
       address: '99/1 หมู่บ้านสิ่งแวดล้อมดี',
       enable_recycle_bank: true,
       enable_welfare: true,

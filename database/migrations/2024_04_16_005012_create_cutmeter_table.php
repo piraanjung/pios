@@ -13,6 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('tw_cutmeter')) {
+            return;
+        }
+
         Schema::create('tw_cutmeter', function (Blueprint $table) {
             $table->id();
             $table->foreignId('meter_id_fk')->constrained('tw_meter_infos')->onDelete('cascade');

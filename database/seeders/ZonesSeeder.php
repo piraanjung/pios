@@ -15,6 +15,10 @@ class ZonesSeeder extends Seeder
      */
     public function run()
     {
+        if (DB::table('zones')->count() > 0) {
+            return;
+        }
+
         DB::table('zones')->insert([
             ['org_id_fk'=> 1,'zone_name' => 'หมู่ 1' , 'location' => 'ตำบลห้องแซง อำเภอเลิงนกทา จังหวัดยโสธร', 'status' => 'active', 'tambon_id' => '350805'],
             ['org_id_fk'=> 1,'zone_name' => 'หมู่ 2' , 'location' => 'ตำบลห้องแซง อำเภอเลิงนกทา จังหวัดยโสธร', 'status' => 'active', 'tambon_id' => '350805'],

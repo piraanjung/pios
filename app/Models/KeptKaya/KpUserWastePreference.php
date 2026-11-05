@@ -20,6 +20,7 @@ class KpUserWastePreference extends Model
     protected $table = 'kp_user_waste_preferences';
 
     protected $fillable = [
+        'org_id',
         'org_id_fk',
         'user_id',
         'is_annual_collection',

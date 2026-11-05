@@ -96,13 +96,15 @@ class ProvincesSeeder extends Seeder
         ];
 
         foreach ($provinceArray as $province){
-            DB::table('provinces')->insert([
-                'id' => $province[1],
-                'province_name' => $province[2],
-                'go_id' => $province[3],
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            DB::table('provinces')->updateOrInsert(
+                ['id' => $province[1]],
+                [
+                    'province_name' => $province[2],
+                    'go_id' => $province[3],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]
+            );
         }
     }
 }

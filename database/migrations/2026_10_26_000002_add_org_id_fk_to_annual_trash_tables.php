@@ -27,7 +27,7 @@ return new class extends Migration
             }
         }
 
-        if (Schema::hasTable('annual_trashs') && Schema::hasTable('users')) {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasTable('annual_trashs') && Schema::hasTable('users')) {
             DB::statement(<<<'SQL'
                 UPDATE annual_trashs AS bins
                 INNER JOIN users AS users ON users.id = bins.user_id
@@ -36,7 +36,7 @@ return new class extends Migration
             SQL);
         }
 
-        if (Schema::hasTable('annual_trash_payments') && Schema::hasTable('annual_trash_subscriptions')) {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasTable('annual_trash_payments') && Schema::hasTable('annual_trash_subscriptions') && Schema::hasColumn('annual_trash_subscriptions', 'org_id_fk')) {
             DB::statement(<<<'SQL'
                 UPDATE annual_trash_payments AS payments
                 INNER JOIN annual_trash_subscriptions AS subscriptions
@@ -46,7 +46,7 @@ return new class extends Migration
             SQL);
         }
 
-        if (Schema::hasTable('annual_trash_payrate_permonth') && Schema::hasTable('budget_year')) {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasTable('annual_trash_payrate_permonth') && Schema::hasTable('budget_year') && Schema::hasColumn('budget_year', 'org_id_fk')) {
             DB::statement(<<<'SQL'
                 UPDATE annual_trash_payrate_permonth AS payrates
                 INNER JOIN budget_year AS years ON years.id = payrates.budgetyear_idfk
@@ -55,7 +55,7 @@ return new class extends Migration
             SQL);
         }
 
-        if (Schema::hasTable('annual_trash_members') && Schema::hasTable('users')) {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasTable('annual_trash_members') && Schema::hasColumn('annual_trash_members', 'org_id_fk') && Schema::hasTable('users')) {
             DB::statement(<<<'SQL'
                 UPDATE annual_trash_members AS members
                 INNER JOIN users AS users ON users.id = members.user_id
@@ -64,7 +64,7 @@ return new class extends Migration
             SQL);
         }
 
-        if (Schema::hasTable('annual_trash_subscriptions') && Schema::hasTable('users')) {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasTable('annual_trash_subscriptions') && Schema::hasColumn('annual_trash_subscriptions', 'org_id_fk') && Schema::hasTable('users')) {
             DB::statement(<<<'SQL'
                 UPDATE annual_trash_subscriptions AS subscriptions
                 INNER JOIN users AS users ON users.id = subscriptions.user_id

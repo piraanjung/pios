@@ -40,8 +40,9 @@ class   LineLiffController extends Controller
     public function dashboard(Request $request, $pref_id, $org_id)
     {
         // 1. ดึงข้อมูล User และตรวจสอบความตรงกันขององค์กร (org_id)
+        $prefOrgCol = \Illuminate\Support\Facades\Schema::hasColumn('kp_user_waste_preferences', 'org_id') ? 'org_id' : 'org_id_fk';
         $pref = KpUserWastePreference::where('id', $pref_id)
-            ->when($org_id, fn($q) => $q->where('org_id_fk', $org_id))
+            ->when($org_id, fn($q) => $q->where($prefOrgCol, $org_id))
             ->firstOrFail();
 
         $userId = $pref->user_id;

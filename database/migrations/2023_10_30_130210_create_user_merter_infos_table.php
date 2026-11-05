@@ -13,6 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('user_meter_infos')) {
+            return;
+        }
+
         Schema::create('user_meter_infos', function (Blueprint $table) {
             $table->unsignedBigInteger('meter_id');
             $table->unsignedBigInteger('user_id');
