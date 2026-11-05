@@ -17,9 +17,48 @@ class MasterLayoutsVerificationTest extends TestCase
 
         $this->assertStringContainsString('soft-ui-dashboard.css', $content);
         $this->assertStringContainsString('nucleo-icons.css', $content);
-        $this->assertStringContainsString('Sarabun', $content);
+        $this->assertStringContainsString("layouts.partials.head-fonts", $content);
+        $this->assertStringContainsString("'Kanit'", $content);
         $this->assertStringContainsString('navbarBlur', $content);
         $this->assertStringContainsString('tenant-badge', $content);
+    }
+
+    public function test_head_fonts_partial_loads_kanit_with_font_display_swap(): void
+    {
+        $this->assertTrue(View::exists('layouts.partials.head-fonts'));
+
+        $rendered = View::make('layouts.partials.head-fonts')->render();
+
+        $this->assertStringContainsString('family=Kanit', $rendered);
+        $this->assertStringContainsString('display=swap', $rendered);
+        $this->assertStringContainsString('preconnect', $rendered);
+    }
+
+    public function test_all_standardized_layouts_reference_kanit_or_head_fonts_partial(): void
+    {
+        $layouts = [
+            'views/layouts/soft-ui-pro.blade.php',
+            'views/layouts/admin1.blade.php',
+            'views/layouts/super-admin.blade.php',
+            'views/layouts/welfare.blade.php',
+            'views/layouts/keptkaya.blade.php',
+            'views/layouts/foodwaste.blade.php',
+            'views/layouts/tabwater_staff_mobile.blade.php',
+            'views/layouts/user_mobile.blade.php',
+            'views/layouts/login.blade.php',
+            'views/kiosk/index1.blade.php',
+            'views/lineliff/index.blade.php',
+        ];
+
+        foreach ($layouts as $relPath) {
+            $path = resource_path($relPath);
+            $this->assertFileExists($path, "File {$relPath} must exist");
+            $content = file_get_contents($path);
+            $this->assertTrue(
+                str_contains($content, 'layouts.partials.head-fonts') || str_contains($content, 'Kanit'),
+                "Layout {$relPath} must reference head-fonts partial or Kanit"
+            );
+        }
     }
 
     public function test_flash_partial_renders_alerts_from_session(): void

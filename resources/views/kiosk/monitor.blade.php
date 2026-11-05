@@ -9,7 +9,8 @@
     <title>Eco-Scan Neumorphism</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Fonts (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
     <style>
         /* ... (CSS เดิมทั้งหมดของคุณ ไม่ต้องแก้) ... */
 

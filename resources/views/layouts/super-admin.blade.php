@@ -29,9 +29,8 @@
   <link rel="icon" type="image/png" href="{{ asset('logo/ko_envsogo.png')}}">
   <title>{{ $tabTitle !== '' ? $tabTitle . ' | ' : '' }}Envsogo</title>
 
-  <!-- Fonts and icons -->
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <!-- Fonts and icons (ADR-0009 Kanit) -->
+  @include('layouts.partials.head-fonts')
   <!-- Nucleo Icons -->
   <link href="{{ asset('soft-ui/assets/css/nucleo-icons.css')}}" rel="stylesheet" />
   <link href="{{ asset('soft-ui/assets/css/nucleo-svg.css')}}" rel="stylesheet" />
@@ -41,9 +40,8 @@
   <link id="pagestyle" href="{{ asset('soft-ui/assets/css/soft-ui-dashboard.css?v=1.0.7')}}" rel="stylesheet" />
 
   <style>
-    /* Open Sans ไม่มีอักษรไทย ให้ใช้ Sarabun เป็นตัวสำรอง */
-    body, .btn, .form-control, .form-select, .dropdown-menu, .table {
-      font-family: "Open Sans", "Sarabun", sans-serif;
+    body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
+      font-family: 'Kanit', 'Open Sans', sans-serif;
     }
     .sidenav .nav-link-text { white-space: normal; }
     .hidden{

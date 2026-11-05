@@ -17,13 +17,16 @@
   <meta name="description" content="Soft UI Dashboard 3 is a beautiful Bootstrap 5 admin dashboard with a large number of components, designed to look beautiful and organized. If you are looking for a tool to manage and visualize data about your business, this dashboard is the thing for you.">
   <!-- Twitter Card data -->
   
-  <!--     Fonts and icons     -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+  <!-- Fonts and icons (ADR-0009 Kanit) -->
+  @include('layouts.partials.head-fonts')
  
   <!-- CSS Files -->
   <link id="pagestyle" href="{{asset('soft-ui/assets/css/soft-ui-dashboard.css')}}" rel="stylesheet" />
   <!-- Anti-flicker snippet (recommended)  -->
   <style>
+    body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
+      font-family: 'Kanit', 'Open Sans', sans-serif;
+    }
     .async-hide {
       opacity: 0 !important
     }

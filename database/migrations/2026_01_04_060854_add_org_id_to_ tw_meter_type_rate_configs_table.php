@@ -13,6 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::hasColumn('tw_meter_type_rate_configs', 'org_id_fk')) {
+            return;
+        }
+
         Schema::table('tw_meter_type_rate_configs', function (Blueprint $table) {
            $table->unsignedBigInteger('org_id_fk')->after('id')->nullable(); 
         

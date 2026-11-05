@@ -19,6 +19,7 @@ return new class extends Migration
         // เชื่อมกับตารางแม่ (Catalog)
         $table->unsignedBigInteger('inv_item_id_fk');
         $table->foreign('inv_item_id_fk')->references('id')->on('inv_items')->onDelete('cascade');
+        $table->unsignedBigInteger('supplier_id_fk')->nullable();
         $table->foreign('supplier_id_fk')->references('id')->on('suppliers')->onDelete('cascade');
 
         // ข้อมูล Lot/Batch
@@ -35,7 +36,9 @@ return new class extends Migration
         
         $table->date('expire_date')->nullable();      // วันหมดอายุของขวดนี้
         $table->date('received_date')->nullable();    // วันที่รับของชิ้นนี้เข้ามา
+        $table->unsignedBigInteger('received_by')->nullable();
         $table->foreign('received_by')->references('id')->on('users')->onDelete('cascade');
+        $table->unsignedBigInteger('location_id_fk')->nullable();
         $table->foreign('location_id_fk')->references('id')->on('inv_locations')->onDelete('cascade');
 
         // สถานะของขวดนี้

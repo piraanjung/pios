@@ -13,7 +13,8 @@
 
 
 
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <!-- Fonts & Icons (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
         integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
 
@@ -30,6 +31,9 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
+        body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
+            font-family: 'Kanit', 'Open Sans', sans-serif;
+        }
         @media (max-width: 767px) {
             .navbar-vertical.navbar-expand-xs {
                 max-width: 14.625rem !important;

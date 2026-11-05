@@ -9,7 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Varela+Round&display=swap" rel="stylesheet">
+    <!-- Fonts (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
 
     <style>
         :root {
@@ -24,7 +25,7 @@
         * { box-sizing: border-box; }
         
         body {
-            font-family: 'Varela Round', 'Kanit', sans-serif; /* ฟอนต์กลมๆ น่ารัก */
+            font-family: 'Kanit', sans-serif;
             margin: 0;
             padding: 0;
             height: 100vh;

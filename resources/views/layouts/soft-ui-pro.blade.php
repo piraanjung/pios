@@ -28,9 +28,8 @@
     <link rel="icon" type="image/png" href="{{ asset('logo/ko_envsogo.png') }}">
     <title>{{ $pageTitle }} | {{ $orgName }}</title>
 
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <!-- Fonts & Icons (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
     <link href="{{ asset('soft-ui/assets/css/nucleo-icons.css') }}" rel="stylesheet" />
     <link href="{{ asset('soft-ui/assets/css/nucleo-svg.css') }}" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/fontawesome-free/css/all.min.css') }}" />
@@ -39,7 +38,7 @@
 
     <style>
         body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
-            font-family: 'Sarabun', 'Open Sans', sans-serif;
+            font-family: 'Kanit', 'Open Sans', sans-serif;
         }
         .navbar-vertical.navbar-expand-xs .navbar-collapse {
             height: calc(100vh - 280px);
