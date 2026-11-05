@@ -367,6 +367,10 @@ public function annualTrashMember()
             return (float) $this->kpRecycleBankMember->balance;
         }
 
+        if (!$this->exists) {
+            return 0.0;
+        }
+
         $bankAcc = $this->recycleBankAccount()->first();
         if ($bankAcc) {
             return (float) $bankAcc->balance;

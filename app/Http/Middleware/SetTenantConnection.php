@@ -22,6 +22,11 @@ class SetTenantConnection
      */
     public function handle(Request $request, Closure $next)
     {
+        // ในโหมด Testing ให้ข้ามการสลับ DB แบบไดนามิก เพื่อให้ทำงานบน SQLite In-memory ได้อย่างสมบูรณ์
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
+
         // 1. โหลด User และสิทธิ์ (Roles/Permissions) จาก Central DB (envsogo_main) เก็บไว้ใน Memory ก่อนสลับ DB
         $user = null;
         if (Auth::check()) {

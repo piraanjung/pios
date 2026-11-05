@@ -288,8 +288,6 @@ Route::middleware(['auth'])->prefix('keptkayas')->name('keptkayas.')->group(func
     });
 
     // 11. User Groups
-    Route::prefix('kp_usergroup')->name('kp_usergroup.')->group(function () {
-        Route::get('/{usergroup_id}/infos', [KpUserGroupController::class, 'infos'])->name('usergroup.infos');
-        Route::resource('/', KpUserGroupController::class)->except(['show'])->parameters(['' => 'kp_usergroup']);
-    });
+    Route::get('kp_usergroup/{usergroup_id}/infos', [KpUserGroupController::class, 'infos'])->name('kp_usergroup.usergroup.infos');
+    Route::resource('kp_usergroup', KpUserGroupController::class)->except(['show']);
 }); // End Main Group

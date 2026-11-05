@@ -20,11 +20,14 @@ class FoodWasteUserPreference extends Model
         'id',
         'user_id',
         'org_id_fk',
+        'is_foodwaste_bank',
         'status'
     ];
 
     protected $casts = [
-        'user_id',
+        'user_id' => 'integer',
+        'org_id_fk' => 'integer',
+        'is_foodwaste_bank' => 'boolean',
     ];
 
     public function user()

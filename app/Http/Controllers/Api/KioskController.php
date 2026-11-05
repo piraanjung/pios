@@ -148,7 +148,13 @@ class KioskController extends Controller
     public function submitTransaction(Request $request)
     {
         // 1. รับข้อมูลจาก Mobile App (สอดรับกับ FormData ที่ส่งมาจากตัวตู้ AIroBacT)
-        $userId      = 10; //$request->input('userId');
+        $userId      = $request->input('userId') ?? auth()->id();
+        if (!$userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบข้อมูล User ID กรุณาระบุตัวตนก่อนทำรายการ'
+            ], 422);
+        }
 
         $totalPoints = $request->input('totalPoints');
         $totalAmount = $request->input('totalPrice'); // หน้าบ้านใช้คีย์ 'totalPrice'
@@ -167,10 +173,17 @@ class KioskController extends Controller
             ], 400);
         }
 
-        $resultData = DB::transaction(function () use ($request, $userId, $items, $totalPoints, $totalAmount, $machineId) {
+        $user = User::find($userId);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบบัญชีผู้ใช้งานในระบบ'
+            ], 404);
+        }
+
+        $resultData = DB::transaction(function () use ($request, $user, $userId, $items, $totalPoints, $totalAmount, $machineId) {
 
             $userWastePref = KpUserWastePreference::where('user_id', $userId)->get()->first();
-            $user = User::find($userId);
 
             // ในโหมด Kiosk ให้ staff_id เป็น null
             $recorderId = null;
