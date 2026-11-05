@@ -30,13 +30,19 @@ class VerifyLineSessionAction
         }
 
         // Prevent unauthorized direct access to Admin accounts via public LIFF URL
-        if (method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['Super Admin', 'Admin'])) {
-            return [
-                'authorized' => false,
-                'status'     => 403,
-                'message'    => 'ไม่อนุญาตให้เข้าถึงบัญชีผู้ดูแลระบบผ่านช่องทาง LIFF URL โดยตรง',
-                'user'       => null,
-            ];
+        if (method_exists($user, 'hasAnyRole')) {
+            try {
+                if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
+                    return [
+                        'authorized' => false,
+                        'status'     => 403,
+                        'message'    => 'ไม่อนุญาตให้เข้าถึงบัญชีผู้ดูแลระบบผ่านช่องทาง LIFF URL โดยตรง',
+                        'user'       => null,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // Table roles not loaded, skip
+            }
         }
 
         // Validate LINE identity match if configured

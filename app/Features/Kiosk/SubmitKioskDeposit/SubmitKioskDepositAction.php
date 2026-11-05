@@ -44,7 +44,8 @@ class SubmitKioskDepositAction
 
             foreach ($items as $item) {
                 KpPurchaseTransactionDetail::create([
-                    'kp_purchase_transaction_id_fk' => $transaction->id,
+                    'kp_purchase_trans_id'         => $transaction->id,
+                    'org_id_fk'                    => $orgId,
                     'kp_recycle_item_id'           => $item['rateId'] ?? $item['itemId'] ?? 1,
                     'kp_units_idfk'                => $item['unitId'] ?? 2,
                     'kp_tbank_items_pricepoint_id' => $item['priceConfigId'] ?? null,
@@ -52,7 +53,6 @@ class SubmitKioskDepositAction
                     'price_per_unit'               => $item['price'] ?? 0,
                     'amount'                       => ($item['price'] ?? 0) * ($item['qty'] ?? 1),
                     'points'                       => ($item['point'] ?? 0) * ($item['qty'] ?? 1),
-                    'comment'                      => 'Auto-detected by AI Kiosk ' . $machineId,
                 ]);
             }
 

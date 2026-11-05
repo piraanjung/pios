@@ -192,13 +192,14 @@ class KioskController extends Controller
             // 2. เจนเลขที่เอกสาร
             $transNo = 'Kiosk-' . now()->format('ymdHis') . strtoupper(Str::random(3));
             $koisk = Kiosk::where('name', $machineId)->get('id')->first();
+            $kioskId = $koisk ? $koisk->id : null;
 
             // 3. บันทึก Header (KpPurchaseTransaction)
             //statsus ต้องcheck ด้วยว่ารูปที่ส่งมาไม่มี unknow ถึงจะ complete			
             $transaction = KpPurchaseTransaction::create([
                 'kp_u_trans_no'         => $transNo,
                 'org_id_fk'             => $orgId,
-                'kiosk_id_fk'           => $koisk->id, // ระบุว่าเป็นตู้ที่เท่าไหร่
+                'kiosk_id_fk'           => $kioskId, // ระบุว่าเป็นตู้ที่เท่าไหร่
                 'user_id'               => $userId,
                 'transaction_date'      => now(),
                 'total_weight'          => 0, // Kiosk ไม่ได้ชั่งน้ำหนัก แต่ใช้จำนวนชิ้น
@@ -225,7 +226,7 @@ class KioskController extends Controller
                     KpKioskUnknownItem::create([
                         'kp_purchase_trans_id' => $transaction->id,
                         'org_id_fk'            => $orgId,
-                        'kiosk_id_fk'          => $koisk->id, // ไอดีตู้
+                        'kiosk_id_fk'          => $kioskId, // ไอดีตู้
                         'user_id_fk'           => $userId,
                         'detected_label'       => $cartItem['sLabel'] ?? 'UNKNOWN_OBJECT',
                         'confidence_score'     => $cartItem['confidence'] ?? 0,
