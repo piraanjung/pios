@@ -12,6 +12,7 @@
 | [0004](0004-unified-master-user-onboarding-and-schema-consolidation.md) | การรวมศูนย์สคีมาฐานข้อมูลและไปป์ไลน์การลงทะเบียนผู้ใช้ (Unified Master User Onboarding & Schema Consolidation) | 2026-11-05 | **Accepted** |
 | [0005](0005-soft-ui-dashboard-pro-design-system-standardization.md) | การจัดทำมาตรฐานระบบ UI/UX อ้างอิงตาม Soft UI Dashboard PRO Laravel | 2026-11-05 | **Accepted** |
 | [0006](0006-git-hygiene-and-gitignore-policy.md) | การจัดระเบียบ Git Repository, `.gitignore` และการล้างไฟล์ความลับ/ไฟล์ขยะออกจาก Git Index | 2026-11-05 | **Accepted** |
+| [0007](0007-comprehensive-testing-strategy-and-qa-pyramid.md) | การออกแบบสถาปัตยกรรมการทดสอบระบบแบบครบวงจร (Comprehensive Testing Strategy & QA Pyramid) | 2026-11-05 | **Accepted** |
 
 ---
 
