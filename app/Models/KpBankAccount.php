@@ -9,7 +9,7 @@ class KPBankAccount extends Model
 protected $table = 'kp_bank_accounts';
 
 protected $fillable = [
-    'user_pref_id', 'org_id_fk', 'account_no', 'balance', 'points', 'status'
+    'user_id', 'user_pref_id', 'org_id_fk', 'account_no', 'member_number', 'balance', 'points', 'status'
 ];
 
 protected $casts = [

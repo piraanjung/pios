@@ -13,13 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('staffs', function (Blueprint $table) {
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade')
-                ->primary()->unique();
-            $table->enum('status', ['active', 'inactive']);
-            $table->enum('deleted', ['0','1']);
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('staffs')) {
+            Schema::create('staffs', function (Blueprint $table) {
+                $table->foreignId('user_id')->constrained('users')->onDelete('cascade')
+                    ->primary()->unique();
+                $table->enum('status', ['active', 'inactive']);
+                $table->enum('deleted', ['0','1']);
+                $table->timestamps();
+            });
+        }
     }
 
     /**
