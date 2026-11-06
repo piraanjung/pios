@@ -64,9 +64,17 @@
 
 <!-- Main Table and Info Cards -->
 <div class="row mt-4">
-    <div class="col-lg-8 col-md-12 mb-4">
+    <div class="col-12 mb-4">
         @php
-            $headers = ['รหัสบัญชี', 'ชื่อ-นามสกุล ประชาชน', 'เบอร์โทรศัพท์', 'คะแนนสะสม', 'ยอดเงินคงเหลือ', 'สถานะ', 'จัดการ'];
+            $headers = [
+                ['text' => 'รหัสบัญชี', 'class' => 'ps-3'],
+                ['text' => 'ชื่อ-นามสกุล ประชาชน', 'class' => 'ps-2'],
+                ['text' => 'เบอร์โทรศัพท์', 'class' => 'text-center'],
+                ['text' => 'คะแนนสะสม', 'class' => 'text-center'],
+                ['text' => 'ยอดเงินคงเหลือ', 'class' => 'text-center'],
+                ['text' => 'สถานะ', 'class' => 'text-center'],
+                ['text' => 'จัดการ', 'class' => 'text-center pe-3'],
+            ];
             $citizens = [
                 [
                     'code' => 'ACC-0001-000001',
@@ -118,7 +126,7 @@
 
             @foreach ($citizens as $citizen)
                 <tr>
-                    <td><span class="text-xs font-weight-bold">{{ $citizen['code'] }}</span></td>
+                    <td class="ps-3"><span class="text-xs font-weight-bold">{{ $citizen['code'] }}</span></td>
                     <td>
                         <div class="d-flex px-2 py-1">
                             <div class="d-flex flex-column justify-content-center">
@@ -127,13 +135,13 @@
                             </div>
                         </div>
                     </td>
-                    <td><span class="text-xs font-weight-bold">{{ $citizen['phone'] }}</span></td>
-                    <td><span class="badge badge-sm {{ $citizen['points_badge'] }}">{{ $citizen['points'] }}</span></td>
-                    <td><span class="text-xs font-weight-bold {{ $citizen['balance_color'] }}">{{ $citizen['balance'] }}</span></td>
-                    <td><x-soft-ui.badge :color="$citizen['status_color']">{{ $citizen['status'] }}</x-soft-ui.badge></td>
-                    <td>
-                        <button class="btn btn-link text-secondary mb-0" aria-label="ดูรายละเอียด"><i class="fas fa-eye text-xs"></i></button>
-                        <button class="btn btn-link text-dark mb-0" aria-label="แก้ไขข้อมูล"><i class="fas fa-edit text-xs"></i></button>
+                    <td class="text-center"><span class="text-xs font-weight-bold">{{ $citizen['phone'] }}</span></td>
+                    <td class="text-center"><span class="badge badge-sm {{ $citizen['points_badge'] }}">{{ $citizen['points'] }}</span></td>
+                    <td class="text-center"><span class="text-xs font-weight-bold {{ $citizen['balance_color'] }}">{{ $citizen['balance'] }}</span></td>
+                    <td class="text-center"><x-soft-ui.badge :color="$citizen['status_color']">{{ $citizen['status'] }}</x-soft-ui.badge></td>
+                    <td class="text-center pe-3">
+                        <button class="btn btn-link text-secondary mb-0 p-1" aria-label="ดูรายละเอียด"><i class="fas fa-eye text-xs"></i></button>
+                        <button class="btn btn-link text-dark mb-0 p-1 ms-1" aria-label="แก้ไขข้อมูล"><i class="fas fa-edit text-xs"></i></button>
                     </td>
                 </tr>
             @endforeach
@@ -189,22 +197,30 @@
     </div>
 
     <!-- Quick Actions Card -->
-    <div class="col-lg-4 col-md-12">
+    <div class="col-12 mb-4">
         <x-soft-ui.card title="เมนูด่วนและบริการประชาชน">
             <p class="text-xs text-secondary mb-3">เข้าถึงฟีเจอร์หลักของแต่ละ Bounded Context ได้อย่างรวดเร็ว</p>
-            <div class="d-grid gap-2">
-                <x-soft-ui.button color="primary" class="w-100 text-start" icon="fas fa-tint">
-                    ระบบประปาหมู่บ้าน (Tabwater Billing)
-                </x-soft-ui.button>
-                <x-soft-ui.button color="success" class="w-100 text-start" icon="fas fa-recycle">
-                    ธนาคารขยะรีไซเคิล (KeptKaya Bank)
-                </x-soft-ui.button>
-                <x-soft-ui.button color="info" class="w-100 text-start" icon="fas fa-robot">
-                    ตู้รับซื้อ AIroBacT AI Kiosk
-                </x-soft-ui.button>
-                <x-soft-ui.button color="warning" class="w-100 text-start" icon="fas fa-hand-holding-heart">
-                    กองทุนสวัสดิการชุมชน (Welfare Fund)
-                </x-soft-ui.button>
+            <div class="row g-3">
+                <div class="col-xl-3 col-md-6 col-12">
+                    <x-soft-ui.button color="primary" class="w-100 text-start py-3" icon="fas fa-tint">
+                        ระบบประปาหมู่บ้าน (Tabwater)
+                    </x-soft-ui.button>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <x-soft-ui.button color="success" class="w-100 text-start py-3" icon="fas fa-recycle">
+                        ธนาคารขยะรีไซเคิล (KeptKaya)
+                    </x-soft-ui.button>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <x-soft-ui.button color="info" class="w-100 text-start py-3" icon="fas fa-robot">
+                        ตู้รับซื้อ AIroBacT AI Kiosk
+                    </x-soft-ui.button>
+                </div>
+                <div class="col-xl-3 col-md-6 col-12">
+                    <x-soft-ui.button color="warning" class="w-100 text-start py-3" icon="fas fa-hand-holding-heart">
+                        กองทุนสวัสดิการชุมชน (Welfare)
+                    </x-soft-ui.button>
+                </div>
             </div>
         </x-soft-ui.card>
     </div>

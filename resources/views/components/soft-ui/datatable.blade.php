@@ -25,7 +25,11 @@
                     <thead>
                         <tr>
                             @foreach ($headers as $header)
-                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{{ $header }}</th>
+                                @php
+                                    $hText = is_array($header) ? ($header['text'] ?? '') : $header;
+                                    $hClass = is_array($header) ? ($header['class'] ?? '') : '';
+                                @endphp
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 {{ $hClass }}">{{ $hText }}</th>
                             @endforeach
                         </tr>
                     </thead>
