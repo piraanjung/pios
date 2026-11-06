@@ -27,7 +27,9 @@ class Kiosk extends Model
         'last_online_at'
     ];
 
-    protected $dates = ['last_online_at'];
+    protected $casts = [
+        'last_online_at' => 'datetime',
+    ];
 
     // --- Relationships ---
 

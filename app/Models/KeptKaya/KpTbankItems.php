@@ -12,7 +12,6 @@ class KpTbankItems extends Model
     use BelongsToOrganization; // ตัวนี้จะช่วยกรอง org_id_fk อัตโนมัติในทุก query
     use SoftDeletes; // 2. เรียกใช้งาน Trait
 
-    protected $dates = ['deleted_at']; // 3. ระบุคอลัมน์วันที่
     protected $table = 'kp_tbank_items';
 
     protected $fillable = [
@@ -33,6 +32,7 @@ class KpTbankItems extends Model
     // แนะนำให้ใส่ Casts เพื่อให้เวลาดึงข้อมูลมาใช้ Laravel เปลี่ยน Type ให้เลย
     protected $casts = [
         'favorite' => 'integer',
+        'deleted_at' => 'datetime',
         // 'deleted' => 'integer',
     ];
 

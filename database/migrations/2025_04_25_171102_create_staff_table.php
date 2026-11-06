@@ -18,8 +18,8 @@ return new class extends Migration
         }
 
         Schema::create('staffs', function (Blueprint $table) {
-            $table->foreignId('id')->constrained('users')->onDelete('cascade')
-                ->primary()->unique();
+            $table->unsignedBigInteger('id')->primary();
+            $table->foreign('id')->references('id')->on('users')->onDelete('cascade');
             $table->foreignId('org_id_fk')->constrained('organizations')->onDelete('cascade');
             $table->enum('status', ['active', 'inactive']);
             $table->enum('deleted', ['0','1']);
