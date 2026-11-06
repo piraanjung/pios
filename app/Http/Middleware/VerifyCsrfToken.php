@@ -12,8 +12,6 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'api/*', // หรือ 'api/kiosk/upload'
-        'smart-utility/api/*',
-        'features/*',
+        'api/*',
     ];
 }

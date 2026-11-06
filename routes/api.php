@@ -28,17 +28,18 @@ use App\Http\Controllers\Tabwater\UserMeterInfosController;
 use Illuminate\Support\Facades\Log;
 
 
-Route::get('/testget', function () {
-    return response()->json([
-        'testget' => 2222
-    ]);
-});
-Route::post('/testpost', function (Request $request) {
-    $data = $request->json()->all();
-    return response()->json([
-        'sensor' => $request->sensor
-    ]);
-});
+if (app()->environment('local', 'testing')) {
+    Route::get('/testget', function () {
+        return response()->json([
+            'testget' => 2222
+        ]);
+    });
+    Route::post('/testpost', function (Request $request) {
+        return response()->json([
+            'sensor' => $request->sensor
+        ]);
+    });
+}
 
 Route::get('/health-check', function () {
     return \App\Shared\Http\ApiResponse::success(

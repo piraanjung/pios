@@ -39,7 +39,7 @@ use App\Http\Controllers\KeptKaya\WithdrawController;
 use App\Http\Controllers\Kiosk\KioskController;
 use App\Http\Controllers\Kiosk\KioskSensorController;
 
-Route::prefix('keptkayas')->name('keptkayas.')->group(function () {
+Route::middleware(['auth'])->prefix('keptkayas')->name('keptkayas.')->group(function () {
     Route::get('/unknown-review', function () {
         return view('keptkayas.unknown_review');
     })->name('kiosk.unknown.review');

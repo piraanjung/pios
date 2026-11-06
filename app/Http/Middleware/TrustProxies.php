@@ -10,9 +10,12 @@ class TrustProxies extends Middleware
     /**
      * The trusted proxies for this application.
      *
+     * In containerized environments and cloud load balancers (e.g. Cloud Run, Traefik, AWS ALB, Nginx reverse proxy),
+     * trusting all upstream proxies or configuring via TRUSTED_PROXIES env is standard for secure HTTPS/Client-IP termination.
+     *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.

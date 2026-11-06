@@ -145,15 +145,16 @@ Route::get('/logout_staff', function () {
 
     return view('auth/login_staff');
 });
-Route::get('/upload-form', function () {
-    return view('upload');
-});
+if (app()->environment('local', 'testing')) {
+    Route::get('/upload-form', function () {
+        return view('upload');
+    });
 
-Route::post('/upload-and-convert', [SqlToJsonController::class, 'uploadAndProcess']);
+    Route::post('/upload-and-convert', [SqlToJsonController::class, 'uploadAndProcess']);
 
-
-Route::resource('/test', TestController::class)->except(['create', 'store', 'show', 'edit', 'update', 'destroy']);
-Route::get('/test/textSendLineMessage', [TestController::class, 'textSendLineMessage']);
+    Route::resource('/test', TestController::class)->except(['create', 'store', 'show', 'edit', 'update', 'destroy']);
+    Route::get('/test/textSendLineMessage', [TestController::class, 'textSendLineMessage']);
+}
 
 
 // Auth::routes() removed: auth routes are provided by Breeze in routes/auth.php.
@@ -409,9 +410,8 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/login', [SuperAdminAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [SuperAdminAuthController::class, 'login'])->name('login.post');
     Route::post('/logout', [SuperAdminAuthController::class, 'logout'])->name('logout');
-    Route::resource('/machines', MachineController::class);
-
     Route::middleware(['auth', 'role:Admin|Super Admin'])->group(function () {
+        Route::resource('/machines', MachineController::class);
         Route::resource('staff', StaffController::class);
     });
 });
@@ -423,7 +423,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('superadmin.dashboard');
 });
 
-Route::prefix('admin/ef')->group(function () {
+Route::middleware(['auth'])->prefix('admin/ef')->group(function () {
     Route::get('/', [EmissionFactorController::class, 'index'])->name('ef.index');
     Route::post('/store', [EmissionFactorController::class, 'store'])->name('ef.store');
     Route::put('/{emissionFactor}', [EmissionFactorController::class, 'update'])->name('ef.update');

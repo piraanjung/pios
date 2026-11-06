@@ -1,58 +1,110 @@
-# 1. ใช้ PHP 8.3 พร้อม Apache
+# ==============================================================================
+# Multi-stage Production Dockerfile for PIOS (Cloud Run / Standalone Container)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Stage 1: Build Frontend Assets (Vite)
+# ------------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY resources/ ./resources/
+COPY vite.config.js tailwind.config.js postcss.config.js ./
+COPY public/ ./public/
+
+RUN npm run build
+
+# ------------------------------------------------------------------------------
+# Stage 2: Production PHP-Apache Runtime
+# ------------------------------------------------------------------------------
 FROM php:8.3-apache
 
-# 2. ติดตั้งส่วนเสริมที่ Laravel ต้องใช้
-RUN apt-get update && apt-get install -y \
+# Install system dependencies including Tesseract OCR (Thai) and media libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    unzip \
+    zip \
+    curl \
+    default-mysql-client \
+    tesseract-ocr \
+    tesseract-ocr-tha \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libwebp-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
-    unzip \
-    git \
-    libzip-dev
+    libzip-dev \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# 3. ติดตั้ง PHP Extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+# Configure & install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        pdo_mysql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        xml \
+        intl \
+        opcache
 
-# 4. เปิดใช้งาน mod_rewrite ของ Apache สำหรับ Laravel
-RUN a2enmod rewrite
+# Install Redis extension
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
-# 5. ตั้งค่าโฟลเดอร์ทำงาน
+# Enable Apache modules
+RUN a2enmod rewrite headers
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /var/www/html
 
-# 6. เอา Composer มาติดตั้ง
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# 7. ก๊อปปี้ไฟล์โปรเจกต์ทั้งหมดลงใน Container
-# (*** สำคัญ: ต้องไปลบ /storage ออกจาก .dockerignore ด้วย ***)
+# Copy application source
 COPY . /var/www/html
 
-# 8. ติดตั้ง Package ของ Laravel
-RUN composer install --optimize-autoloader --no-dev --no-scripts --ignore-platform-reqs
+# Copy compiled frontend assets from Stage 1
+COPY --from=frontend-builder /app/public/build /var/www/html/public/build
 
-# 9. 🌟 จัดการโฟลเดอร์และสิทธิ์ (Permission)
-# สร้างโฟลเดอร์ที่จำเป็นต้องใช้เขียนไฟล์ (รวมถึง public/uploads หรือโฟลเดอร์ที่คุณต้องการ)
-RUN mkdir -p /var/www/html/storage \
-    /var/www/html/storage/framework/cache \
+# Install Composer dependencies (production only)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+# Configure OPcache for Production
+RUN { \
+    echo 'opcache.enable=1'; \
+    echo 'opcache.memory_consumption=128'; \
+    echo 'opcache.interned_strings_buffer=16'; \
+    echo 'opcache.max_accelerated_files=10000'; \
+    echo 'opcache.validate_timestamps=0'; \
+    echo 'opcache.save_comments=1'; \
+    echo 'opcache.fast_shutdown=1'; \
+} > /usr/local/etc/php/conf.d/opcache-recommended.ini
+
+# Setup directories and permissions
+RUN mkdir -p /var/www/html/storage/framework/cache/data \
     /var/www/html/storage/framework/sessions \
     /var/www/html/storage/framework/views \
     /var/www/html/storage/logs \
     /var/www/html/bootstrap/cache \
     /var/www/html/public/uploads \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage \
-    /var/www/html/bootstrap/cache \
-    /var/www/html/public
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/uploads
 
-# 10. ตั้งค่า Apache Document Root ไปที่ public
+# Configure Apache DocumentRoot
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 11. ตั้งค่า Port สำหรับ Google Cloud Run (8080)
+# Configure Port for Cloud Run / Container Platforms (Default 8080)
 ENV PORT=8080
 RUN sed -s -i -e "s/80/\${PORT}/" /etc/apache2/ports.conf /etc/apache2/sites-available/*.conf
-EXPOSE ${PORT}
+EXPOSE 8080
 
-# เริ่มการทำงานของ Apache
 CMD ["apache2-foreground"]

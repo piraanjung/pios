@@ -55,7 +55,7 @@ class VerticalSliceServiceProvider extends ServiceProvider
                 if (File::exists($routeFile)) {
                     $sliceName = Str::kebab(basename($sliceDir));
                     
-                    Route::middleware(['web'])
+                    Route::middleware(['api'])
                         ->name($contextName . '.' . $sliceName . '.')
                         ->group($routeFile);
                 }
