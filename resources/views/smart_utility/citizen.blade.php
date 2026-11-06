@@ -7,7 +7,9 @@
     <title>ระบบรับแจ้งเหตุสาธารณูปโภค — {{ $config->org_name }}</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Fonts (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
+    <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
         :root {
@@ -27,7 +29,7 @@
             margin: 0;
             background: var(--bg);
             color: var(--ink);
-            font-family: "Sarabun", sans-serif;
+            font-family: 'Kanit', sans-serif !important;
             -webkit-font-smoothing: antialiased;
         }
         .container {

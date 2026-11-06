@@ -20929,7 +20929,7 @@ fieldset:disabled .btn {
 }
 
 .card .card-body {
-  font-family: "Open Sans";
+  font-family: 'Kanit', sans-serif;
   padding: 1.5rem;
 }
 
@@ -24936,7 +24936,7 @@ p {
 }
 
 .text-sans-serif {
-  font-family: "Open Sans" !important;
+  font-family: 'Kanit', sans-serif !important;
 }
 
 .text-monospace {

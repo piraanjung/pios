@@ -38,8 +38,28 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
 
     <style>
-        body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
-            font-family: 'Kanit', 'Open Sans', sans-serif;
+        html, body,
+        h1, h2, h3, h4, h5, h6,
+        p, span, a, label, li, ul, ol,
+        input, button, select, textarea, optgroup, option,
+        table, thead, tbody, tfoot, tr, th, td,
+        .card, .card-header, .card-body, .card-footer, .card-title,
+        .navbar, .navbar-brand, .nav, .nav-item, .nav-link,
+        .badge, .alert, .dropdown, .dropdown-menu, .dropdown-item,
+        .modal, .modal-title, .modal-body, .modal-footer,
+        .btn, .btn-sm, .btn-lg, .form-control, .form-select, .form-check-label,
+        .table-responsive, .text-sans-serif, .font-sans,
+        div {
+            font-family: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        }
+        i, .fa, .fas, .far, .fab, .fal, .fad,
+        [class*="fa-"], [class^="fa-"],
+        .ni, [class*="ni-"], [class^="ni-"],
+        .nucleo, .material-icons, [class*="bi-"], [class^="bi-"] {
+            font-family: 'Font Awesome 5 Free', 'FontAwesome', 'NucleoIcons', 'bootstrap-icons' !important;
+        }
+        .fab {
+            font-family: 'Font Awesome 5 Brands', 'FontAwesome' !important;
         }
         .navbar-vertical.navbar-expand-xs .navbar-collapse {
             height: calc(100vh - 280px);

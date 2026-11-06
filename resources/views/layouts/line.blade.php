@@ -8,6 +8,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
+    <!-- Fonts (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
+    <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('soft-ui/assets/css/soft-ui-dashboard.min.css') }}">
 
     @yield('style')

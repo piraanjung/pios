@@ -88,7 +88,7 @@
   /* ==========================================================================
      4. Typography (ADR-0009 Kanit)
      ========================================================================== */
-  --font-family-sans: 'Kanit', 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-sans: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -150,7 +150,33 @@
   --space-3xl: 32px;
 }
 
-/* Global Kanit base application */
+/* Universal Kanit base application (ADR-0009) */
+html, body,
+h1, h2, h3, h4, h5, h6,
+p, span, a, label, li, ul, ol,
+input, button, select, textarea, optgroup, option,
+table, thead, tbody, tfoot, tr, th, td,
+.card, .card-header, .card-body, .card-footer, .card-title,
+.navbar, .navbar-brand, .nav, .nav-item, .nav-link,
+.badge, .alert, .dropdown, .dropdown-menu, .dropdown-item,
+.modal, .modal-title, .modal-body, .modal-footer,
+.btn, .btn-sm, .btn-lg, .form-control, .form-select, .form-check-label,
+.table-responsive, .text-sans-serif, .font-sans,
+div {
+  font-family: var(--font-family-sans) !important;
+}
+
+/* Preserve icon fonts */
+i, .fa, .fas, .far, .fab, .fal, .fad,
+[class*="fa-"], [class^="fa-"],
+.ni, [class*="ni-"], [class^="ni-"],
+.nucleo, .material-icons, [class*="bi-"], [class^="bi-"] {
+  font-family: 'Font Awesome 5 Free', 'FontAwesome', 'NucleoIcons', 'bootstrap-icons' !important;
+}
+.fab {
+  font-family: 'Font Awesome 5 Brands', 'FontAwesome' !important;
+}
+
 body {
   font-family: var(--font-family-sans) !important;
   color: var(--color-foreground);

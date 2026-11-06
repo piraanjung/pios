@@ -10,7 +10,9 @@
 <title>{{ $config->org_name ?? 'ระบบบริหารจัดการไฟฟ้าสาธารณะและประปาอัจฉริยะ' }} — Smart Utility GIS</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Fonts (ADR-0009 Kanit) -->
+@include('layouts.partials.head-fonts')
+<link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
 <style>
 :root{
   --bg:#f1f5f9;--card:#ffffff;--ink:#0f172a;--mute:#64748b;--line:#cbd5e1;
@@ -20,7 +22,7 @@
 }
 *{box-sizing:border-box}
 html{width:100%;height:100%;}
-body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--ink);font:400 15px/1.5 "Sarabun","IBM Plex Sans Thai",sans-serif;overflow-x:hidden}
+body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--ink);font:400 15px/1.5 'Kanit', sans-serif;overflow-x:hidden}
 main{max-width:1280px;margin:0 auto;padding:16px 16px 40px}
 
 /* Header & Brand */
