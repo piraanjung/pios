@@ -3,6 +3,7 @@
     'headers' => [],
     'title' => 'รายการข้อมูล',
     'actions' => null,
+    'mobileCards' => null,
 ])
 
 <div class="card shadow-blur">
@@ -17,19 +18,42 @@
         </div>
     @endif
     <div class="card-body px-0 pt-0 pb-2">
-        <div class="table-responsive p-3">
-            <table class="table align-items-center mb-0" id="{{ $id }}">
-                <thead>
-                    <tr>
-                        @foreach ($headers as $header)
-                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{{ $header }}</th>
-                        @endforeach
-                    </tr>
-                </thead>
-                <tbody>
-                    {{ $slot }}
-                </tbody>
-            </table>
-        </div>
+        @if ($mobileCards)
+            <!-- Desktop Table View (Hidden on mobile < md) -->
+            <div class="table-responsive p-3 d-none d-md-block">
+                <table class="table align-items-center mb-0" id="{{ $id }}">
+                    <thead>
+                        <tr>
+                            @foreach ($headers as $header)
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{{ $header }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ $slot }}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile Card List View (Visible on mobile < md) -->
+            <div class="d-block d-md-none p-3 pt-2">
+                {{ $mobileCards }}
+            </div>
+        @else
+            <div class="table-responsive p-3">
+                <table class="table align-items-center mb-0" id="{{ $id }}">
+                    <thead>
+                        <tr>
+                            @foreach ($headers as $header)
+                                <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">{{ $header }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ $slot }}
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </div>
 </div>
