@@ -1,14 +1,19 @@
 @props([
     'id' => 'datatable-' . uniqid(),
     'headers' => [],
+    'title' => 'รายการข้อมูล',
     'actions' => null,
 ])
 
 <div class="card shadow-blur">
-    @if ($actions)
-        <div class="card-header pb-0 p-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0 font-weight-bolder">รายการข้อมูล</h6>
-            <div>{{ $actions }}</div>
+    @if ($title || $actions)
+        <div class="card-header pb-0 p-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+            @if ($title)
+                <h6 class="mb-0 font-weight-bolder text-nowrap">{{ $title }}</h6>
+            @endif
+            @if ($actions)
+                <div class="d-flex flex-column flex-sm-row gap-2 w-100 w-sm-auto justify-content-start justify-content-sm-end">{{ $actions }}</div>
+            @endif
         </div>
     @endif
     <div class="card-body px-0 pt-0 pb-2">

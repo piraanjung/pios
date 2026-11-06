@@ -70,10 +70,10 @@
         @endphp
         <x-soft-ui.datatable id="citizenSummaryTable" :headers="$headers">
             <x-slot:actions>
-                <x-soft-ui.button color="primary" size="sm" icon="fas fa-user-plus">
+                <x-soft-ui.button color="primary" size="sm" icon="fas fa-user-plus" class="w-100 w-sm-auto">
                     ลงทะเบียนประชาชนใหม่
                 </x-soft-ui.button>
-                <x-soft-ui.button color="info" size="sm" :outline="true" icon="fas fa-file-export" class="ms-2">
+                <x-soft-ui.button color="info" size="sm" :outline="true" icon="fas fa-file-export" class="w-100 w-sm-auto">
                     ส่งออก Excel
                 </x-soft-ui.button>
             </x-slot:actions>

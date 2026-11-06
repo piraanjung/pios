@@ -52,6 +52,18 @@
             font-size: 11px;
             font-weight: 600;
         }
+        @media (max-width: 767.98px) {
+            .main-content > .container-fluid {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .main-content > .container-fluid {
+                padding-left: 1.5rem !important;
+                padding-right: 1.5rem !important;
+            }
+        }
     </style>
     @stack('styles')
 </head>
@@ -98,7 +110,7 @@
     <!-- Main Content Area -->
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
         <!-- Top Navbar -->
-        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
+        <nav class="navbar navbar-main navbar-expand-lg px-0 mx-3 mx-md-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
             <div class="container-fluid py-1 px-3">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
@@ -136,7 +148,7 @@
         </nav>
 
         <!-- Body Container -->
-        <div class="container-fluid py-4">
+        <div class="container-fluid py-4 px-3 px-md-4">
             @include('layouts.partials.flash')
 
             @yield('content')
