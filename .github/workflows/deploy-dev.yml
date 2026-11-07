@@ -191,13 +191,54 @@ jobs:
           fi
           echo "✔ SSH Private Key validated successfully."
 
+          # Setup SSH config with compatibility options for cPanel servers
+          SSH_PORT="${{ secrets.DEV_SSH_PORT }}"
+          if [ -z "$SSH_PORT" ]; then
+            SSH_PORT="22"
+          fi
+
+          SSH_HOST="${{ secrets.DEV_SSH_HOST }}"
+          SSH_USER="${{ secrets.DEV_SSH_USER }}"
+
+          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ]; then
+            echo "::error::กรุณาตรวจสอบว่ามี Repository Secrets ชื่อ DEV_SSH_HOST และ DEV_SSH_USER ครบถ้วน"
+            exit 1
+          fi
+
+          cat << SSHCONFIG > ~/.ssh/config
+          Host cpanel
+              HostName ${SSH_HOST}
+              User ${SSH_USER}
+              Port ${SSH_PORT}
+              IdentityFile ~/.ssh/deploy_key
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+              PubkeyAcceptedKeyTypes +ssh-rsa
+              HostKeyAlgorithms +ssh-rsa
+              ConnectTimeout 30
+              ServerAliveInterval 60
+          SSHCONFIG
+          chmod 600 ~/.ssh/config
+
+      - name: Verify SSH Connection & Ensure Target Path
+        run: |
+          TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
+          echo "Testing SSH connection to cpanel (${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}) ..."
+          
+          # Test connection and create target directory if it does not exist yet
+          ssh cpanel "
+            echo '✔ SSH connected successfully as: '\$(whoami) 'on' \$(hostname)
+            mkdir -p '${TARGET_PATH}'
+            echo '✔ Target directory verified: ${TARGET_PATH}'
+          "
+
       - name: Deploy Code via Rsync
         run: |
           TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
           echo "Syncing application code to $TARGET_PATH ..."
           
           rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEV_SSH_PORT }} -o StrictHostKeyChecking=accept-new" \
+            -e ssh \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.env' \
@@ -209,14 +250,14 @@ jobs:
             --exclude='docs/database.sql' \
             --exclude='repomix-output.xml' \
             --exclude='.DS_Store' \
-            ./ "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${TARGET_PATH}/"
+            ./ "cpanel:${TARGET_PATH}/"
 
       - name: Execute Post-Deploy Commands on cPanel
         run: |
           TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
           CUSTOM_PHP_BIN="${{ vars.DEV_PHP_BIN }}"
           
-          ssh -i ~/.ssh/deploy_key -p "${{ secrets.DEV_SSH_PORT }}" -o StrictHostKeyChecking=accept-new "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}" "
+          ssh cpanel "
             set -e
             cd '${TARGET_PATH}'
 
