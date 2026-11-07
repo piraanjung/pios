@@ -1,0 +1,182 @@
+name: CI/CD - Deploy to z.com cPanel
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+    inputs:
+      target_site:
+        description: "เลือก Site ปลายทางที่ต้องการ Deploy (ค่าเริ่มต้น: develop)"
+        required: true
+        default: "develop"
+        type: string
+
+concurrency:
+  group: deploy-dev-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # =========================================================================
+  # 1. CI QUALITY GATE: ตรวจสอบความถูกต้องและรัน Automated Tests
+  # =========================================================================
+  test:
+    name: "1. Automated Tests & CI Gate"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, bcmath, gd, intl, zip, pdo_sqlite, pdo_mysql
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-ci-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-ci-${{ runner.os }}-
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run PHPUnit Tests
+        run: php artisan test
+
+  # =========================================================================
+  # 2. CD BUILD: คอมไพล์โปรเจกต์และ Front-end Assets (Build Once)
+  # =========================================================================
+  build:
+    name: "2. Build Artifacts"
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, bcmath, gd, intl, zip, pdo_mysql
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-prod-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-prod-${{ runner.os }}-
+
+      - name: Install Composer Dependencies (Production)
+        run: composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction --no-progress
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Front-end Assets
+        run: npm run build
+
+      - name: Archive Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pios-app-build
+          retention-days: 1
+          path: |
+            ./
+            !.git
+            !.github
+            !tests
+            !node_modules
+
+  # =========================================================================
+  # 3. CD DEPLOY: อัปโหลดไปยัง z.com cPanel ตาม Target Path ที่กำหนด
+  # =========================================================================
+  deploy:
+    name: "3. Deploy to cPanel Target"
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code (for site configuration mapping)
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pios-app-build
+          path: deploy-dist
+
+      - name: Determine Target Deploy Path
+        id: target
+        run: |
+          # 1. รับค่า target_site (ถ้าเป็น push develop จะได้ 'develop' เสมอ)
+          TARGET_KEY="${{ github.event.inputs.target_site || 'develop' }}"
+          echo "Target Site Key: $TARGET_KEY"
+
+          # 2. อ่าน path จาก .github/deploy-sites.dev.json
+          DEPLOY_PATH=$(python3 -c "
+          import json, sys
+          with open('.github/deploy-sites.dev.json') as f:
+              sites = json.load(f)
+          key = sys.argv[1]
+          if key in sites:
+              print(sites[key]['path'])
+          else:
+              print('NOT_FOUND')
+          " "$TARGET_KEY")
+
+          if [ "$DEPLOY_PATH" = "NOT_FOUND" ] || [ -z "$DEPLOY_PATH" ]; then
+              echo "::error::Target site '$TARGET_KEY' ไม่พบใน .github/deploy-sites.dev.json"
+              exit 1
+          fi
+
+          echo "deploy_path=$DEPLOY_PATH" >> $GITHUB_OUTPUT
+          echo "target_key=$TARGET_KEY" >> $GITHUB_OUTPUT
+          echo "Deploying to path: $DEPLOY_PATH"
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+
+      - name: Deploy Code via Rsync
+        run: |
+          TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
+          echo "Syncing application code to $TARGET_PATH ..."
+          
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.DEV_SSH_PORT }} -o StrictHostKeyChecking=accept-new" \
+            --exclude='.env' \
+            --exclude='storage/' \
+            --exclude='public/uploads/' \
+            --exclude='.htaccess' \
+            --exclude='.DS_Store' \
+            deploy-dist/ "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${TARGET_PATH}/"
+
+      - name: Execute Post-Deploy Commands on cPanel
+        run: |
+          TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
+          PHP_BIN="${{ vars.DEV_PHP_BIN || 'php' }}"
+          
+          echo "Running post-deploy tasks at $TARGET_PATH using $PHP_BIN ..."
+          ssh -p "${{ secrets.DEV_SSH_PORT }}" -o StrictHostKeyChecking=accept-new "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}" "
+            cd '${TARGET_PATH}' && \
+            mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads && \
+            chmod -R 775 storage bootstrap/cache public/uploads && \
+            ${PHP_BIN} artisan storage:link --force || true && \
+            ${PHP_BIN} artisan optimize:clear && \
+            ${PHP_BIN} artisan migrate --force --no-interaction && \
+            ${PHP_BIN} artisan config:cache && \
+            ${PHP_BIN} artisan route:cache && \
+            ${PHP_BIN} artisan view:cache && \
+            echo '✔ Deployment to ${TARGET_PATH} successfully completed!'
+          "
