@@ -1,0 +1,7 @@
+{
+  "develop": {
+    "name": "Develop Staging",
+    "path": "/home/zfgstpsz/public_html/develop.z25890-fg43st.ps10.zwhhosting.com",
+    "description": "Default auto-deploy target when merging into branch: develop"
+  }
+}
