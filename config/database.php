@@ -96,7 +96,13 @@ return [
             'options' => $mysqlOptions,
         ],
 
-        'tenant' => [
+        'tenant' => env('DB_CONNECTION') === 'sqlite' ? [
+            'driver' => 'sqlite',
+            'url' => env('DATABASE_URL'),
+            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        ] : [
             'driver' => 'mysql',
             'host' => env('DB_HOST_TENANT', env('DB_HOST_S_ADMIN', '127.0.0.1')),
             'port' => env('DB_PORT_TENANT', env('DB_PORT_S_ADMIN', '3306')),

@@ -21,7 +21,9 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        $organizations = \App\Models\Admin\Organization::all();
+        $organizations = \Illuminate\Support\Facades\Schema::connection('envsogo_main')->hasTable('organizations')
+            ? \App\Models\Admin\Organization::all()
+            : collect();
 
         return view('auth.register', compact('organizations'));
     }

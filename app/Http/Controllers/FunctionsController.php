@@ -138,6 +138,17 @@ class FunctionsController extends Controller
 
     public static function keptkaya_nav_infos()
     {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('kp_tbank_items_groups')) {
+            return [
+                'items_group_count'         => 0,
+                'units_count'               => 0,
+                'items_count'               => 0,
+                'items_prices_count'        => 0,
+                'shop_count'                => 0,
+                'kp_user_waste_preferences' => 0,
+            ];
+        }
+
         $orgId = Auth::user()?->org_id_fk ?? 1;
         return  [
             'items_group_count'         => KpTbankItemsGroups::where('status', 'active')

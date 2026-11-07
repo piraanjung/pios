@@ -44,6 +44,11 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Run PHPUnit Tests
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:4k8kUaK4aQ7l7oR/7v5Qc8hFz7TqG5xW9v0N2p4r6s8=
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
         run: php artisan test
 
   # =========================================================================
