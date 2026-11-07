@@ -57,6 +57,9 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "db:import": [
+            "bash -c 'docker exec -i pios_db mysql -upios -psecret -e \"DROP DATABASE IF EXISTS pios; CREATE DATABASE pios CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\" && docker exec -i pios_db mysql -upios -psecret pios < docs/database.sql && docker exec pios_app php /var/www/html/docker/php/entrypoint.sh php artisan migrate --force'"
         ]
     },
     "extra": {

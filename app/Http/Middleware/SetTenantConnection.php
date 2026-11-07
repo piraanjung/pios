@@ -60,8 +60,10 @@ class SetTenantConnection
             // รายชื่อค่าที่หมายถึงให้ใช้ฐานข้อมูลกลาง (Central DB: envsogo_main)
             $centralAliases = array_filter([
                 $centralDbName,
+                'envsogo',
                 'envsogo_main',
                 'envsogo_super_admin',
+                'envoso_main',
                 'mysql',
                 'null',
                 'NULL',
