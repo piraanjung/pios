@@ -226,17 +226,18 @@ jobs:
           echo "Testing SSH connection to cpanel (${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}) ..."
           
           # Test connection with verbose logging and catch exact error
-          if ! ssh -v -o ConnectTimeout=15 cpanel "
+          if ! ssh -vv -o ConnectTimeout=15 cpanel "
             echo '✔ SSH connected successfully as: '\$(whoami) 'on' \$(hostname)
             mkdir -p '${TARGET_PATH}'
             echo '✔ Target directory verified: ${TARGET_PATH}'
           " > /tmp/ssh_log.txt 2>&1; then
             cat /tmp/ssh_log.txt
-            REASON=$(grep -iE "permission denied|connection refused|operation timed out|no route to host|could not resolve|bad port|host key verification" /tmp/ssh_log.txt | tail -n 2 | tr '\n' ' ' | sed 's/"//g')
-            if [ -z "$REASON" ]; then
-              REASON=$(tail -n 8 /tmp/ssh_log.txt | tr '\n' ' ' | sed 's/"//g')
-            fi
-            echo "::error::SSH Connection to cPanel failed: $REASON"
+            python3 - << 'PYEOF'
+            with open('/tmp/ssh_log.txt', 'r', errors='ignore') as f:
+                lines = [line.strip() for line in f.readlines() if line.strip()]
+            summary = "%0A".join(lines[-15:])
+            print(f"::error::SSH Debug Logs (last 15 lines):%0A{summary}")
+          PYEOF
             exit 1
           fi
           cat /tmp/ssh_log.txt
