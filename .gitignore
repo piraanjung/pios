@@ -23,6 +23,7 @@
 .env
 .env.*
 !.env.example
+!.env.docker
 *.env.zip
 *.zip
 *.tar.gz

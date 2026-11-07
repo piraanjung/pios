@@ -36,8 +36,19 @@
     <env name="QUEUE_CONNECTION" value="sync" force="true"/>
     <env name="SESSION_DRIVER" value="array" force="true"/>
     <env name="TELESCOPE_ENABLED" value="false" force="true"/>
+    <server name="APP_ENV" value="testing" force="true"/>
+    <server name="APP_KEY" value="base64:4k8kUaK4aQ7l7oR/7v5Qc8hFz7TqG5xW9v0N2p4r6s8=" force="true"/>
+    <server name="BCRYPT_ROUNDS" value="4" force="true"/>
+    <server name="CACHE_DRIVER" value="array" force="true"/>
     <server name="DB_CONNECTION" value="sqlite" force="true"/>
     <server name="DB_DATABASE" value=":memory:" force="true"/>
+    <server name="DB_FOREIGN_KEYS" value="false" force="true"/>
+    <server name="DB_HOST_S_ADMIN" value="" force="true"/>
+    <server name="DB_DATABASE_S_ADMIN" value=":memory:" force="true"/>
+    <server name="MAIL_MAILER" value="array" force="true"/>
+    <server name="QUEUE_CONNECTION" value="sync" force="true"/>
+    <server name="SESSION_DRIVER" value="array" force="true"/>
+    <server name="TELESCOPE_ENABLED" value="false" force="true"/>
   </php>
   <source>
     <include>

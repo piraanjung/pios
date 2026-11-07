@@ -37,11 +37,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: composer-ci-${{ runner.os }}-${{ hashFiles('composer.lock') }}
-          restore-keys: composer-ci-${{ runner.os }}-
+          key: composer-ci-v2-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-ci-v2-${{ runner.os }}-
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare Environment File for Testing
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force
 
       - name: Run PHPUnit Tests
         env:
@@ -52,82 +57,22 @@ jobs:
         run: php artisan test
 
   # =========================================================================
-  # 2. CD BUILD: คอมไพล์โปรเจกต์และ Front-end Assets (Build Once)
+  # 2. CD BUILD & DEPLOY: คอมไพล์โปรเจกต์และอัปโหลดไปยัง z.com cPanel
   # =========================================================================
-  build:
-    name: "2. Build Artifacts"
+  deploy:
+    name: "2. Build & Deploy to z.com cPanel"
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          extensions: mbstring, bcmath, gd, intl, zip, pdo_mysql
-          coverage: none
-
-      - name: Cache Composer packages
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: composer-prod-${{ runner.os }}-${{ hashFiles('composer.lock') }}
-          restore-keys: composer-prod-${{ runner.os }}-
-
-      - name: Install Composer Dependencies (Production)
-        run: composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction --no-progress
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Build Front-end Assets
-        run: npm run build
-
-      - name: Archive Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pios-app-build
-          retention-days: 1
-          path: |
-            ./
-            !.git
-            !.github
-            !tests
-            !node_modules
-
-  # =========================================================================
-  # 3. CD DEPLOY: อัปโหลดไปยัง z.com cPanel ตาม Target Path ที่กำหนด
-  # =========================================================================
-  deploy:
-    name: "3. Deploy to cPanel Target"
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code (for site configuration mapping)
-        uses: actions/checkout@v4
-
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: pios-app-build
-          path: deploy-dist
-
       - name: Determine Target Deploy Path
         id: target
         run: |
-          # 1. รับค่า target_site (ถ้าเป็น push develop จะได้ 'develop' เสมอ)
           TARGET_KEY="${{ github.event.inputs.target_site || 'develop' }}"
           echo "Target Site Key: $TARGET_KEY"
 
-          # 2. อ่าน path จาก .github/deploy-sites.dev.json
           DEPLOY_PATH=$(python3 -c "
           import json, sys
           with open('.github/deploy-sites.dev.json') as f:
@@ -148,6 +93,35 @@ jobs:
           echo "target_key=$TARGET_KEY" >> $GITHUB_OUTPUT
           echo "Deploying to path: $DEPLOY_PATH"
 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, bcmath, gd, intl, zip, pdo_mysql
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-prod-v2-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-prod-v2-${{ runner.os }}-
+
+      - name: Install Composer Dependencies (Production)
+        run: composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction --no-progress
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Front-end Assets
+        run: npm run build
+
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -160,28 +134,94 @@ jobs:
           
           rsync -avz --delete \
             -e "ssh -p ${{ secrets.DEV_SSH_PORT }} -o StrictHostKeyChecking=accept-new" \
+            --exclude='.git' \
+            --exclude='.github' \
             --exclude='.env' \
+            --exclude='.env.*' \
             --exclude='storage/' \
             --exclude='public/uploads/' \
-            --exclude='.htaccess' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='docs/database.sql' \
+            --exclude='repomix-output.xml' \
             --exclude='.DS_Store' \
-            deploy-dist/ "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${TARGET_PATH}/"
+            ./ "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}:${TARGET_PATH}/"
 
       - name: Execute Post-Deploy Commands on cPanel
         run: |
           TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
-          PHP_BIN="${{ vars.DEV_PHP_BIN || 'php' }}"
+          CUSTOM_PHP_BIN="${{ vars.DEV_PHP_BIN }}"
           
-          echo "Running post-deploy tasks at $TARGET_PATH using $PHP_BIN ..."
           ssh -p "${{ secrets.DEV_SSH_PORT }}" -o StrictHostKeyChecking=accept-new "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}" "
-            cd '${TARGET_PATH}' && \
-            mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads && \
-            chmod -R 775 storage bootstrap/cache public/uploads && \
-            ${PHP_BIN} artisan storage:link --force || true && \
-            ${PHP_BIN} artisan optimize:clear && \
-            ${PHP_BIN} artisan migrate --force --no-interaction && \
-            ${PHP_BIN} artisan config:cache && \
-            ${PHP_BIN} artisan route:cache && \
-            ${PHP_BIN} artisan view:cache && \
+            set -e
+            cd '${TARGET_PATH}'
+
+            if [ -n '${CUSTOM_PHP_BIN}' ]; then
+              PHP_BIN='${CUSTOM_PHP_BIN}'
+            elif command -v ea-php83 >/dev/null 2>&1; then
+              PHP_BIN='ea-php83'
+            elif [ -x '/opt/cpanel/ea-php83/root/usr/bin/php' ]; then
+              PHP_BIN='/opt/cpanel/ea-php83/root/usr/bin/php'
+            elif [ -x '/usr/local/bin/ea-php83' ]; then
+              PHP_BIN='/usr/local/bin/ea-php83'
+            else
+              PHP_BIN='php'
+            fi
+
+            echo \"Using PHP binary: \$PHP_BIN (\$( \$PHP_BIN -v | head -n 1 ))\"
+
+            mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
+            chmod -R 775 storage bootstrap/cache public/uploads
+
+            if [ -f '.env' ] && ! grep -q '^APP_KEY=base64:' .env; then
+              echo 'Generating APP_KEY in .env...'
+              \$PHP_BIN artisan key:generate --force
+            fi
+
+            \$PHP_BIN artisan storage:link --force || true
+            \$PHP_BIN artisan optimize:clear
+
+            # Sync baseline migrations that already exist in docs/database.sql dump
+            \$PHP_BIN -r \"
+              require 'vendor/autoload.php';
+              \\\$app = require_once 'bootstrap/app.php';
+              \\\$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+              if (Illuminate\Support\Facades\Schema::hasTable('migrations')) {
+                  \\\$existing = [
+                      '2023_10_30_130210_create_user_merter_infos_table',
+                      '2025_07_28_061902_create_staff_table',
+                      '2025_09_03_084012_create_organizations_table',
+                      '2025_10_12_065735_create_machines_table',
+                      '2026_09_25_085045_add_audit_logs_to_inv_transactions_table',
+                      '2026_09_25_090011_create_inv_transaction_approvals_table',
+                      '2026_09_25_090554_create_approval_workflows_table',
+                      '2026_09_25_090555_create_approval_workflow_steps_table',
+                      '2026_09_25_103925_add_approvalworkflow_id_column_in_inv_categories_table',
+                      '2026_09_25_164846_create_inv_locations_table',
+                      '2026_09_25_164847_add_location_id_to_inv_item_details_table',
+                      '2026_09_25_171122_add_conversion_rate_to_inv_item_details_table',
+                      '2026_09_26_005147_create_suppliers_table',
+                      '2026_10_08_110038_create_kp_purchase_routes_table_and_kp_purchase_route_zones_table',
+                      '2026_10_09_001549_create_kp_settings_table',
+                      '2026_10_09_042443_add_modulename_column_in_inv_transaction_approvals_table',
+                      '2026_10_13_025520_create_welfare_members_table',
+                      '2026_10_15_135128_create_tabwater_stations_table',
+                      '2026_10_15_135129_create_tabwater_station_staffs_table',
+                      '2026_10_15_135130_create_tabwater_devices_table',
+                      '2026_10_15_135943_create_tabwater_device_logs_table',
+                      '2026_10_15_160030_create_tabwater_pipe_nodes_table',
+                      '2026_10_15_160058_create_tabwater_pipelines_table',
+                  ];
+                  foreach (\\\$existing as \\\$m) {
+                      if (!Illuminate\Support\Facades\DB::table('migrations')->where('migration', \\\$m)->exists()) {
+                          Illuminate\Support\Facades\DB::table('migrations')->insert(['migration' => \\\$m, 'batch' => 1]);
+                      }
+                  }
+              }
+            \"
+
+            \$PHP_BIN artisan migrate --force --no-interaction
+            \$PHP_BIN artisan config:cache
+            \$PHP_BIN artisan view:cache
             echo '✔ Deployment to ${TARGET_PATH} successfully completed!'
           "
