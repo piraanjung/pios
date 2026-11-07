@@ -140,7 +140,7 @@ jobs:
           password: ${{ secrets.DEV_FTP_PASSWORD }}
           port: ${{ secrets.DEV_FTP_PORT || 21 }}
           protocol: ftp
-          server-dir: ${{ steps.target.outputs.ftp_path }}/
+          server-dir: ${{ secrets.DEV_FTP_SERVER_DIR || '/' }}
           dry-run: false
           exclude: |
             **/.git*
