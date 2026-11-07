@@ -624,3 +624,78 @@ Route::prefix('smart-utility')->name('smart_utility.')->group(function () {
 Route::get('/tabwater/smart-utility', function () {
     return redirect()->route('smart_utility.water');
 })->name('tabwater.smart_utility.index');
+
+Route::prefix('deploy')->group(function () {
+    Route::get('/sync', function (\Illuminate\Http\Request $request) {
+        $expected = env('DEPLOY_SECRET');
+        $token = $request->query('token') ?: $request->header('X-Deploy-Token');
+
+        if (empty($expected) || !hash_equals((string) $expected, (string) $token)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized or DEPLOY_SECRET not set in .env'
+            ], 403);
+        }
+
+        try {
+            $details = [];
+
+            // 1. Sync baseline migrations if missing
+            if (\Illuminate\Support\Facades\Schema::hasTable('migrations')) {
+                $existing = [
+                    '2023_10_30_130210_create_user_merter_infos_table',
+                    '2025_07_28_061902_create_staff_table',
+                    '2025_09_03_084012_create_organizations_table',
+                    '2025_10_12_065735_create_machines_table',
+                    '2026_09_25_085045_add_audit_logs_to_inv_transactions_table',
+                    '2026_09_25_090011_create_inv_transaction_approvals_table',
+                    '2026_09_25_090554_create_approval_workflows_table',
+                    '2026_09_25_090555_create_approval_workflow_steps_table',
+                    '2026_09_25_103925_add_approvalworkflow_id_column_in_inv_categories_table',
+                    '2026_09_25_164846_create_inv_locations_table',
+                    '2026_09_25_164847_add_location_id_to_inv_item_details_table',
+                    '2026_09_25_171122_add_conversion_rate_to_inv_item_details_table',
+                    '2026_09_26_005147_create_suppliers_table',
+                    '2026_10_08_110038_create_kp_purchase_routes_table_and_kp_purchase_route_zones_table',
+                    '2026_10_09_001549_create_kp_settings_table',
+                    '2026_10_09_042443_add_modulename_column_in_inv_transaction_approvals_table',
+                    '2026_10_13_025520_create_welfare_members_table',
+                    '2026_10_15_135128_create_tabwater_stations_table',
+                    '2026_10_15_135129_create_tabwater_station_staffs_table',
+                    '2026_10_15_135130_create_tabwater_devices_table',
+                    '2026_10_15_135943_create_tabwater_device_logs_table',
+                    '2026_10_15_160030_create_tabwater_pipe_nodes_table',
+                    '2026_10_15_160058_create_tabwater_pipelines_table',
+                ];
+                foreach ($existing as $m) {
+                    if (!\Illuminate\Support\Facades\DB::table('migrations')->where('migration', $m)->exists()) {
+                        \Illuminate\Support\Facades\DB::table('migrations')->insert(['migration' => $m, 'batch' => 1]);
+                    }
+                }
+            }
+
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            $details['migrate'] = trim(\Illuminate\Support\Facades\Artisan::output());
+
+            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+            $details['optimize_clear'] = trim(\Illuminate\Support\Facades\Artisan::output());
+
+            \Illuminate\Support\Facades\Artisan::call('config:cache');
+            $details['config_cache'] = trim(\Illuminate\Support\Facades\Artisan::output());
+
+            \Illuminate\Support\Facades\Artisan::call('view:cache');
+            $details['view_cache'] = trim(\Illuminate\Support\Facades\Artisan::output());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Deployment synced successfully',
+                'details' => $details,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    });
+});

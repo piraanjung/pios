@@ -89,9 +89,14 @@ jobs:
               exit 1
           fi
 
+          # แปลง path /home/user/public_html/... ให้เป็น relative path สำหรับ cPanel FTP (public_html/...)
+          FTP_PATH=$(echo "$DEPLOY_PATH" | sed -E 's|^/home/[^/]+/||' | sed -E 's|^/||')
+
           echo "deploy_path=$DEPLOY_PATH" >> $GITHUB_OUTPUT
+          echo "ftp_path=$FTP_PATH" >> $GITHUB_OUTPUT
           echo "target_key=$TARGET_KEY" >> $GITHUB_OUTPUT
-          echo "Deploying to path: $DEPLOY_PATH"
+          echo "Filesystem path: $DEPLOY_PATH"
+          echo "FTP relative path: $FTP_PATH"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -122,218 +127,43 @@ jobs:
       - name: Build Front-end Assets
         run: npm run build
 
-      - name: Setup SSH Key
+      - name: Prepare Storage and Cache Folders for Deployment
+        run: |
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
+          touch storage/framework/cache/data/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep bootstrap/cache/.gitkeep public/uploads/.gitkeep
+
+      - name: Deploy Code via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.DEV_FTP_HOST || secrets.DEV_SSH_HOST }}
+          username: ${{ secrets.DEV_FTP_USER || secrets.DEV_SSH_USER }}
+          password: ${{ secrets.DEV_FTP_PASSWORD }}
+          port: ${{ secrets.DEV_FTP_PORT || 21 }}
+          protocol: ftp
+          server-dir: ${{ steps.target.outputs.ftp_path }}/
+          dry-run: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/.env*
+            **/node_modules/**
+            **/tests/**
+            docs/database.sql
+            repomix-output.xml
+            **/.DS_Store
+
+      - name: Trigger Post-Deploy Sync & Optimization via Webhook
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-          SSH_PASSPHRASE: ${{ secrets.DEV_SSH_PASSPHRASE }}
+          DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          python3 - << 'EOF'
-          import os, re, sys
-
-          raw = os.environ.get("SSH_PRIVATE_KEY", "")
-          if not raw or not raw.strip():
-              print("::error::ไม่พบค่า DEV_SSH_PRIVATE_KEY ใน GitHub Actions Secrets (หรือใส่ไว้ผิดที่ เช่น ใส่ใน Environment Secrets แทนที่จะเป็น Repository Secrets)")
-              sys.exit(1)
-
-          text = raw.replace("\r\n", "\n").replace("\r", "\n").strip()
-
-          if text.startswith(("ssh-rsa ", "ssh-ed25519 ", "ecdsa-sha2-", "-----BEGIN PUBLIC KEY-----", "---- BEGIN SSH2 PUBLIC KEY ----")):
-              print("::error::ค่าใน DEV_SSH_PRIVATE_KEY เป็น Public Key (.pub) กรุณานำเนื้อหาจากไฟล์ Private Key (เช่น id_rsa ที่ขึ้นต้นด้วย -----BEGIN ... PRIVATE KEY-----) มาใส่แทน")
-              sys.exit(1)
-
-          if "PuTTY-User-Key-File" in text:
-              print("::error::ค่าใน DEV_SSH_PRIVATE_KEY เป็นไฟล์ .ppk ของ PuTTY กรุณาใช้ไฟล์ Private Key รูปแบบ OpenSSH/PEM (id_rsa) จาก cPanel แทน")
-              sys.exit(1)
-
-          # Reformat single-line or space-corrupted PEM/OpenSSH keys
-          m = re.match(r"^(-----BEGIN [A-Z0-9 ]+PRIVATE KEY-----)\s*(.*?)\s*(-----END [A-Z0-9 ]+PRIVATE KEY-----)$", text, re.DOTALL)
-          if m:
-              header, body, footer = m.group(1), m.group(2), m.group(3)
-              lines = [line.strip() for line in body.split("\n")]
-              header_lines = []
-              b64_chunks = []
-              for line in lines:
-                  if ":" in line:
-                      header_lines.append(line)
-                  elif line:
-                      b64_chunks.append( re.sub(r"\s+", "", line) )
-              b64_data = "".join(b64_chunks)
-              wrapped = [b64_data[i:i+64] for i in range(0, len(b64_data), 64)]
-              if header_lines:
-                  text = header + "\n" + "\n".join(header_lines) + "\n\n" + "\n".join(wrapped) + "\n" + footer + "\n"
-              else:
-                  text = header + "\n" + "\n".join(wrapped) + "\n" + footer + "\n"
-          else:
-              text = text + "\n"
-
-          key_path = os.path.expanduser("~/.ssh/deploy_key")
-          with open(key_path, "w", encoding="utf-8") as f:
-              f.write(text)
-          os.chmod(key_path, 0o600)
-
-          first_line = text.splitlines()[0] if text.splitlines() else "EMPTY"
-          is_encrypted_header = "ENCRYPTED" in text[:200]
-          print(f"Key header detected: {first_line} (encrypted_header={is_encrypted_header}, length={len(text)} bytes)")
-          EOF
-
-          if ! ssh-keygen -y -P "" -f ~/.ssh/deploy_key >/dev/null 2>&1; then
-            if [ -n "$SSH_PASSPHRASE" ]; then
-              echo "Unlocking passphrase-protected SSH Private Key using DEV_SSH_PASSPHRASE..."
-              ssh-keygen -p -P "$SSH_PASSPHRASE" -N "" -f ~/.ssh/deploy_key
-            else
-              echo "::error::SSH Private Key ใน DEV_SSH_PRIVATE_KEY ติดรหัสผ่าน (Passphrase) ที่ตั้งไว้ตอนสร้าง Key ใน cPanel หรือรูปแบบ Key ไม่สมบูรณ์! วิธีแก้ไข: เพิ่ม Repository Secret ชื่อ DEV_SSH_PASSPHRASE (ใส่รหัสผ่านที่ตั้งไว้ตอนสร้าง SSH Key ใน cPanel) หรือใช้ Private Key ที่ไม่มีรหัสผ่าน"
-              ssh-keygen -y -P "" -f ~/.ssh/deploy_key || true
-              exit 1
-            fi
-          fi
-          echo "✔ SSH Private Key validated successfully."
-
-          # Setup SSH config with compatibility options for cPanel servers
-          SSH_PORT="${{ secrets.DEV_SSH_PORT }}"
-          if [ -z "$SSH_PORT" ]; then
-            SSH_PORT="22"
+          TARGET_KEY="${{ steps.target.outputs.target_key }}"
+          DOMAIN="${TARGET_KEY}.z25890-fg43st.ps10.zwhhosting.com"
+          if [ -n "$DEPLOY_SECRET" ]; then
+            echo "Invoking deploy sync endpoint on https://${DOMAIN}/deploy/sync ..."
+            RESPONSE=$(curl -k -s "https://${DOMAIN}/deploy/sync?token=${DEPLOY_SECRET}" || true)
+            echo "Sync Response: $RESPONSE"
+          else
+            echo "Notice: DEPLOY_SECRET is not configured in GitHub Secrets. You can trigger migrations manually in cPanel Terminal via: php artisan migrate --force"
           fi
 
-          SSH_HOST="${{ secrets.DEV_SSH_HOST }}"
-          SSH_USER="${{ secrets.DEV_SSH_USER }}"
-
-          if [ -z "$SSH_HOST" ] || [ -z "$SSH_USER" ]; then
-            echo "::error::กรุณาตรวจสอบว่ามี Repository Secrets ชื่อ DEV_SSH_HOST และ DEV_SSH_USER ครบถ้วน"
-            exit 1
-          fi
-
-          cat << SSHCONFIG > ~/.ssh/config
-          Host cpanel
-              HostName ${SSH_HOST}
-              User ${SSH_USER}
-              Port ${SSH_PORT}
-              IdentityFile ~/.ssh/deploy_key
-              StrictHostKeyChecking no
-              UserKnownHostsFile /dev/null
-              PubkeyAcceptedKeyTypes +ssh-rsa
-              HostKeyAlgorithms +ssh-rsa
-              ConnectTimeout 30
-              ServerAliveInterval 60
-          SSHCONFIG
-          chmod 600 ~/.ssh/config
-
-      - name: Verify SSH Connection & Ensure Target Path
-        run: |
-          TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
-          echo "Testing SSH connection to cpanel (${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}) ..."
-          
-          # Test connection with verbose logging and catch exact error
-          if ! ssh -vv -o ConnectTimeout=15 cpanel "
-            echo '✔ SSH connected successfully as: '\$(whoami) 'on' \$(hostname)
-            mkdir -p '${TARGET_PATH}'
-            echo '✔ Target directory verified: ${TARGET_PATH}'
-          " > /tmp/ssh_log.txt 2>&1; then
-            cat /tmp/ssh_log.txt
-            LAST_LOG=$(tail -n 3 /tmp/ssh_log.txt | tr '\r\n' '  ' | sed 's/"//g')
-            MATCHED=$(grep -E "Connection refused|Permission denied|timed out|Operation timed out|Host key" /tmp/ssh_log.txt | tail -n 1 | tr '\r\n' '  ' | sed 's/"//g')
-            echo "::error title=SSH Connection Failed::${MATCHED:-$LAST_LOG}"
-            exit 1
-          fi
-          cat /tmp/ssh_log.txt
-
-      - name: Deploy Code via Rsync
-        run: |
-          TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
-          echo "Syncing application code to $TARGET_PATH ..."
-          
-          rsync -avz --delete \
-            -e ssh \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.env' \
-            --exclude='.env.*' \
-            --exclude='storage/' \
-            --exclude='public/uploads/' \
-            --exclude='node_modules' \
-            --exclude='tests' \
-            --exclude='docs/database.sql' \
-            --exclude='repomix-output.xml' \
-            --exclude='.DS_Store' \
-            ./ "cpanel:${TARGET_PATH}/"
-
-      - name: Execute Post-Deploy Commands on cPanel
-        run: |
-          TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
-          CUSTOM_PHP_BIN="${{ vars.DEV_PHP_BIN }}"
-          
-          ssh cpanel "
-            set -e
-            cd '${TARGET_PATH}'
-
-            if [ -n '${CUSTOM_PHP_BIN}' ]; then
-              PHP_BIN='${CUSTOM_PHP_BIN}'
-            elif command -v ea-php83 >/dev/null 2>&1; then
-              PHP_BIN='ea-php83'
-            elif [ -x '/opt/cpanel/ea-php83/root/usr/bin/php' ]; then
-              PHP_BIN='/opt/cpanel/ea-php83/root/usr/bin/php'
-            elif [ -x '/usr/local/bin/ea-php83' ]; then
-              PHP_BIN='/usr/local/bin/ea-php83'
-            else
-              PHP_BIN='php'
-            fi
-
-            echo \"Using PHP binary: \$PHP_BIN (\$( \$PHP_BIN -v | head -n 1 ))\"
-
-            mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
-            chmod -R 775 storage bootstrap/cache public/uploads
-
-            if [ -f '.env' ] && ! grep -q '^APP_KEY=base64:' .env; then
-              echo 'Generating APP_KEY in .env...'
-              \$PHP_BIN artisan key:generate --force
-            fi
-
-            \$PHP_BIN artisan storage:link --force || true
-            \$PHP_BIN artisan optimize:clear
-
-            # Sync baseline migrations that already exist in docs/database.sql dump
-            \$PHP_BIN -r \"
-              require 'vendor/autoload.php';
-              \\\$app = require_once 'bootstrap/app.php';
-              \\\$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-              if (Illuminate\Support\Facades\Schema::hasTable('migrations')) {
-                  \\\$existing = [
-                      '2023_10_30_130210_create_user_merter_infos_table',
-                      '2025_07_28_061902_create_staff_table',
-                      '2025_09_03_084012_create_organizations_table',
-                      '2025_10_12_065735_create_machines_table',
-                      '2026_09_25_085045_add_audit_logs_to_inv_transactions_table',
-                      '2026_09_25_090011_create_inv_transaction_approvals_table',
-                      '2026_09_25_090554_create_approval_workflows_table',
-                      '2026_09_25_090555_create_approval_workflow_steps_table',
-                      '2026_09_25_103925_add_approvalworkflow_id_column_in_inv_categories_table',
-                      '2026_09_25_164846_create_inv_locations_table',
-                      '2026_09_25_164847_add_location_id_to_inv_item_details_table',
-                      '2026_09_25_171122_add_conversion_rate_to_inv_item_details_table',
-                      '2026_09_26_005147_create_suppliers_table',
-                      '2026_10_08_110038_create_kp_purchase_routes_table_and_kp_purchase_route_zones_table',
-                      '2026_10_09_001549_create_kp_settings_table',
-                      '2026_10_09_042443_add_modulename_column_in_inv_transaction_approvals_table',
-                      '2026_10_13_025520_create_welfare_members_table',
-                      '2026_10_15_135128_create_tabwater_stations_table',
-                      '2026_10_15_135129_create_tabwater_station_staffs_table',
-                      '2026_10_15_135130_create_tabwater_devices_table',
-                      '2026_10_15_135943_create_tabwater_device_logs_table',
-                      '2026_10_15_160030_create_tabwater_pipe_nodes_table',
-                      '2026_10_15_160058_create_tabwater_pipelines_table',
-                  ];
-                  foreach (\\\$existing as \\\$m) {
-                      if (!Illuminate\Support\Facades\DB::table('migrations')->where('migration', \\\$m)->exists()) {
-                          Illuminate\Support\Facades\DB::table('migrations')->insert(['migration' => \\\$m, 'batch' => 1]);
-                      }
-                  }
-              }
-            \"
-
-            \$PHP_BIN artisan migrate --force --no-interaction
-            \$PHP_BIN artisan config:cache
-            \$PHP_BIN artisan view:cache
-            echo '✔ Deployment to ${TARGET_PATH} successfully completed!'
-          "
