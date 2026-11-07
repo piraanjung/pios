@@ -122,10 +122,74 @@ jobs:
       - name: Build Front-end Assets
         run: npm run build
 
-      - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+      - name: Setup SSH Key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SSH_PASSPHRASE: ${{ secrets.DEV_SSH_PASSPHRASE }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          python3 - << 'EOF'
+          import os, re, sys
+
+          raw = os.environ.get("SSH_PRIVATE_KEY", "")
+          if not raw or not raw.strip():
+              print("::error::ไม่พบค่า DEV_SSH_PRIVATE_KEY ใน GitHub Actions Secrets (หรือใส่ไว้ผิดที่ เช่น ใส่ใน Environment Secrets แทนที่จะเป็น Repository Secrets)")
+              sys.exit(1)
+
+          text = raw.replace("\r\n", "\n").replace("\r", "\n").strip()
+
+          if text.startswith(("ssh-rsa ", "ssh-ed25519 ", "ecdsa-sha2-", "-----BEGIN PUBLIC KEY-----", "---- BEGIN SSH2 PUBLIC KEY ----")):
+              print("::error::ค่าใน DEV_SSH_PRIVATE_KEY เป็น Public Key (.pub) กรุณานำเนื้อหาจากไฟล์ Private Key (เช่น id_rsa ที่ขึ้นต้นด้วย -----BEGIN ... PRIVATE KEY-----) มาใส่แทน")
+              sys.exit(1)
+
+          if "PuTTY-User-Key-File" in text:
+              print("::error::ค่าใน DEV_SSH_PRIVATE_KEY เป็นไฟล์ .ppk ของ PuTTY กรุณาใช้ไฟล์ Private Key รูปแบบ OpenSSH/PEM (id_rsa) จาก cPanel แทน")
+              sys.exit(1)
+
+          # Reformat single-line or space-corrupted PEM/OpenSSH keys
+          m = re.match(r"^(-----BEGIN [A-Z0-9 ]+PRIVATE KEY-----)\s*(.*?)\s*(-----END [A-Z0-9 ]+PRIVATE KEY-----)$", text, re.DOTALL)
+          if m:
+              header, body, footer = m.group(1), m.group(2), m.group(3)
+              lines = [line.strip() for line in body.split("\n")]
+              header_lines = []
+              b64_chunks = []
+              for line in lines:
+                  if ":" in line:
+                      header_lines.append(line)
+                  elif line:
+                      b64_chunks.append( re.sub(r"\s+", "", line) )
+              b64_data = "".join(b64_chunks)
+              wrapped = [b64_data[i:i+64] for i in range(0, len(b64_data), 64)]
+              if header_lines:
+                  text = header + "\n" + "\n".join(header_lines) + "\n\n" + "\n".join(wrapped) + "\n" + footer + "\n"
+              else:
+                  text = header + "\n" + "\n".join(wrapped) + "\n" + footer + "\n"
+          else:
+              text = text + "\n"
+
+          key_path = os.path.expanduser("~/.ssh/deploy_key")
+          with open(key_path, "w", encoding="utf-8") as f:
+              f.write(text)
+          os.chmod(key_path, 0o600)
+
+          first_line = text.splitlines()[0] if text.splitlines() else "EMPTY"
+          is_encrypted_header = "ENCRYPTED" in text[:200]
+          print(f"Key header detected: {first_line} (encrypted_header={is_encrypted_header}, length={len(text)} bytes)")
+          EOF
+
+          if ! ssh-keygen -y -P "" -f ~/.ssh/deploy_key >/dev/null 2>&1; then
+            if [ -n "$SSH_PASSPHRASE" ]; then
+              echo "Unlocking passphrase-protected SSH Private Key using DEV_SSH_PASSPHRASE..."
+              ssh-keygen -p -P "$SSH_PASSPHRASE" -N "" -f ~/.ssh/deploy_key
+            else
+              echo "::error::SSH Private Key ใน DEV_SSH_PRIVATE_KEY ติดรหัสผ่าน (Passphrase) ที่ตั้งไว้ตอนสร้าง Key ใน cPanel หรือรูปแบบ Key ไม่สมบูรณ์! วิธีแก้ไข: เพิ่ม Repository Secret ชื่อ DEV_SSH_PASSPHRASE (ใส่รหัสผ่านที่ตั้งไว้ตอนสร้าง SSH Key ใน cPanel) หรือใช้ Private Key ที่ไม่มีรหัสผ่าน"
+              ssh-keygen -y -P "" -f ~/.ssh/deploy_key || true
+              exit 1
+            fi
+          fi
+          echo "✔ SSH Private Key validated successfully."
 
       - name: Deploy Code via Rsync
         run: |
@@ -133,7 +197,7 @@ jobs:
           echo "Syncing application code to $TARGET_PATH ..."
           
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.DEV_SSH_PORT }} -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEV_SSH_PORT }} -o StrictHostKeyChecking=accept-new" \
             --exclude='.git' \
             --exclude='.github' \
             --exclude='.env' \
@@ -152,7 +216,7 @@ jobs:
           TARGET_PATH="${{ steps.target.outputs.deploy_path }}"
           CUSTOM_PHP_BIN="${{ vars.DEV_PHP_BIN }}"
           
-          ssh -p "${{ secrets.DEV_SSH_PORT }}" -o StrictHostKeyChecking=accept-new "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}" "
+          ssh -i ~/.ssh/deploy_key -p "${{ secrets.DEV_SSH_PORT }}" -o StrictHostKeyChecking=accept-new "${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }}" "
             set -e
             cd '${TARGET_PATH}'
 
