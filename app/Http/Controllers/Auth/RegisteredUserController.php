@@ -21,7 +21,9 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        return view('auth.register');
+        $organizations = \App\Models\Admin\Organization::all();
+
+        return view('auth.register', compact('organizations'));
     }
 
     /**
@@ -55,14 +57,15 @@ class RegisteredUserController extends Controller
             'phone'         => $request->phone,
             'gender'        => $request->gender ?? 'm',
             'address'       => $request->address,
-            'org_id_fk'     => $request->organization_id ?? $request->org_id_fk,
-            'zone_id'       => $request->zone_id,
-            'subzone_id'    => $request->subzone_id,
-            'tambon_code'   => $request->tambon_code,
-            'district_code' => $request->district_code,
-            'province_code' => $request->province_code,
+            'org_id_fk'     => $request->organization_id ?? $request->org_id_fk ?? 1,
+            'zone_id'       => $request->zone_id ?? 1,
+            'subzone_id'    => $request->subzone_id ?? 1,
+            'tambon_code'   => $request->tambon_code ?? '350805',
+            'district_code' => $request->district_code ?? '3508',
+            'province_code' => $request->province_code ?? '35',
             'status'        => 'active',
         ]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'User', 'guard_name' => 'web']);
         $user->assignRole('User');
 
         event(new Registered($user));

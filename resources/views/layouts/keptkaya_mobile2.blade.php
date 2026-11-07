@@ -9,6 +9,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>EnvSoGo Staff - ระบบปฏิบัติงานเจ้าหน้าที่ภาคสนาม</title>
+    <!-- Fonts (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
+    <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
     @yield('style')
 </head>
 <body>

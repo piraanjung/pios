@@ -227,7 +227,7 @@
     <li class="nav-item mt-4">
         <form method="POST" action="{{ route('logout') }}" class="mb-0">
             @csrf
-            <button type="submit" class="nav-link w-100 text-start border border-danger bg-transparent">
+            <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
                 <div class="icon icon-shape icon-sm shadow border-radius-md bg-danger text-center me-2 d-flex align-items-center justify-content-center">
                     <i class="fas fa-sign-out-alt text-white text-sm"></i>
                 </div>

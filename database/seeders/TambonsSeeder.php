@@ -51,14 +51,16 @@ class TambonsSeeder extends Seeder
                 [3405, '340513', 'หัวนา',34170],
         ];
         foreach ($tambonArray as $tambon){
-            DB::table('tambons')->insert([
-                'id' => $tambon[1],
-                'tambon_name' => $tambon[2],
-                'district_id' => $tambon[0],
-                'zipcode' => $tambon[3],
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s')
-            ]);
+            DB::table('tambons')->updateOrInsert(
+                ['id' => $tambon[1]],
+                [
+                    'tambon_name' => $tambon[2],
+                    'district_id' => $tambon[0],
+                    'zipcode' => $tambon[3],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]
+            );
         }
     }
 }

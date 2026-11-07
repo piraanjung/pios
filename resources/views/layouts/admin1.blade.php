@@ -36,8 +36,8 @@
     <link rel="icon" type="image/png" href="{{ asset('logo/ko_envsogo.png') }}">
     <title>{{ $tabTitle !== '' ? $tabTitle . ' | ' : '' }}{{ $orgName }}</title>
 
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <!-- Fonts & Icons (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
     <link href="{{ asset('soft-ui/assets/css/nucleo-icons.css') }}" rel="stylesheet" />
     <link href="{{ asset('soft-ui/assets/css/nucleo-svg.css') }}" rel="stylesheet" />
     <!-- Font Awesome 5 (soft-ui-dashboard.css อ้าง 'Font Awesome 5 Free'; ใช้ class fas/far/fab ไม่ใช่ fa-solid) -->
@@ -46,9 +46,8 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
 
     <style>
-        /* Open Sans ไม่มีอักษรไทย ให้ใช้ Sarabun เป็นตัวสำรอง */
-        body, .btn, .form-control, .form-select, .dropdown-menu, .table {
-            font-family: "Open Sans", "Sarabun", sans-serif;
+        body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
+            font-family: 'Kanit', 'Open Sans', sans-serif;
         }
         .hidden { display: none !important; }
         .padding4px { padding: 4px !important; }

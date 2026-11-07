@@ -33,8 +33,8 @@
     <link rel="icon" type="image/png" href="{{ asset('logo/ko_envsogo.png') }}">
     <title>{{ $tabTitle !== '' ? $tabTitle . ' | ' : '' }}EnvSoGo::Kept Kaya</title>
 
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <!-- Fonts & Icons (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
     <link href="{{ asset('soft-ui/assets/css/nucleo-icons.css') }}" rel="stylesheet" />
     <link href="{{ asset('soft-ui/assets/css/nucleo-svg.css') }}" rel="stylesheet" />
     <!-- Font Awesome 5 (soft-ui-dashboard.css อ้าง 'Font Awesome 5 Free'; ใช้ class fas/far/fab) -->
@@ -44,9 +44,8 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     <style>
-        /* Open Sans ไม่มีอักษรไทย ให้ใช้ Sarabun เป็นตัวสำรอง */
-        body, .btn, .form-control, .form-select, .dropdown-menu, .table {
-            font-family: "Open Sans", "Sarabun", sans-serif;
+        body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
+            font-family: 'Kanit', 'Open Sans', sans-serif;
         }
         /* sidebar ยาว: ให้เลื่อนในตัวเอง */
         .navbar-vertical.navbar-expand-xs .navbar-collapse { max-height: calc(100vh - 6rem); overflow-y: auto; }

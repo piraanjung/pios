@@ -138,7 +138,7 @@ class FunctionsController extends Controller
 
     public static function keptkaya_nav_infos()
     {
-        $orgId = Auth::user()->org_id_fk;
+        $orgId = Auth::user()?->org_id_fk ?? 1;
         return  [
             'items_group_count'         => KpTbankItemsGroups::where('status', 'active')
                 ->where('org_id_fk', $orgId)->count(),

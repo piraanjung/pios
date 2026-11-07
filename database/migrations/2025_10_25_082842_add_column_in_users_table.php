@@ -23,8 +23,12 @@ return new class extends Migration
             $table->foreignId('subzone_id')->constrained('subzones')
                 ->after('lastname')->nullable()->onDelete('cascade'); 
             
-            $table->foreignId('tambon_code')->constrained('tambons')
-                ->after('lastname')->nullable()->onDelete('cascade'); 
+            if (DB::getDriverName() === 'sqlite') {
+                $table->unsignedBigInteger('tambon_code')->nullable()->after('lastname');
+            } else {
+                $table->foreignId('tambon_code')->constrained('tambons')
+                    ->after('lastname')->nullable()->onDelete('cascade'); 
+            } 
             $table->foreignId('district_code')->constrained('districts')
                 ->after('lastname')->nullable()->onDelete('cascade'); 
             $table->foreignId('province_code')->constrained('provinces')

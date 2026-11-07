@@ -1016,14 +1016,16 @@ class DistrictsSeeder extends Seeder
             // [9681, 'อ.บางนรา  จ.นราธิวาส', '96', 6],
         ];
         foreach($districtArray as $district){
-            DB::table('districts')->insert([
-                'id' => $district[0],
-                'district_name' => $district[1],
-                'province_id' => $district[2],
-                'go_id' => $district[3],
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+            DB::table('districts')->updateOrInsert(
+                ['id' => $district[0]],
+                [
+                    'district_name' => $district[1],
+                    'province_id' => $district[2],
+                    'go_id' => $district[3],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]
+            );
         }
     }
 }

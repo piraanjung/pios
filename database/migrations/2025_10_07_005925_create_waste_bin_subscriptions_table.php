@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('waste_bin_subscriptions')) {
+            return;
+        }
+
         Schema::create('waste_bin_subscriptions', function (Blueprint $table) {
             
             $table->id();

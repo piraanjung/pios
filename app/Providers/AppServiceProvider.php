@@ -27,6 +27,13 @@ class AppServiceProvider extends ServiceProvider
         if (env(key: 'APP_ENV') === 'local' && request()->server(key: 'HTTP_X_FORWARDED_PROTO') === 'https') {
             URL::forceScheme(scheme: 'https');
         }
+
+        // Spatie Permission v5/v6 forward compatibility aliases
+        if (!class_exists('\Spatie\Permission\Middleware\RoleMiddleware') && class_exists('\Spatie\Permission\Middlewares\RoleMiddleware')) {
+            class_alias('\Spatie\Permission\Middlewares\RoleMiddleware', '\Spatie\Permission\Middleware\RoleMiddleware');
+            class_alias('\Spatie\Permission\Middlewares\PermissionMiddleware', '\Spatie\Permission\Middleware\PermissionMiddleware');
+            class_alias('\Spatie\Permission\Middlewares\RoleOrPermissionMiddleware', '\Spatie\Permission\Middleware\RoleOrPermissionMiddleware');
+        }
     }
 
     /**
@@ -40,6 +47,15 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
+
+        // Standard API Response Macros (ADR-0008)
+        \Illuminate\Support\Facades\Response::macro('apiSuccess', function ($data = null, string $message = 'ดำเนินการสำเร็จ', int $status = 200, array $meta = []) {
+            return \App\Shared\Http\ApiResponse::success($data, $message, $status, $meta);
+        });
+
+        \Illuminate\Support\Facades\Response::macro('apiError', function (string $message = 'เกิดข้อผิดพลาดในการประมวลผล', int $status = 400, $errors = null, array $meta = []) {
+            return \App\Shared\Http\ApiResponse::error($message, $status, $errors, $meta);
+        });
 
         // ส่งตัวแปร $orgInfos ไปยัง Layout หลักอัตโนมัติ
         View::composer('layouts.admin1', function ($view) {

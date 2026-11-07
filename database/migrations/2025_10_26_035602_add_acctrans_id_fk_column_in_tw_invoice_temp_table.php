@@ -13,6 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::hasColumn('tw_invoice_temp', 'acc_trans_id_fk')) {
+            return;
+        }
+
         Schema::table('tw_invoice_temp', function (Blueprint $table) {
             $table->foreignId('acc_trans_id_fk')->constrained('tw_acc_transactions')->onDelete('cascade');
         });

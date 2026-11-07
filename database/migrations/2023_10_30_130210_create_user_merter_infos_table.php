@@ -13,6 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('user_meter_infos')) {
+            return;
+        }
+
         Schema::create('user_meter_infos', function (Blueprint $table) {
             $table->unsignedBigInteger('meter_id');
             $table->unsignedBigInteger('user_id');
@@ -36,7 +40,11 @@ return new class extends Migration
             $table->timestamps();
             $table->primary(['meter_id']);
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('metertype_id')->references('id')->on('meter_types');
+            if (Schema::hasTable('meter_types')) {
+                $table->foreign('metertype_id')->references('id')->on('meter_types');
+            } elseif (Schema::hasTable('tw_meter_types')) {
+                $table->foreign('metertype_id')->references('id')->on('tw_meter_types');
+            }
             $table->foreign('undertake_zone_id')->references('id')->on('zones');
             $table->foreign('undertake_subzone_id')->references('id')->on('subzones');
         });

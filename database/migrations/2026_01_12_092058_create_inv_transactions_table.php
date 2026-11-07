@@ -24,6 +24,7 @@ return new class extends Migration
         $table->unsignedBigInteger('approve_workflow_id_fk')->on('approval_workflows')->onDelete('cascade');
           
         // พัสดุที่เบิก
+        $table->unsignedBigInteger('inv_item_id_fk');
         $table->foreign('inv_item_id_fk')->references('id')->on('inv_items');
         
         $table->integer('quantity'); 

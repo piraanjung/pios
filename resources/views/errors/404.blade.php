@@ -6,11 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>ไม่พบหน้าที่ต้องการ | Envsogo</title>
   <link rel="icon" type="image/png" href="{{ asset('logo/ko_envsogo.png') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <!-- Fonts (ADR-0009 Kanit) -->
+  @include('layouts.partials.head-fonts')
+  <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
   <link href="{{ asset('soft-ui/assets/css/nucleo-icons.css') }}" rel="stylesheet" />
   <link href="{{ asset('soft-ui/assets/css/soft-ui-dashboard.css?v=1.0.7') }}" rel="stylesheet" />
   <style>
-    body { font-family: "Open Sans", "Sarabun", sans-serif; }
+    body { font-family: 'Kanit', sans-serif !important; }
   </style>
 </head>
 

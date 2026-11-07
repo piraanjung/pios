@@ -13,6 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('waste_bin_payrate_permonth')) {
+            return;
+        }
+
         Schema::create('waste_bin_payrate_permonth', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kp_usergroup_idfk')->constrained('kp_usergroups')->onDelete('restrict');

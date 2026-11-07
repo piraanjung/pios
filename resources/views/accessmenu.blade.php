@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KU:PI-OS - Access Menu</title>
 
-    <!-- Fonts & Icons -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Sarabun:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap"
-        rel="stylesheet">
+    <!-- Fonts & Icons (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
+    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&display=swap" rel="stylesheet">
+    <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
     <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 
     <!-- Soft UI Dashboard CSS -->
@@ -18,7 +18,7 @@
 
     <style>
         body {
-            font-family: "Sarabun", sans-serif;
+            font-family: 'Kanit', sans-serif !important;
             background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
             min-height: 100vh;
             overflow: hidden;

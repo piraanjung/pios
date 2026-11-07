@@ -5,29 +5,29 @@
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "php": "^8.2|^8.3|^8.4|^8.5",
         "barryvdh/laravel-dompdf": "^3.1",
-        "guzzlehttp/guzzle": "^7.2",
+        "guzzlehttp/guzzle": "^7.8",
         "icehouse-ventures/laravel-chartjs": "^1.0",
         "intervention/image": "^2.7", 
-        "laravel/framework": "^9.2",
-        "laravel/sanctum": "^2.14.1",
-        "laravel/tinker": "^2.7",
+        "laravel/framework": "^11.0",
+        "laravel/sanctum": "^4.0",
+        "laravel/tinker": "^2.10",
         "laravel/ui": "^4.5",
         "maatwebsite/excel": "^3.1",
         "phpoffice/phpspreadsheet": "^1.29",
-        "simplesoftwareio/simple-qrcode": "~4",
-        "spatie/laravel-permission": "^5.5",
+        "simplesoftwareio/simple-qrcode": "~4|^4.2",
+        "spatie/laravel-permission": "^6.10",
         "thiagoalessio/tesseract_ocr": "^2.13"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.9.1",
-        "laravel/breeze": "^1.8",
-        "laravel/sail": "^1.0.1",
-        "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^6.1",
-        "phpunit/phpunit": "^9.5.10",
-        "spatie/laravel-ignition": "^1.0"
+        "fakerphp/faker": "^1.23",
+        "laravel/breeze": "^2.0",
+        "laravel/sail": "^1.30",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.1",
+        "phpunit/phpunit": "^10.5|^11.0",
+        "spatie/laravel-ignition": "^2.4"
     },
     "autoload": {
         "files": [
@@ -57,6 +57,9 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "db:import": [
+            "bash -c 'docker exec -i pios_db mysql -upios -psecret -e \"DROP DATABASE IF EXISTS pios; CREATE DATABASE pios CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\" && docker exec -i pios_db mysql -upios -psecret pios < docs/database.sql && docker exec pios_app php /var/www/html/docker/php/entrypoint.sh php artisan migrate --force'"
         ]
     },
     "extra": {
@@ -67,7 +70,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "audit": {
+            "abandoned": "fail"
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

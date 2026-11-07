@@ -22,6 +22,12 @@ return new class extends Migration
             $table->string('tax_number')->nullable(); // เลขประจำตัวผู้เสียภาษี (ถ้ามี)
             $table->timestamps();
         });
+
+        if (Schema::hasTable('inv_item_details') && Schema::hasColumn('inv_item_details', 'supplier_id_fk') && \Illuminate\Support\Facades\DB::getDriverName() !== 'sqlite') {
+            Schema::table('inv_item_details', function (Blueprint $table) {
+                $table->foreign('supplier_id_fk')->references('id')->on('suppliers')->onDelete('cascade');
+            });
+        }
     }
 
     /**

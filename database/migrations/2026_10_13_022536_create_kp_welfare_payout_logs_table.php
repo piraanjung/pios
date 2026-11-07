@@ -8,9 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('welfare_payout_logs', function (Blueprint $table) {
+        $targetTable = Schema::hasTable('kp_welfare_payouts') ? 'kp_welfare_payouts' : (Schema::hasTable('welfare_payouts') ? 'welfare_payouts' : null);
+
+        Schema::create('welfare_payout_logs', function (Blueprint $table) use ($targetTable) {
             $table->id();
-            $table->foreignId('payout_id')->constrained('welfare_payouts')->onDelete('cascade');
+            if ($targetTable) {
+                $table->foreignId('payout_id')->constrained($targetTable)->onDelete('cascade');
+            } else {
+                $table->unsignedBigInteger('payout_id');
+            }
             $table->foreignId('step_id')->nullable()->constrained('approval_workflow_steps')->onDelete('set null');
             $table->foreignId('action_by_user_id')->constrained('users')->onDelete('cascade');
             $table->enum('status', ['submitted', 'approved', 'rejected', 'returned']);

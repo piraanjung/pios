@@ -18,6 +18,7 @@ use App\Models\KeptKaya\KpUserWastePreference;
 use App\Models\Kiosk;
 use App\Models\KpBankAccount;
 use App\Models\User;
+use App\Shared\Http\ApiResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -148,7 +149,13 @@ class KioskController extends Controller
     public function submitTransaction(Request $request)
     {
         // 1. รับข้อมูลจาก Mobile App (สอดรับกับ FormData ที่ส่งมาจากตัวตู้ AIroBacT)
-        $userId      = 10; //$request->input('userId');
+        $userId      = $request->input('userId') ?? auth()->id();
+        if (!$userId) {
+            return ApiResponse::error(
+                message: 'ไม่พบข้อมูล User ID กรุณาระบุตัวตนก่อนทำรายการ',
+                statusCode: 422
+            );
+        }
 
         $totalPoints = $request->input('totalPoints');
         $totalAmount = $request->input('totalPrice'); // หน้าบ้านใช้คีย์ 'totalPrice'
@@ -161,16 +168,23 @@ class KioskController extends Controller
 
         // ดักจับตรวจสอบความถูกต้องเบื้องต้น ป้องกันการส่งคิวขยะว่างเปล่ามาถล่มระบบ
         if (empty($items) || !is_array($items)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ไม่พบข้อมูลรายการขยะในตระกร้า หรือโครงสร้างข้อมูลผิดพลาด'
-            ], 400);
+            return ApiResponse::error(
+                message: 'ไม่พบข้อมูลรายการขยะในตระกร้า หรือโครงสร้างข้อมูลผิดพลาด',
+                statusCode: 400
+            );
         }
 
-        $resultData = DB::transaction(function () use ($request, $userId, $items, $totalPoints, $totalAmount, $machineId) {
+        $user = User::find($userId);
+        if (!$user) {
+            return ApiResponse::error(
+                message: 'ไม่พบบัญชีผู้ใช้งานในระบบ',
+                statusCode: 404
+            );
+        }
+
+        $resultData = DB::transaction(function () use ($request, $user, $userId, $items, $totalPoints, $totalAmount, $machineId) {
 
             $userWastePref = KpUserWastePreference::where('user_id', $userId)->get()->first();
-            $user = User::find($userId);
 
             // ในโหมด Kiosk ให้ staff_id เป็น null
             $recorderId = null;
@@ -179,13 +193,14 @@ class KioskController extends Controller
             // 2. เจนเลขที่เอกสาร
             $transNo = 'Kiosk-' . now()->format('ymdHis') . strtoupper(Str::random(3));
             $koisk = Kiosk::where('name', $machineId)->get('id')->first();
+            $kioskId = $koisk ? $koisk->id : null;
 
             // 3. บันทึก Header (KpPurchaseTransaction)
             //statsus ต้องcheck ด้วยว่ารูปที่ส่งมาไม่มี unknow ถึงจะ complete			
             $transaction = KpPurchaseTransaction::create([
                 'kp_u_trans_no'         => $transNo,
                 'org_id_fk'             => $orgId,
-                'kiosk_id_fk'           => $koisk->id, // ระบุว่าเป็นตู้ที่เท่าไหร่
+                'kiosk_id_fk'           => $kioskId, // ระบุว่าเป็นตู้ที่เท่าไหร่
                 'user_id'               => $userId,
                 'transaction_date'      => now(),
                 'total_weight'          => 0, // Kiosk ไม่ได้ชั่งน้ำหนัก แต่ใช้จำนวนชิ้น
@@ -212,7 +227,7 @@ class KioskController extends Controller
                     KpKioskUnknownItem::create([
                         'kp_purchase_trans_id' => $transaction->id,
                         'org_id_fk'            => $orgId,
-                        'kiosk_id_fk'          => $koisk->id, // ไอดีตู้
+                        'kiosk_id_fk'          => $kioskId, // ไอดีตู้
                         'user_id_fk'           => $userId,
                         'detected_label'       => $cartItem['sLabel'] ?? 'UNKNOWN_OBJECT',
                         'confidence_score'     => $cartItem['confidence'] ?? 0,
@@ -288,11 +303,14 @@ class KioskController extends Controller
             $recycleAcc->increment('points', $totalPoints);
 
             return [
-                'success' => true,
-                'trans_no' => $transNo
+                'trans_no' => $transNo,
             ];
         });
-        return response()->json($resultData);
+
+        return ApiResponse::success(
+            data: $resultData,
+            message: 'บันทึกรายการฝากขยะสำเร็จ'
+        );
     }
 
     public function uploadKioskImage(Request $request)

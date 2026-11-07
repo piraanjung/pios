@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        @import url("https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap");
 
         body {
             font-family: 'Kanit', sans-serif;
@@ -65,8 +65,6 @@
         }
     </style>
     <style>
-        @import url("https://fonts.googleapis.com/css?family=Fredoka+One");
-
         .store-container {
             line-height: 0;
             margin: 50px auto;
@@ -432,11 +430,8 @@
             background-color: #e9ecef;
         }
 
-        /* Import ฟอนต์ไทยสวยๆ */
-        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
-
         body {
-            font-family: 'Prompt', sans-serif;
+            font-family: 'Kanit', sans-serif;
             background-color: #f0f2f5;
             /* สีพื้นหลังให้อ่อนสบายตา */
         }

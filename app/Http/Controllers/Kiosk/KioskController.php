@@ -254,11 +254,12 @@ public function store(Request $request)
             // B. สร้าง Header (KpPurchaseTransaction)
             // สร้างเลข Transaction (ตัวอย่าง: TRX-YYYYMMDD-Random)
             $transNo = 'TRX-' . Carbon::now()->format('YmdHis') . '-' . rand(100, 999);
+            $userPref = $user ? \App\Models\KeptKaya\KpUserWastePreference::where('user_id', $user->id)->first() : null;
 
             $transaction = KpPurchaseTransaction::create([
                 'org_id_fk' => $kiosk->org_id_fk, // ใช้ Org เดียวกับตู้
                 'kp_u_trans_no' => $transNo,
-                'kp_user_w_pref_id_fk' => 13, // หรือ ID ของ Profile ที่ผูกกับ User
+                'kp_user_w_pref_id_fk' => $userPref ? $userPref->id : null, // ID ของ Profile ที่ผูกกับ User
                 'machine_id_fk' => null,
                 'kiosk_id_fk' => $kiosk->id,
                 'transaction_date' => now(),
@@ -266,7 +267,7 @@ public function store(Request $request)
                 'total_amount' => $grandTotalAmount,
                 'total_points' => $grandTotalPoints,
                 'status' => '1', // หรือ pending
-                'recorder_id' => $user->id, // หรือ ID ของระบบ System
+                'recorder_id' => $user ? $user->id : null, // หรือ ID ของระบบ System
                 'cash_back' => 0,
             ]);
 

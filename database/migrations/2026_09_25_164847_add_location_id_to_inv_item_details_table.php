@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
        Schema::table('inv_item_details', function (Blueprint $table) {
-        $table->unsignedBigInteger('location_id_fk')->nullable()->after('expire_date');
-        $table->foreign('location_id_fk')->references('id')->on('inv_locations')->onDelete('set null');
+        if (!Schema::hasColumn('inv_item_details', 'location_id_fk')) {
+            $table->unsignedBigInteger('location_id_fk')->nullable()->after('expire_date');
+            $table->foreign('location_id_fk')->references('id')->on('inv_locations')->onDelete('set null');
+        }
     });
     }
 

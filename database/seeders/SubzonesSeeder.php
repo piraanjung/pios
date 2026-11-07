@@ -15,6 +15,10 @@ class SubzonesSeeder extends Seeder
      */
     public function run()
     {
+        if (DB::table('subzones')->count() > 0) {
+            return;
+        }
+
         DB::table('subzones')->insert([
                     ['id' => '1',  'zone_id' =>	'1',	'subzone_name' => 'หมู่1'	        , 'status' => 'active'],
                     ['id' => '2',  'zone_id' =>	'2',	'subzone_name' => 'หมู่2'	        , 'status' => 'active'],

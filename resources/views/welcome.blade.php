@@ -8,10 +8,9 @@
     <!-- Bootstrap 4.6 & FontAwesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Sarabun:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <!-- Google Fonts & Kanit (ADR-0009) -->
+    @include('layouts.partials.head-fonts')
+    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&display=swap" rel="stylesheet">
     <!-- AOS Animation Library -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
@@ -30,7 +29,7 @@
         }
 
         body {
-            font-family: 'Sarabun', sans-serif !important;
+            font-family: 'Kanit', sans-serif !important;
             background-color: var(--soft-surface) !important;
             color: var(--text-dark) !important;
             font-size: 1.15rem !important;

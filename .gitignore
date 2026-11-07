@@ -1,16 +1,76 @@
+# =========================================================================
+# 1. Laravel Core & Build Artifacts (Laravel 12 + Vite + Mix Legacy)
+# =========================================================================
 /node_modules
+/vendor
+/public/build
 /public/hot
 /public/storage
+/public/mix-manifest.json
 /storage/*.key
-/vendor
+/storage/logs/*.log
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/bootstrap/cache/*.php
+
+# =========================================================================
+# 2. Environment, Secrets & Archives (NEVER COMMIT)
+# =========================================================================
 .env
-.env.backup
+.env.*
+!.env.example
+*.env.zip
+*.zip
+*.tar.gz
+*.sql
+*.sql.gz
+*.bak
+.ftpquota
+
+# =========================================================================
+# 3. Testing, Static Analysis & IDE Helpers
+# =========================================================================
 .phpunit.result.cache
-docker-compose.override.yml
+.phpunit.cache/
+/coverage
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+phpstan.result.cache
 Homestead.json
 Homestead.yaml
+docker-compose.override.yml
 npm-debug.log
 yarn-error.log
+
+# =========================================================================
+# 4. OS, Editor & AI Context Dumps
+# =========================================================================
+.DS_Store
+**/.DS_Store
+Thumbs.db
 /.idea
 /.vscode
-/storage/logs/*.log
+*.swp
+*.swo
+repomix-output.xml
+repomix-output.*
+my_file.txt
+
+# =========================================================================
+# 5. Accidental Copy / Backup Files Prevention
+# =========================================================================
+* copy.*
+* copy *.*
+*copy2.*
+
+# =========================================================================
+# 6. Test Reports & Artifacts
+# =========================================================================
+/playwright-report/
+/test-results/
+database/database.sqlite

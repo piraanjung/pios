@@ -13,9 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
+        if (Schema::hasTable('tw_cutmeter')) {
+            return;
+        }
+
         Schema::create('tw_cutmeter', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('meter_id_fk')->constrained('tw_meter_infos')->onDelete('cascade');
+            $table->foreignId('meter_id_fk')->constrained('tw_meter_infos', 'meter_id')->onDelete('cascade');
             $table->integer('owe_count')->default(0);
             $table->integer('warning_print')->default(0);
             $table->enum('status', ['pending', 'cutmeter', 'install', 'complete', 'cancel']);

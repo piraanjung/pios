@@ -20929,7 +20929,7 @@ fieldset:disabled .btn {
 }
 
 .card .card-body {
-  font-family: "Open Sans";
+  font-family: 'Kanit', sans-serif;
   padding: 1.5rem;
 }
 
@@ -22354,7 +22354,7 @@ html {
 .container-xl,
 .container-xxl {
   padding-right: calc(var(--bs-gutter-x) * 1);
-  padding-left: calc(var(--bs-gutter-x) * );
+  padding-left: calc(var(--bs-gutter-x) * 1);
 }
 
 .navbar {
@@ -24936,7 +24936,7 @@ p {
 }
 
 .text-sans-serif {
-  font-family: "Open Sans" !important;
+  font-family: 'Kanit', sans-serif !important;
 }
 
 .text-monospace {

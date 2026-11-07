@@ -52,7 +52,7 @@ return new class extends Migration
                 $table->unsignedBigInteger('user_id')->nullable()->after('kp_u_trans_no');
             });
 
-            if ($hasOldColumn) {
+            if ($hasOldColumn && DB::getDriverName() !== 'sqlite') {
                 DB::statement("
                     UPDATE {$t} t
                     JOIN kp_user_waste_preferences p ON p.id = t.kp_user_w_pref_id_fk
@@ -66,10 +66,8 @@ return new class extends Migration
             }
         }
 
-        if (DB::table($t)->whereNull('user_id')->doesntExist()) {
-            Schema::table($t, function (Blueprint $table) {
-                $table->unsignedBigInteger('user_id')->nullable(false)->change();
-            });
+        if (DB::getDriverName() !== 'sqlite' && DB::table($t)->whereNull('user_id')->doesntExist()) {
+            DB::statement("ALTER TABLE `{$t}` MODIFY `user_id` BIGINT UNSIGNED NOT NULL");
         }
         $this->ensureForeignKey($t, 'user_id', 'users', 'kp_purchase_transactions_kp_user_w_pref_id_fk_foreign', 'CASCADE');
 
@@ -78,7 +76,7 @@ return new class extends Migration
         $this->ensureForeignKey($t, 'recorder_id', 'users', 'staff_fk');
 
         // 3. ตู้ kiosk: เดิมเป็น string default '0' -> bigint unsigned nullable
-        if (Schema::hasColumn($t, 'kiosk_id_fk') && $this->columnType($t, 'kiosk_id_fk') !== 'bigint') {
+        if (DB::getDriverName() !== 'sqlite' && Schema::hasColumn($t, 'kiosk_id_fk') && $this->columnType($t, 'kiosk_id_fk') !== 'bigint') {
             $this->dropForeignKeys($t, 'kiosk_id_fk');
             DB::statement("ALTER TABLE {$t} MODIFY kiosk_id_fk VARCHAR(191) NULL DEFAULT NULL");
             DB::statement("
@@ -100,17 +98,17 @@ return new class extends Migration
                 $table->unsignedBigInteger('org_id_fk')->nullable()->after('id');
                 $table->index('org_id_fk', 'xx');
             });
-            DB::statement("
-                UPDATE {$t} s
-                JOIN kp_purchase_shops sh ON sh.id = s.shop_id_fk
-                SET s.org_id_fk = sh.org_id_fk
-                WHERE s.org_id_fk IS NULL
-            ");
+            if (DB::getDriverName() !== 'sqlite') {
+                DB::statement("
+                    UPDATE {$t} s
+                    JOIN kp_purchase_shops sh ON sh.id = s.shop_id_fk
+                    SET s.org_id_fk = sh.org_id_fk
+                    WHERE s.org_id_fk IS NULL
+                ");
+            }
         }
-        if (DB::table($t)->whereNull('org_id_fk')->doesntExist()) {
-            Schema::table($t, function (Blueprint $table) {
-                $table->unsignedBigInteger('org_id_fk')->nullable(false)->change();
-            });
+        if (DB::getDriverName() !== 'sqlite' && DB::table($t)->whereNull('org_id_fk')->doesntExist()) {
+            DB::statement("ALTER TABLE `{$t}` MODIFY `org_id_fk` BIGINT UNSIGNED NOT NULL");
         } else {
             Log::warning("{$t}: some rows have no org_id_fk (no shop to map from); column left nullable.");
         }
@@ -120,12 +118,14 @@ return new class extends Migration
                 $table->unsignedBigInteger('user_id_fk')->nullable()->after('org_id_fk');
             });
             // เหมือน KpSellController: ผู้ขายคือเจ้าของบัญชีธนาคารขยะของหน่วยงาน
-            DB::statement("
-                UPDATE {$t} s
-                JOIN kp_bank_accounts a ON a.org_id_fk = s.org_id_fk AND a.entity_type = 'org_recycle_bank'
-                SET s.user_id_fk = a.user_id
-                WHERE s.user_id_fk IS NULL
-            ");
+            if (DB::getDriverName() !== 'sqlite' && Schema::hasColumn('kp_bank_accounts', 'org_id_fk') && Schema::hasColumn('kp_bank_accounts', 'entity_type')) {
+                DB::statement("
+                    UPDATE {$t} s
+                    JOIN kp_bank_accounts a ON a.org_id_fk = s.org_id_fk AND a.entity_type = 'org_recycle_bank'
+                    SET s.user_id_fk = a.user_id
+                    WHERE s.user_id_fk IS NULL
+                ");
+            }
         }
         $this->ensureForeignKey($t, 'user_id_fk', 'users', 'user_id_fk');
 
@@ -141,17 +141,17 @@ return new class extends Migration
             Schema::table($t, function (Blueprint $table) {
                 $table->unsignedBigInteger('org_id_fk')->nullable()->after('id');
             });
-            DB::statement("
-                UPDATE {$t} d
-                JOIN kp_sell_transactions s ON s.id = d.kp_sell_trans_id
-                SET d.org_id_fk = s.org_id_fk
-                WHERE d.org_id_fk IS NULL
-            ");
+            if (DB::getDriverName() !== 'sqlite') {
+                DB::statement("
+                    UPDATE {$t} d
+                    JOIN kp_sell_transactions s ON s.id = d.kp_sell_trans_id
+                    SET d.org_id_fk = s.org_id_fk
+                    WHERE d.org_id_fk IS NULL
+                ");
+            }
         }
-        if (DB::table($t)->whereNull('org_id_fk')->doesntExist()) {
-            Schema::table($t, function (Blueprint $table) {
-                $table->unsignedBigInteger('org_id_fk')->nullable(false)->change();
-            });
+        if (DB::getDriverName() !== 'sqlite' && DB::table($t)->whereNull('org_id_fk')->doesntExist()) {
+            DB::statement("ALTER TABLE `{$t}` MODIFY `org_id_fk` BIGINT UNSIGNED NOT NULL");
         } else {
             Log::warning("{$t}: some rows have no org_id_fk; column left nullable.");
         }
@@ -172,6 +172,10 @@ return new class extends Migration
      */
     private function dropForeignKeys(string $table, string $column, ?string $keepReferenced = null): void
     {
+        if (DB::getDriverName() === 'sqlite' || !Schema::hasColumn($table, $column)) {
+            return;
+        }
+
         $fks = DB::table('information_schema.KEY_COLUMN_USAGE')
             ->where('TABLE_SCHEMA', DB::raw('DATABASE()'))
             ->where('TABLE_NAME', $table)
@@ -192,6 +196,10 @@ return new class extends Migration
      */
     private function ensureForeignKey(string $table, string $column, string $references, string $name, ?string $onDelete = null): void
     {
+        if (DB::getDriverName() === 'sqlite' || !Schema::hasColumn($table, $column)) {
+            return;
+        }
+
         $exists = DB::table('information_schema.KEY_COLUMN_USAGE')
             ->where('TABLE_SCHEMA', DB::raw('DATABASE()'))
             ->where('TABLE_NAME', $table)

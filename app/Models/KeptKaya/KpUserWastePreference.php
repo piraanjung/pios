@@ -8,17 +8,19 @@ use App\Models\Admin\Zone;
 use App\Models\AnnualTrash\AnnualTrash;
 use App\Models\KpBankAccount;
 use App\Models\User;
+use App\Shared\Tenancy\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KpUserWastePreference extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
     protected $table = 'kp_user_waste_preferences';
 
     protected $fillable = [
+        'org_id',
         'org_id_fk',
         'user_id',
         'is_annual_collection',

@@ -14,8 +14,15 @@ return new class extends Migration
      */
     public function up()
     {
-       // วิธีที่ง่ายที่สุดสำหรับ MySQL (Copy โครงสร้างรวม Index)
-        DB::statement('CREATE TABLE tw_invoice_history LIKE tw_invoice');
+        if (Schema::hasTable('tw_invoice_history')) {
+            return;
+        }
+
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('CREATE TABLE tw_invoice_history AS SELECT * FROM tw_invoice WHERE 0');
+        } else {
+            DB::statement('CREATE TABLE tw_invoice_history LIKE tw_invoice');
+        }
     }
 
     /**

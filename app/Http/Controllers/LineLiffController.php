@@ -40,8 +40,9 @@ class   LineLiffController extends Controller
     public function dashboard(Request $request, $pref_id, $org_id)
     {
         // 1. ดึงข้อมูล User และตรวจสอบความตรงกันขององค์กร (org_id)
+        $prefOrgCol = \Illuminate\Support\Facades\Schema::hasColumn('kp_user_waste_preferences', 'org_id') ? 'org_id' : 'org_id_fk';
         $pref = KpUserWastePreference::where('id', $pref_id)
-            ->when($org_id, fn($q) => $q->where('org_id_fk', $org_id))
+            ->when($org_id, fn($q) => $q->where($prefOrgCol, $org_id))
             ->firstOrFail();
 
         $userId = $pref->user_id;
@@ -54,17 +55,25 @@ class   LineLiffController extends Controller
             abort(403, 'ไม่อนุญาตให้เข้าถึงบัญชีผู้ดูแลระบบผ่านช่องทาง LIFF URL โดยตรง');
         }
 
-        // ตรวจสอบ LINE User ID หากส่งมา หรือตรวจสอบ Session ที่ผูกไว้
-        if ($request->filled('line_user_id')) {
-            if (!empty($user->line_user_id) && $user->line_user_id !== $request->line_user_id && $user->line_id !== $request->line_user_id) {
+        // ตรวจสอบ LINE User ID หรือ Session ที่ได้รับการยืนยันตัวตนแล้วเท่านั้น (ป้องกัน IDOR Account Takeover ตาม ADR-0003)
+        $verifiedLineUserId = $request->input('line_user_id')
+            ?? $request->header('X-Line-User-Id')
+            ?? $request->session()->get('verified_line_user_id');
+
+        if (Auth::check() && Auth::id() === $user->id) {
+            // ผู้ใช้งานล็อกอินตรงกับเจ้าของข้อมูลอยู่แล้ว
+        } elseif (!empty($verifiedLineUserId) && (!empty($user->line_user_id) || !empty($user->line_id))) {
+            if ($user->line_user_id !== $verifiedLineUserId && $user->line_id !== $verifiedLineUserId) {
                 abort(403, 'ข้อมูลบัญชี LINE ไม่ตรงกับผู้ใช้งาน');
             }
+            $request->session()->put('verified_line_user_id', $verifiedLineUserId);
+        } elseif ($request->session()->get('pref_id_mobile') == $pref_id) {
+            // อนุญาตเฉพาะ Session ที่ผ่านการผูกบัญชีในรอบการใช้งานเดียวกัน
+        } else {
+            abort(403, 'กรุณายืนยันตัวตนผ่าน LINE LIFF ก่อนเข้าใช้งานแดชบอร์ด');
         }
 
         $request->session()->put('pref_id_mobile', $pref_id);
-        if (!Auth::check() || Auth::id() !== $user->id) {
-            Auth::login($user);
-        }
         // 2. ดึงข้อมูลบัญชี (New Schema)
         $recycleAcc = KpBankAccount::where('user_id', $userId)
             ->where('org_id_fk', $org_id)

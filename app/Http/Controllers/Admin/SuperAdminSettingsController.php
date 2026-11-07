@@ -20,7 +20,7 @@ use App\Imports\TambonsImport;
 use App\Imports\TwMetersImport;
 use App\Imports\TWZoneBlocksImport;
 use App\Imports\TwZonesImport;
-use App\Imports\UsersImport;
+use App\Imports\UserImport;
 use App\Models\AsMembers;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel; // อย่าลืม import Facade
@@ -263,7 +263,7 @@ class SuperAdminSettingsController extends Controller
         ]);
 
         try {
-            Excel::import(new UsersImport, $request->file('users_excel_file'));
+            Excel::import(new UserImport, $request->file('users_excel_file'));
             return back()->with('success', 'Users data imported successfully!');
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             $failures = $e->failures();

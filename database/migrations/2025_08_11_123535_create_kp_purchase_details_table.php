@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('kp_purchase_trans_id')->constrained('kp_purchase_transactions')->onDelete('cascade');
             $table->foreignId('kp_recycle_item_id')->constrained('kp_tbank_items')->onDelete('restrict');
-            $table->foreignId('kp_tbank_items_pricepoint_id')->nullable()->constrained('kp_tbank_items_pricepoint')->onDelete('set null');
+            $table->unsignedBigInteger('kp_tbank_items_pricepoint_id')->nullable();
+            $table->foreign('kp_tbank_items_pricepoint_id', 'kp_purch_det_pricepoint_fk')
+                ->references('id')->on('kp_tbank_items_pricepoint')->onDelete('set null');
             $table->foreignId('recorder_id')->nullable()->constrained('users', 'id')->onDelete('set null');
             $table->foreignId('kp_units_idfk')->constrained('kp_tbank_items_units', 'id')->onDelete('cascade');
             $table->decimal('amount_in_units', 10, 2); // ปริมาณ (น้ำหนัก/ชิ้น)

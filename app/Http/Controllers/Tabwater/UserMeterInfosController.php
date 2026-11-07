@@ -139,6 +139,11 @@ class UserMeterInfosController extends Controller
         ])->where('meter_id', $meter_id)->get()->first();
         return view('tabwater.usermeter_infos.index', compact('usermeter_infos'));
     }
+
+    public function store_edited_invoice(Request $request)
+    {
+        return $this->meter_records($request);
+    }
 public function exportExcel(Request $request)
 {
     $fileName = 'รายชื่อผู้ใช้น้ำประปา_' . date('Ymd_His') . '.xlsx';

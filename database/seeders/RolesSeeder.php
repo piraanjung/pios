@@ -18,7 +18,7 @@ class RolesSeeder extends Seeder
         $roles =['Super Admin', 'Admin', 'Tabwater Header', 'Tabwater Staff', 
                 'Finance Header', 'Finance Staff', "User"];
         foreach($roles as $role){
-            Role::create(['name' => $role]);
+            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
         }
     }
 }

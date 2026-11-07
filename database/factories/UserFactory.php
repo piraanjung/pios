@@ -18,10 +18,24 @@ class UserFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->name(),
+            'org_id_fk' => 1,
+            'username' => $this->faker->unique()->userName(),
+            'prefix' => 'นาย',
+            'firstname' => $this->faker->firstName(),
+            'lastname' => $this->faker->lastName(),
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            'id_card' => $this->faker->numerify('#############'),
+            'phone' => '0999999999',
+            'gender' => 'm',
+            'address' => 'x',
+            'zone_id' => '1',
+            'subzone_id' => '1',
+            'tambon_code' => '350805',
+            'district_code' => '3508',
+            'province_code' => '35',
+            'status' => 'active',
             'remember_token' => Str::random(10),
         ];
     }

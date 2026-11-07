@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('kp_tbank_items', function (Blueprint $table) {
-            $table->unsignedBigInteger('ef_id_fk')->nullable()->change();
-        });
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
+        \Illuminate\Support\Facades\DB::statement('ALTER TABLE kp_tbank_items MODIFY ef_id_fk BIGINT UNSIGNED NULL;');
     }
 
     /**

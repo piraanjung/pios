@@ -1,0 +1,213 @@
+/**
+ * PIOS Smart City — Unified Design Tokens (ui-ux-pro-max + Soft UI PRO)
+ * Source of Truth: design-system/pios-smart-city/MASTER.md
+ * ADR Reference: ADR-0005, ADR-0009
+ */
+
+:root {
+  /* ==========================================================================
+     1. Primitive Palette (Navy, Slate, Municipal Accents)
+     ========================================================================== */
+  --slate-50:  #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --slate-950: #020617;
+
+  --navy-base: #0f172a;
+  --navy-dark: #0a0f1d;
+  --navy-light: #1e293b;
+
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
+
+  --emerald-500: #10b981;
+  --emerald-600: #059669;
+
+  --amber-500: #f59e0b;
+  --amber-600: #d97706;
+
+  --rose-500: #f43f5e;
+  --rose-600: #e11d48;
+
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --gray-900: #212529;
+
+  /* ==========================================================================
+     2. Semantic Colors (Municipal Authority & High Contrast)
+     ========================================================================== */
+  --color-primary: var(--navy-base);
+  --color-on-primary: #ffffff;
+  --color-secondary: var(--slate-700);
+  --color-on-secondary: #ffffff;
+  --color-accent: var(--sky-700);
+  --color-on-accent: #ffffff;
+
+  --color-background: var(--slate-50);
+  --color-foreground: var(--slate-950);
+  --color-card: #ffffff;
+  --color-card-foreground: var(--slate-950);
+
+  --color-muted: #e8ecf1;
+  --color-muted-foreground: var(--slate-600);
+  --color-border: var(--slate-200);
+  --color-destructive: #dc2626;
+  --color-on-destructive: #ffffff;
+  --color-ring: var(--navy-base);
+
+  /* Bounded Context Module Accent Colors */
+  --module-admin: var(--navy-base);
+  --module-tabwater: var(--sky-600);
+  --module-recycle: var(--emerald-600);
+  --module-trash: var(--amber-600);
+  --module-welfare: var(--rose-600);
+  --module-kiosk: var(--slate-800);
+
+  /* ==========================================================================
+     3. Gradients (Soft UI PRO Compatible)
+     ========================================================================== */
+  --gradient-primary: linear-gradient(310deg, #0f172a 0%, #1e40af 100%);
+  --gradient-info:    linear-gradient(310deg, #0284c7 0%, #38bdf8 100%);
+  --gradient-success: linear-gradient(310deg, #059669 0%, #34d399 100%);
+  --gradient-warning: linear-gradient(310deg, #d97706 0%, #fbbf24 100%);
+  --gradient-danger:  linear-gradient(310deg, #be123c 0%, #fb7185 100%);
+  --gradient-dark:    linear-gradient(310deg, #0f172a 0%, #334155 100%);
+
+  /* ==========================================================================
+     4. Typography (ADR-0009 Kanit)
+     ========================================================================== */
+  --font-family-sans: 'Kanit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ==========================================================================
+     5. Density & Spacing Scales
+     ========================================================================== */
+  /* Comfortable (Mobile / Kiosk / Portals) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Touch Targets */
+  --touch-target-mobile: 48px;
+  --touch-target-kiosk:  64px;
+
+  /* ==========================================================================
+     6. Shadows & Elevations
+     ========================================================================== */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-blur: inset 0 0 1px 1px rgba(255, 255, 255, 0.9), 0 20px 27px 0 rgba(0, 0, 0, 0.05);
+
+  /* ==========================================================================
+     7. Radii
+     ========================================================================== */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem;  /* 8px */
+  --radius-lg: 0.75rem; /* 12px */
+  --radius-xl: 1rem;    /* 16px */
+  --radius-2xl: 1.5rem; /* 24px */
+  --radius-full: 9999px;
+
+  /* ==========================================================================
+     8. Bootstrap & Soft UI PRO Overrides
+     ========================================================================== */
+  --bs-primary: var(--color-primary);
+  --bs-body-font-family: var(--font-family-sans);
+  --bs-body-color: var(--color-foreground);
+  --bs-body-bg: var(--color-background);
+}
+
+/* Compact Density Modifier (Backoffice Data-Dense Tables) */
+.density-compact {
+  --space-xs: 2px;
+  --space-sm: 4px;
+  --space-md: 8px;
+  --space-lg: 12px;
+  --space-xl: 16px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+}
+
+/* Universal Kanit base application (ADR-0009) */
+html, body,
+h1, h2, h3, h4, h5, h6,
+p, span, a, label, li, ul, ol,
+input, button, select, textarea, optgroup, option,
+table, thead, tbody, tfoot, tr, th, td,
+.card, .card-header, .card-body, .card-footer, .card-title,
+.navbar, .navbar-brand, .nav, .nav-item, .nav-link,
+.badge, .alert, .dropdown, .dropdown-menu, .dropdown-item,
+.modal, .modal-title, .modal-body, .modal-footer,
+.btn, .btn-sm, .btn-lg, .form-control, .form-select, .form-check-label,
+.table-responsive, .text-sans-serif, .font-sans,
+div {
+  font-family: var(--font-family-sans) !important;
+}
+
+/* Preserve icon fonts */
+i, .fa, .fas, .far, .fab, .fal, .fad,
+[class*="fa-"], [class^="fa-"],
+.ni, [class*="ni-"], [class^="ni-"],
+.nucleo, .material-icons, [class*="bi-"], [class^="bi-"] {
+  font-family: 'Font Awesome 5 Free', 'FontAwesome', 'NucleoIcons', 'bootstrap-icons' !important;
+}
+.fab {
+  font-family: 'Font Awesome 5 Brands', 'FontAwesome' !important;
+}
+
+body {
+  font-family: var(--font-family-sans) !important;
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tenant Badge enhancement */
+.tenant-badge {
+  background: var(--gradient-primary) !important;
+  color: #fff !important;
+  padding: 4px 12px !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 11px !important;
+  font-weight: var(--font-weight-semibold) !important;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
+}
+
+/* Accessible interactive elements */
+:focus-visible {
+  outline: 2px solid var(--color-accent) !important;
+  outline-offset: 2px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

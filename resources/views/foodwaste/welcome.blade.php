@@ -6,8 +6,8 @@
 
         <title>Laravel</title>
 
-        <!-- Fonts -->
-        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+        <!-- Fonts (ADR-0009 Kanit) -->
+        @include('layouts.partials.head-fonts')
 
         <!-- Styles -->
         <style>
@@ -16,7 +16,7 @@
 
         <style>
             body {
-                font-family: 'Nunito', sans-serif;
+                font-family: 'Kanit', sans-serif !important;
             }
         </style>
     </head>

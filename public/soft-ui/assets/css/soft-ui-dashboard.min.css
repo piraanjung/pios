@@ -48,7 +48,7 @@
     --bs-black-rgb: 0,0,0;
     --bs-body-color-rgb: 103,116,142;
     --bs-body-bg-rgb: 255,255,255;
-    --bs-font-sans-serif: Open Sans;
+    --bs-font-sans-serif: Kanit, sans-serif;
     --bs-font-monospace: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
     --bs-gradient: linear-gradient(180deg,hsla(0,0%,100%,.15),hsla(0,0%,100%,0));
     --bs-body-font-family: var(--bs-font-sans-serif);
@@ -20089,7 +20089,7 @@ textarea.form-control,textarea.form-control-lg,textarea.form-control-sm {
 }
 
 .card .card-body {
-    font-family: Open Sans;
+    font-family: Kanit, sans-serif;
     padding: 1.5rem
 }
 
@@ -23739,7 +23739,7 @@ p {
 }
 
 .text-sans-serif {
-    font-family: Open Sans!important
+    font-family: Kanit, sans-serif!important
 }
 
 .text-monospace {

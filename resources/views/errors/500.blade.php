@@ -4,13 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>เกิดข้อผิดพลาดในระบบ (Error 500)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Fonts (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
+    <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
     <style>
         * { box-sizing: border-box; }
         body {
             margin: 0;
             padding: 24px;
-            font-family: 'Sarabun', sans-serif;
+            font-family: 'Kanit', sans-serif !important;
             background: #f8fafc;
             color: #1e293b;
         }

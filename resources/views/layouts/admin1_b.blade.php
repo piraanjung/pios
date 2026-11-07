@@ -13,11 +13,10 @@
 
 
 
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,500;0,700;1,400;1,500&display=swap"
-        rel="stylesheet">
+    <!-- Fonts & Icons (ADR-0009 Kanit) -->
+    @include('layouts.partials.head-fonts')
+    <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
     <link href="{{ asset('soft-ui/assets/css/nucleo-icons.css') }}" rel="stylesheet" />
-    <link href="{{ asset('soft-ui/assets/css/nucleo-svg.css') }}" rel="stylesheet" />
-
     <link href="{{ asset('soft-ui/assets/css/nucleo-svg.css') }}" rel="stylesheet" />
 
     <link id="pagestyle" href="{{ asset('soft-ui/assets/css/soft-ui-dashboard.min.css') }}" rel="stylesheet" />
@@ -26,10 +25,10 @@
 
     <style>
         body{
-             font-family: "Sarabun", sans-serif;
+             font-family: 'Kanit', sans-serif !important;
         }
         .card .card-body {
-            font-family: "Sarabun", sans-serif;
+            font-family: 'Kanit', sans-serif !important;
             padding: 1.5rem;
         }
         .navbar-vertical.navbar-expand-xs .navbar-collapse {

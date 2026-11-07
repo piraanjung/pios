@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('foodwaste_issue_reports', 'assigned_staff_id')) {
+            return;
+        }
+
         Schema::table('foodwaste_issue_reports', function (Blueprint $table) {
             $table->unsignedBigInteger('assigned_staff_id')->after('id');
 

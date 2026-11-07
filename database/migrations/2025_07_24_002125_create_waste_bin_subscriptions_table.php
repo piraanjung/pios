@@ -11,36 +11,48 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('waste_bin_subscriptions', function (Blueprint $table) {
-            
-            $table->id();
-            $table->string('fiscal_year');
-            $table->foreignId('waste_bin_id')->constrained('waste_bins')->onDelete('cascade');
-            $table->foreignId('payrate_permonth_id_fk')->constrained('waste_bin_payrate_permonth')->onDelete('cascade');
-            $table->decimal('annual_fee', 10, 2); // ค่าธรรมเนียมรายปีทั้งหมด
-            $table->decimal('month_fee', 10, 2); // ค่าธรรมเนียมรายเดือน (annual_fee / 12)
-            $table->decimal('total_paid_amt', 10, 2)->default(0); // ยอดรวมที่ชำระแล้วสำหรับปีนั้น
-            $table->string('status')->default('pending'); // pending, partially_paid, paid, overdue
-            $table->timestamps();
+        if (!Schema::hasTable('waste_bin_subscriptions')) {
+            Schema::create('waste_bin_subscriptions', function (Blueprint $table) {
+                
+                $table->id();
+                $table->string('fiscal_year');
+                $table->unsignedBigInteger('waste_bin_id');
+                if (Schema::hasTable('waste_bins')) {
+                    $table->foreign('waste_bin_id')->references('id')->on('waste_bins')->onDelete('cascade');
+                } elseif (Schema::hasTable('kp_waste_bins')) {
+                    $table->foreign('waste_bin_id')->references('id')->on('kp_waste_bins')->onDelete('cascade');
+                }
+                $table->unsignedBigInteger('payrate_permonth_id_fk')->nullable();
+                if (Schema::hasTable('waste_bin_payrate_permonth')) {
+                    $table->foreign('payrate_permonth_id_fk')->references('id')->on('waste_bin_payrate_permonth')->onDelete('cascade');
+                }
+                $table->decimal('annual_fee', 10, 2); // ค่าธรรมเนียมรายปีทั้งหมด
+                $table->decimal('month_fee', 10, 2); // ค่าธรรมเนียมรายเดือน (annual_fee / 12)
+                $table->decimal('total_paid_amt', 10, 2)->default(0); // ยอดรวมที่ชำระแล้วสำหรับปีนั้น
+                $table->string('status')->default('pending'); // pending, partially_paid, paid, overdue
+                $table->timestamps();
 
-            // Unique constraint to ensure one subscription per bin per fiscal year
-            $table->unique(['waste_bin_id']);
-        });
+                // Unique constraint to ensure one subscription per bin per fiscal year
+                $table->unique(['waste_bin_id']);
+            });
+        }
 
-        Schema::create('waste_bin_payments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('wbs_id')->constrained('waste_bin_subscriptions')->onDelete('cascade'); // waste_bin_subscription_id
-            $table->unsignedTinyInteger('pay_mon'); // เดือนที่ชำระ (1-12)
-            $table->unsignedSmallInteger('pay_yr'); // ปีของเดือนที่ชำระ (อาจไม่ตรงกับ fiscal_year ถ้าค้างชำระ)
-            $table->decimal('amount_paid', 10, 2); // จำนวนเงินที่ชำระในงวดนี้
-            $table->date('pay_date'); // วันที่ชำระเงิน
-            $table->string('notes')->nullable(); // บันทึกเพิ่มเติม
-            $table->foreignId('staff_id')->nullable()->constrained('users'); // เจ้าหน้าที่ที่รับชำระ
-            $table->timestamps();
+        if (!Schema::hasTable('waste_bin_payments')) {
+            Schema::create('waste_bin_payments', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('wbs_id')->constrained('waste_bin_subscriptions')->onDelete('cascade'); // waste_bin_subscription_id
+                $table->unsignedTinyInteger('pay_mon'); // เดือนที่ชำระ (1-12)
+                $table->unsignedSmallInteger('pay_yr'); // ปีของเดือนที่ชำระ (อาจไม่ตรงกับ fiscal_year ถ้าค้างชำระ)
+                $table->decimal('amount_paid', 10, 2); // จำนวนเงินที่ชำระในงวดนี้
+                $table->date('pay_date'); // วันที่ชำระเงิน
+                $table->string('notes')->nullable(); // บันทึกเพิ่มเติม
+                $table->foreignId('staff_id')->nullable()->constrained('users'); // เจ้าหน้าที่ที่รับชำระ
+                $table->timestamps();
 
-            // Unique constraint to ensure one payment record per subscription per month
-            $table->unique(['wbs_id', 'pay_mon', 'pay_yr']);
-        });
+                // Unique constraint to ensure one payment record per subscription per month
+                $table->unique(['wbs_id', 'pay_mon', 'pay_yr']);
+            });
+        }
     }
 
     /**
