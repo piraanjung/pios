@@ -1,28 +1,32 @@
 <?php
 /**
- * One-Time Secure Extractor & Post-Deploy Optimizer for PIOS cPanel Deployment
- * This file is automatically deployed and deleted upon successful execution.
+ * One-Time Secure Fast Extractor & Optimizer for PIOS cPanel Deployment
  */
 @set_time_limit(300);
 @ini_set('memory_limit', '512M');
+@ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
+$startTime = microtime(true);
+$log = [];
 
 $expectedToken = 'TOKEN_PLACEHOLDER';
 $providedToken = $_GET['token'] ?? ($_POST['token'] ?? '');
 
-// 1. Verify Authentication Token
+// 1. Verify Token
 if (empty($expectedToken) || !hash_equals($expectedToken, (string)$providedToken)) {
     http_response_code(403);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['success' => false, 'error' => 'Unauthorized access'], JSON_PRETTY_PRINT);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized token'], JSON_PRETTY_PRINT);
     exit;
 }
 
-// 2. Locate deploy.zip (either current dir or parent dir if running inside public/)
+// 2. Locate deploy.zip
 $targetDir = file_exists(__DIR__ . '/deploy.zip') ? __DIR__ : dirname(__DIR__);
 $zipFile = $targetDir . '/deploy.zip';
 
 if (!file_exists($zipFile)) {
-    http_response_code(404);
+    http_response_code(200);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
         'success' => false,
@@ -32,27 +36,77 @@ if (!file_exists($zipFile)) {
     exit;
 }
 
-// 3. Extract Archive
-$zip = new ZipArchive();
-if ($zip->open($zipFile) !== true) {
-    http_response_code(500);
+$zipSizeMb = round(filesize($zipFile) / (1024 * 1024), 2);
+$log[] = "Found deploy.zip ($zipSizeMb MB) in $targetDir";
+
+// 3. Fast Extract: System unzip first (100x faster), fallback to ZipArchive
+$extracted = false;
+$extractMethod = 'none';
+
+if (function_exists('exec')) {
+    $out = [];
+    $ret = -1;
+    @exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1', $out, $ret);
+    if ($ret === 0 && file_exists($targetDir . '/artisan')) {
+        $extracted = true;
+        $extractMethod = 'exec(unzip)';
+        $log[] = "Extracted via exec(unzip) successfully";
+    } else {
+        $log[] = "exec(unzip) returned code $ret: " . implode(" ", $out);
+    }
+}
+
+if (!$extracted && function_exists('shell_exec')) {
+    $out = @shell_exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1');
+    if (file_exists($targetDir . '/artisan')) {
+        $extracted = true;
+        $extractMethod = 'shell_exec(unzip)';
+        $log[] = "Extracted via shell_exec(unzip) successfully";
+    } else {
+        $log[] = "shell_exec(unzip) output: " . trim((string)$out);
+    }
+}
+
+if (!$extracted && class_exists('ZipArchive')) {
+    $zip = new ZipArchive();
+    $res = $zip->open($zipFile);
+    if ($res === true) {
+        $zip->extractTo($targetDir);
+        $zip->close();
+        if (file_exists($targetDir . '/artisan')) {
+            $extracted = true;
+            $extractMethod = 'ZipArchive';
+            $log[] = "Extracted via ZipArchive successfully";
+        }
+    } else {
+        $log[] = "ZipArchive::open failed with error code $res";
+    }
+}
+
+if (!$extracted) {
+    http_response_code(200);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['success' => false, 'error' => 'Failed to open deploy.zip'], JSON_PRETTY_PRINT);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Failed to extract deploy.zip with any available method',
+        'log' => $log,
+    ], JSON_PRETTY_PRINT);
     exit;
 }
 
-$zip->extractTo($targetDir);
-$zip->close();
+$extractDuration = round(microtime(true) - $startTime, 2);
+$log[] = "Extraction completed in {$extractDuration}s using $extractMethod";
 
-// 4. Immediate Self-Cleanup of deploy.zip and extract.php
+// 4. Cleanup zip and extractor files immediately
 @unlink($zipFile);
 @unlink($targetDir . '/extract.php');
 @unlink($targetDir . '/public/extract.php');
 if (file_exists(__FILE__)) {
     @unlink(__FILE__);
 }
+$log[] = "Cleaned up deploy.zip and extract.php";
 
-// 5. Ensure Storage Directories & Symlinks
+// 5. Setup directories & symlink
 @mkdir($targetDir . '/storage/framework/cache/data', 0775, true);
 @mkdir($targetDir . '/storage/framework/sessions', 0775, true);
 @mkdir($targetDir . '/storage/framework/views', 0775, true);
@@ -62,13 +116,8 @@ if (!file_exists($targetDir . '/public/storage') && file_exists($targetDir . '/s
     @symlink($targetDir . '/storage/app/public', $targetDir . '/public/storage');
 }
 
-$results = [
-    'success' => true,
-    'message' => 'Archive extracted and self-cleaned successfully',
-    'timestamp' => date('c'),
-];
-
-// 6. Bootstrap Laravel and Run Artisan Migration & Cache Optimization
+// 6. Bootstrap Laravel and run Artisan commands
+$artisanResults = [];
 try {
     if (file_exists($targetDir . '/vendor/autoload.php') && file_exists($targetDir . '/bootstrap/app.php')) {
         require $targetDir . '/vendor/autoload.php';
@@ -76,7 +125,7 @@ try {
         $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
 
-        // Baseline migration sync for pre-existing tables if needed
+        // Baseline migration sync
         try {
             if (Illuminate\Support\Facades\Schema::hasTable('migrations')) {
                 $existingMigrations = [
@@ -113,33 +162,44 @@ try {
                 }
                 if (!empty($toInsert)) {
                     Illuminate\Support\Facades\DB::table('migrations')->insert($toInsert);
+                    $artisanResults['baseline_synced'] = count($toInsert);
                 }
             }
         } catch (\Throwable $mEx) {
-            $results['migration_sync_notice'] = $mEx->getMessage();
+            $artisanResults['migration_sync_notice'] = $mEx->getMessage();
         }
 
         // Run migrations
         try {
             Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-            $results['migrate_output'] = trim(Illuminate\Support\Facades\Artisan::output());
+            $artisanResults['migrate_output'] = trim(Illuminate\Support\Facades\Artisan::output());
         } catch (\Throwable $mEx) {
-            $results['migrate_error'] = $mEx->getMessage();
+            $artisanResults['migrate_error'] = $mEx->getMessage();
         }
 
-        // Clear and rebuild caches
+        // Cache optimization
         try {
             Illuminate\Support\Facades\Artisan::call('optimize:clear');
             Illuminate\Support\Facades\Artisan::call('config:cache');
             Illuminate\Support\Facades\Artisan::call('view:cache');
-            $results['cache_optimized'] = true;
+            $artisanResults['cache_optimized'] = true;
         } catch (\Throwable $cEx) {
-            $results['cache_error'] = $cEx->getMessage();
+            $artisanResults['cache_error'] = $cEx->getMessage();
         }
     }
 } catch (\Throwable $e) {
-    $results['artisan_bootstrap_error'] = $e->getMessage();
+    $artisanResults['bootstrap_error'] = $e->getMessage();
 }
 
+$totalDuration = round(microtime(true) - $startTime, 2);
+
 header('Content-Type: application/json; charset=utf-8');
-echo json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+echo json_encode([
+    'success' => true,
+    'method' => $extractMethod,
+    'extract_duration' => $extractDuration,
+    'total_duration' => $totalDuration,
+    'artisan' => $artisanResults,
+    'log' => $log,
+    'timestamp' => date('c'),
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

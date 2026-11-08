@@ -135,7 +135,7 @@ jobs:
           echo "Packaging project into deploy.zip..."
           zip -q -r deploy.zip \
             app bootstrap config database public resources routes storage vendor artisan composer.json composer.lock .htaccess \
-            -x "*.git*" "*/.git/*" "*node_modules*" "*/tests/*" "*.DS_Store" "docs/database.sql" "repomix-output.xml"
+            -x "*.git*" "*/.git/*" "*node_modules*" "*/tests/*" "*/Tests/*" "*/.github/*" "*.DS_Store" "docs/database.sql" "repomix-output.xml"
 
           ZIP_SIZE=$(du -h deploy.zip | cut -f1)
           echo "deploy.zip created successfully (Size: $ZIP_SIZE)"
@@ -200,18 +200,29 @@ jobs:
           echo "Triggering extractor webhook on https://${DOMAIN} ..."
 
           # ทดสอบเรียก extract.php จาก root ก่อน หากได้ 404 ให้เรียก public/extract.php
-          HTTP_CODE=$(curl -k -s -o response.json -w "%{http_code}" "https://${DOMAIN}/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
+          HTTP_CODE=$(curl -k -s --max-time 180 -o response.json -w "%{http_code}" "https://${DOMAIN}/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
           if [ "$HTTP_CODE" != "200" ]; then
             echo "Root extract.php returned HTTP $HTTP_CODE, trying public/extract.php..."
-            HTTP_CODE=$(curl -k -s -o response.json -w "%{http_code}" "https://${DOMAIN}/public/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
+            HTTP_CODE=$(curl -k -s --max-time 180 -o response.json -w "%{http_code}" "https://${DOMAIN}/public/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
           fi
 
           echo "Webhook Response (HTTP $HTTP_CODE):"
           cat response.json || true
           echo ""
 
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::Extraction webhook failed with HTTP status $HTTP_CODE"
+          SUCCESS=$(python3 -c "
+          import json, sys
+          try:
+              with open('response.json') as f:
+                  data = json.load(f)
+              print('true' if data.get('success') else 'false')
+          except Exception as e:
+              print('error: ' + str(e))
+          ")
+
+          echo "Extraction Success Status: $SUCCESS"
+          if [ "$SUCCESS" != "true" ]; then
+            echo "::error::Extraction webhook did not succeed."
             exit 1
           fi
 
