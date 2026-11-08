@@ -207,11 +207,17 @@ jobs:
           echo ""
 
           SUCCESS=$(python3 -c "
-          import json, sys
+          import json, re, sys
           try:
               with open('response.json') as f:
-                  data = json.load(f)
-              print('true' if data.get('success') else 'false')
+                  content = f.read()
+              m = re.search(r'---DEPLOY_JSON_START---\s*(.*?)\s*---DEPLOY_JSON_END---', content, re.DOTALL)
+              if m:
+                  data = json.loads(m.group(1))
+                  print('true' if data.get('success') else 'false')
+              else:
+                  data = json.loads(content)
+                  print('true' if data.get('success') else 'false')
           except Exception as e:
               print('error: ' + str(e))
           ")

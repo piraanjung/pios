@@ -2,10 +2,23 @@
 /**
  * Fast Extractor & Post-Deploy Migration Runner for PIOS cPanel Deployment
  */
-@set_time_limit(300);
+@set_time_limit(600);
 @ini_set('memory_limit', '512M');
 @ini_set('display_errors', '1');
 error_reporting(E_ALL);
+
+// Prevent LiteSpeed / reverse proxy timeouts
+@apache_setenv('no-gzip', '1');
+@ini_set('zlib.output_compression', 'Off');
+@ini_set('output_buffering', 'Off');
+@ini_set('implicit_flush', '1');
+ob_implicit_flush(true);
+while (ob_get_level()) {
+    @ob_end_flush();
+}
+
+header('X-Accel-Buffering: no');
+header('Content-Type: text/plain; charset=utf-8');
 
 $startTime = microtime(true);
 $log = [];
@@ -16,8 +29,9 @@ $providedToken = $_GET['token'] ?? ($_POST['token'] ?? '');
 // 1. Verify Authentication Token
 if (empty($expectedToken) || !hash_equals($expectedToken, (string)$providedToken)) {
     http_response_code(403);
-    header('Content-Type: application/json; charset=utf-8');
+    echo "---DEPLOY_JSON_START---\n";
     echo json_encode(['success' => false, 'error' => 'Unauthorized token'], JSON_PRETTY_PRINT);
+    echo "\n---DEPLOY_JSON_END---\n";
     exit;
 }
 
@@ -27,17 +41,20 @@ $zipFile = $targetDir . '/deploy.zip';
 
 if (!file_exists($zipFile)) {
     http_response_code(200);
-    header('Content-Type: application/json; charset=utf-8');
+    echo "---DEPLOY_JSON_START---\n";
     echo json_encode([
         'success' => false,
         'error' => 'deploy.zip not found in ' . $targetDir,
         'current_dir' => __DIR__,
     ], JSON_PRETTY_PRINT);
+    echo "\n---DEPLOY_JSON_END---\n";
     exit;
 }
 
 $zipSizeMb = round(filesize($zipFile) / (1024 * 1024), 2);
 $log[] = "Found deploy.zip ($zipSizeMb MB) in $targetDir";
+echo "HEARTBEAT: Starting extraction of deploy.zip ($zipSizeMb MB)...\n";
+@flush();
 
 // 3. Fast Extract: Try native unzip first, then ZipArchive
 $extracted = false;
@@ -77,14 +94,22 @@ if (!$extracted && class_exists('ZipArchive')) {
         $numFiles = $zip->numFiles;
         $log[] = "ZipArchive opened archive with $numFiles files";
         
-        // Extract all files
-        $extractResult = @$zip->extractTo($targetDir);
+        $chunkSize = 250;
+        $batch = [];
+        for ($i = 0; $i < $numFiles; $i++) {
+            $batch[] = $zip->getNameIndex($i);
+            if (count($batch) >= $chunkSize || $i === $numFiles - 1) {
+                $zip->extractTo($targetDir, $batch);
+                $batch = [];
+                echo "HEARTBEAT: Extracted " . ($i + 1) . "/{$numFiles} files\n";
+                @flush();
+            }
+        }
         $zip->close();
         
-        $log[] = "ZipArchive::extractTo result: " . ($extractResult ? "true" : "false");
-        if ($extractResult && file_exists($targetDir . '/artisan')) {
+        if (file_exists($targetDir . '/artisan')) {
             $extracted = true;
-            $extractMethod = 'ZipArchive';
+            $extractMethod = 'ZipArchive(chunked)';
         }
     } else {
         $log[] = "ZipArchive::open failed with code $res";
@@ -92,17 +117,20 @@ if (!$extracted && class_exists('ZipArchive')) {
 }
 
 if (!$extracted) {
-    header('Content-Type: application/json; charset=utf-8');
+    echo "---DEPLOY_JSON_START---\n";
     echo json_encode([
         'success' => false,
         'error' => 'Failed to extract deploy.zip',
         'log' => $log,
     ], JSON_PRETTY_PRINT);
+    echo "\n---DEPLOY_JSON_END---\n";
     exit;
 }
 
 $extractDuration = round(microtime(true) - $startTime, 2);
 $log[] = "Extraction finished in {$extractDuration}s using $extractMethod";
+echo "HEARTBEAT: Extraction complete in {$extractDuration}s\n";
+@flush();
 
 // 4. Cleanup temporary deploy files
 @unlink($zipFile);
@@ -159,6 +187,8 @@ try {
         try {
             Illuminate\Support\Facades\DB::connection()->getPdo();
             $log[] = "Database connected successfully";
+            echo "HEARTBEAT: Database connected successfully\n";
+            @flush();
 
             // Baseline migration sync for pre-existing tables
             if (Illuminate\Support\Facades\Schema::hasTable('migrations')) {
@@ -201,8 +231,18 @@ try {
             }
 
             // Run migrations
+            echo "HEARTBEAT: Running artisan migrate --force...\n";
+            @flush();
             Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             $artisanResults['migrate_output'] = trim(Illuminate\Support\Facades\Artisan::output());
+
+            // Run seeders if users table is empty
+            if (Illuminate\Support\Facades\Schema::hasTable('users') && Illuminate\Support\Facades\DB::table('users')->count() === 0) {
+                echo "HEARTBEAT: Running artisan db:seed --force...\n";
+                @flush();
+                Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+                $artisanResults['seed_output'] = trim(Illuminate\Support\Facades\Artisan::output());
+            }
         } catch (\Throwable $mEx) {
             $artisanResults['database_notice'] = $mEx->getMessage();
         }
@@ -224,7 +264,7 @@ try {
 $totalDuration = round(microtime(true) - $startTime, 2);
 $log[] = "Deployment finished in {$totalDuration}s";
 
-header('Content-Type: application/json; charset=utf-8');
+echo "\n---DEPLOY_JSON_START---\n";
 echo json_encode([
     'success' => true,
     'method' => $extractMethod,
@@ -234,3 +274,4 @@ echo json_encode([
     'log' => $log,
     'timestamp' => date('c'),
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+echo "\n---DEPLOY_JSON_END---\n";
