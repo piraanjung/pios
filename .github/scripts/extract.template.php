@@ -7,7 +7,6 @@
 @ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
-// Prevent LiteSpeed / reverse proxy timeouts
 if (function_exists('apache_setenv')) {
     @apache_setenv('no-gzip', '1');
 }
@@ -55,66 +54,48 @@ if (!file_exists($zipFile)) {
 
 $zipSizeMb = round(filesize($zipFile) / (1024 * 1024), 2);
 $log[] = "Found deploy.zip ($zipSizeMb MB) in $targetDir";
-echo "HEARTBEAT: Starting extraction of deploy.zip ($zipSizeMb MB)...\n";
+echo "HEARTBEAT: Found deploy.zip ($zipSizeMb MB). Extracting...\n";
+echo str_repeat(" ", 4096) . "\n";
 @flush();
 
-// 3. Fast Extract: Try native unzip first, then ZipArchive
+// 3. Fast Extract using ZipArchive
 $extracted = false;
 $extractMethod = 'none';
 
-// Test exec / shell_exec
-$disabledFunctions = explode(',', (string)ini_get('disable_functions'));
-$disabledFunctions = array_map('trim', $disabledFunctions);
-$execAllowed = function_exists('exec') && !in_array('exec', $disabledFunctions, true);
-
-if ($execAllowed) {
-    $out = [];
-    $ret = -1;
-    @exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1', $out, $ret);
-    $log[] = "exec(unzip) return code: $ret, out: " . implode(" ", $out);
-    if ($ret === 0 && file_exists($targetDir . '/artisan')) {
-        $extracted = true;
-        $extractMethod = 'exec(unzip)';
-    }
-} else {
-    $log[] = "exec() is disabled or unavailable";
-}
-
-if (!$extracted && function_exists('shell_exec') && !in_array('shell_exec', $disabledFunctions, true)) {
-    $out = @shell_exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1');
-    $log[] = "shell_exec(unzip) out: " . trim((string)$out);
-    if (file_exists($targetDir . '/artisan')) {
-        $extracted = true;
-        $extractMethod = 'shell_exec(unzip)';
-    }
-}
-
-if (!$extracted && class_exists('ZipArchive')) {
+if (class_exists('ZipArchive')) {
     $zip = new ZipArchive();
     $res = $zip->open($zipFile);
     if ($res === true) {
         $numFiles = $zip->numFiles;
         $log[] = "ZipArchive opened archive with $numFiles files";
+        echo "HEARTBEAT: Uncompressing $numFiles files...\n";
+        @flush();
         
-        $chunkSize = 250;
-        $batch = [];
-        for ($i = 0; $i < $numFiles; $i++) {
-            $batch[] = $zip->getNameIndex($i);
-            if (count($batch) >= $chunkSize || $i === $numFiles - 1) {
-                $zip->extractTo($targetDir, $batch);
-                $batch = [];
-                echo "HEARTBEAT: Extracted " . ($i + 1) . "/{$numFiles} files\n";
-                @flush();
-            }
-        }
+        $extractResult = $zip->extractTo($targetDir);
         $zip->close();
         
-        if (file_exists($targetDir . '/artisan')) {
+        $log[] = "ZipArchive::extractTo result: " . ($extractResult ? "true" : "false");
+        if ($extractResult && file_exists($targetDir . '/artisan')) {
             $extracted = true;
-            $extractMethod = 'ZipArchive(chunked)';
+            $extractMethod = 'ZipArchive';
         }
     } else {
         $log[] = "ZipArchive::open failed with code $res";
+    }
+}
+
+// Fallback to exec/shell_exec unzip if needed
+if (!$extracted) {
+    $disabledFunctions = explode(',', (string)ini_get('disable_functions'));
+    $disabledFunctions = array_map('trim', $disabledFunctions);
+    if (function_exists('exec') && !in_array('exec', $disabledFunctions, true)) {
+        $out = [];
+        $ret = -1;
+        @exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1', $out, $ret);
+        if ($ret === 0 && file_exists($targetDir . '/artisan')) {
+            $extracted = true;
+            $extractMethod = 'exec(unzip)';
+        }
     }
 }
 
