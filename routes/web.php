@@ -637,6 +637,12 @@ Route::prefix('deploy')->group(function () {
             ], 403);
         }
 
+        if ($request->query('action') === 'log') {
+            $logPath = storage_path('logs/laravel.log');
+            $content = file_exists($logPath) ? file_get_contents($logPath) : 'No log file';
+            return response(substr($content, -4000), 200, ['Content-Type' => 'text/plain']);
+        }
+
         try {
             $details = [];
 
