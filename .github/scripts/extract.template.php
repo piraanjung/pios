@@ -175,8 +175,9 @@ try {
         $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
 
-        // Baseline migration sync for pre-existing tables
+        // Baseline migration sync for pre-existing tables if DB connects
         try {
+            Illuminate\Support\Facades\DB::connection()->getPdo();
             if (Illuminate\Support\Facades\Schema::hasTable('migrations')) {
                 $existingMigrations = [
                     '2023_10_30_130210_create_user_merter_infos_table',
@@ -215,16 +216,12 @@ try {
                     $artisanResults['baseline_synced'] = count($toInsert);
                 }
             }
-        } catch (\Throwable $mEx) {
-            $artisanResults['migration_sync_notice'] = $mEx->getMessage();
-        }
 
-        // Run migrations
-        try {
+            // Run migrations
             Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             $artisanResults['migrate_output'] = trim(Illuminate\Support\Facades\Artisan::output());
         } catch (\Throwable $mEx) {
-            $artisanResults['migrate_error'] = $mEx->getMessage();
+            $artisanResults['database_notice'] = $mEx->getMessage();
         }
 
         // Cache optimization
