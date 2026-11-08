@@ -8,7 +8,9 @@
 error_reporting(E_ALL);
 
 // Prevent LiteSpeed / reverse proxy timeouts
-@apache_setenv('no-gzip', '1');
+if (function_exists('apache_setenv')) {
+    @apache_setenv('no-gzip', '1');
+}
 @ini_set('zlib.output_compression', 'Off');
 @ini_set('output_buffering', 'Off');
 @ini_set('implicit_flush', '1');
