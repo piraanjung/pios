@@ -1,12 +1,14 @@
 <?php
 /**
- * Asynchronous Fast Extractor & Optimizer for PIOS cPanel Deployment
+ * Fast Extractor & Post-Deploy Migration Runner for PIOS cPanel Deployment
  */
-@ignore_user_abort(true);
-@set_time_limit(600);
+@set_time_limit(300);
 @ini_set('memory_limit', '512M');
 @ini_set('display_errors', '0');
 error_reporting(E_ALL);
+
+$startTime = microtime(true);
+$log = [];
 
 $expectedToken = 'TOKEN_PLACEHOLDER';
 $providedToken = $_GET['token'] ?? ($_POST['token'] ?? '');
@@ -22,10 +24,9 @@ if (empty($expectedToken) || !hash_equals($expectedToken, (string)$providedToken
 // 2. Locate targetDir and deploy.zip
 $targetDir = file_exists(__DIR__ . '/deploy.zip') ? __DIR__ : dirname(__DIR__);
 $zipFile = $targetDir . '/deploy.zip';
-$statusFile = $targetDir . '/public/deploy_status.json';
 
 if (!file_exists($zipFile)) {
-    http_response_code(404);
+    http_response_code(200);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
         'success' => false,
@@ -35,51 +36,10 @@ if (!file_exists($zipFile)) {
     exit;
 }
 
-// Initialize deploy_status.json
-$initialStatus = [
-    'status' => 'extracting',
-    'started_at' => date('c'),
-    'zip_size_mb' => round(filesize($zipFile) / (1024 * 1024), 2),
-    'log' => ['Extraction process started'],
-];
-@file_put_contents($statusFile, json_encode($initialStatus, JSON_PRETTY_PRINT));
+$zipSizeMb = round(filesize($zipFile) / (1024 * 1024), 2);
+$log[] = "Found deploy.zip ($zipSizeMb MB) in $targetDir";
 
-// 3. Immediately send HTTP 200 to GitHub Actions and close connection
-$response = json_encode([
-    'success' => true,
-    'message' => 'Extraction running in background',
-    'status_url' => '/deploy_status.json',
-], JSON_PRETTY_PRINT);
-
-header('Content-Type: application/json; charset=utf-8');
-header('Connection: close');
-header('Content-Length: ' . strlen($response));
-echo $response;
-
-if (ob_get_level() > 0) {
-    ob_end_flush();
-}
-@flush();
-if (function_exists('fastcgi_finish_request')) {
-    fastcgi_finish_request();
-}
-
-// =========================================================================
-// BACKGROUND WORK STARTS HERE
-// =========================================================================
-$startTime = microtime(true);
-$log = ["Background worker initiated at " . date('H:i:s')];
-
-function updateStatus($statusFile, $status, $log, $extra = []) {
-    $data = array_merge([
-        'status' => $status,
-        'updated_at' => date('c'),
-        'log' => $log,
-    ], $extra);
-    @file_put_contents($statusFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-}
-
-// 4. Extract deploy.zip
+// 3. Extract deploy.zip
 $extracted = false;
 $extractMethod = 'none';
 
@@ -91,8 +51,6 @@ if (function_exists('exec')) {
         $extracted = true;
         $extractMethod = 'exec(unzip)';
         $log[] = "Extracted via exec(unzip) successfully";
-    } else {
-        $log[] = "exec(unzip) returned code $ret: " . implode(" ", $out);
     }
 }
 
@@ -117,29 +75,34 @@ if (!$extracted && class_exists('ZipArchive')) {
             $log[] = "Extracted via ZipArchive successfully";
         }
     } else {
-        $log[] = "ZipArchive::open failed with error code $res";
+        $log[] = "ZipArchive::open failed with code $res";
     }
 }
 
 if (!$extracted) {
-    updateStatus($statusFile, 'failed', $log, ['error' => 'Failed to extract deploy.zip']);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => false,
+        'error' => 'Failed to extract deploy.zip',
+        'log' => $log,
+    ], JSON_PRETTY_PRINT);
     exit;
 }
 
 $extractDuration = round(microtime(true) - $startTime, 2);
 $log[] = "Extraction finished in {$extractDuration}s using $extractMethod";
-updateStatus($statusFile, 'optimizing', $log, ['extract_duration' => $extractDuration]);
 
-// 5. Cleanup temporary deploy files
+// 4. Cleanup temporary deploy files
 @unlink($zipFile);
 @unlink($targetDir . '/extract.php');
 @unlink($targetDir . '/public/extract.php');
+@unlink($targetDir . '/public/deploy_status.json');
 if (file_exists(__FILE__)) {
     @unlink(__FILE__);
 }
 $log[] = "Self-cleaned deploy.zip and extract.php";
 
-// 6. Ensure Storage Directories & Symlinks
+// 5. Ensure Storage Directories & Symlinks
 @mkdir($targetDir . '/storage/framework/cache/data', 0775, true);
 @mkdir($targetDir . '/storage/framework/sessions', 0775, true);
 @mkdir($targetDir . '/storage/framework/views', 0775, true);
@@ -150,7 +113,7 @@ if (!file_exists($targetDir . '/public/storage') && file_exists($targetDir . '/s
     @symlink($targetDir . '/storage/app/public', $targetDir . '/public/storage');
 }
 
-// 7. Ensure .env exists with APP_KEY
+// 6. Ensure .env exists with APP_KEY
 if (!file_exists($targetDir . '/.env') && file_exists($targetDir . '/.env.example')) {
     @copy($targetDir . '/.env.example', $targetDir . '/.env');
     $log[] = "Created .env from .env.example";
@@ -166,7 +129,7 @@ if (file_exists($targetDir . '/.env')) {
     }
 }
 
-// 8. Bootstrap Laravel and Run Artisan
+// 7. Bootstrap Laravel and Run Artisan
 $artisanResults = [];
 try {
     if (file_exists($targetDir . '/vendor/autoload.php') && file_exists($targetDir . '/bootstrap/app.php')) {
@@ -175,9 +138,12 @@ try {
         $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
         $kernel->bootstrap();
 
-        // Baseline migration sync for pre-existing tables if DB connects
+        // Check DB connection & run migrations
         try {
             Illuminate\Support\Facades\DB::connection()->getPdo();
+            $log[] = "Database connected successfully";
+
+            // Baseline migration sync for pre-existing tables
             if (Illuminate\Support\Facades\Schema::hasTable('migrations')) {
                 $existingMigrations = [
                     '2023_10_30_130210_create_user_merter_infos_table',
@@ -241,10 +207,13 @@ try {
 $totalDuration = round(microtime(true) - $startTime, 2);
 $log[] = "Deployment finished in {$totalDuration}s";
 
-updateStatus($statusFile, 'complete', $log, [
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode([
     'success' => true,
     'method' => $extractMethod,
     'extract_duration' => $extractDuration,
     'total_duration' => $totalDuration,
     'artisan' => $artisanResults,
-]);
+    'log' => $log,
+    'timestamp' => date('c'),
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
