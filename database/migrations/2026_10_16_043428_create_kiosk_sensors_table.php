@@ -14,7 +14,19 @@ return new class extends Migration
         if (! Schema::hasTable('kiosk_sensors')) {
             Schema::create('kiosk_sensors', function (Blueprint $table) {
                 $table->id();
-                $table->string('kiosk_id');
+
+                $isBigInt = true;
+                if (Schema::hasTable('kiosks')) {
+                    $type = Schema::getColumnType('kiosks', 'id');
+                    $isBigInt = in_array(strtolower($type), ['bigint', 'integer', 'int']);
+                }
+
+                if ($isBigInt) {
+                    $table->unsignedBigInteger('kiosk_id');
+                } else {
+                    $table->string('kiosk_id');
+                }
+
                 $table->foreign('kiosk_id')->references('id')->on('kiosks')->onDelete('cascade');
                 $table->string('sensor_code', 50); // เช่น ULTRASONIC_BIN, IR_BOTTLE, SERVO_DOOR, CAM_AI
                 $table->string('sensor_name', 100); // ชื่อแสดงผล เช่น เซ็นเซอร์ถังขยะเต็ม, กล้อง AI

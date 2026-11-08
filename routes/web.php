@@ -643,6 +643,25 @@ Route::prefix('deploy')->group(function () {
             return response(substr($content, -4000), 200, ['Content-Type' => 'text/plain']);
         }
 
+        if ($request->query('action') === 'import_sql') {
+            try {
+                \Illuminate\Support\Facades\Artisan::call('pios:import-sql', [
+                    '--force' => true,
+                ]);
+                $output = \Illuminate\Support\Facades\Artisan::output();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'SQL dump imported successfully',
+                    'output' => trim($output),
+                ]);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Import failed: ' . $e->getMessage(),
+                ], 500);
+            }
+        }
+
         try {
             $details = [];
 

@@ -29,6 +29,7 @@
 *.tar.gz
 *.sql
 !docs/database.sql
+!database/data.sql
 !docker/mysql/initdb.d/00-init-grants.sql
 *.sql.gz
 *.bak
