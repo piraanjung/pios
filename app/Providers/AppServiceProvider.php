@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Models\Admin\Organization;
 use Illuminate\Pagination\Paginator;
 
@@ -43,6 +44,11 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') !== 'local') {
             URL::forceScheme('https');
         }
+
+        // Implicitly grant "Super Admin" role all permissions
+        Gate::before(function ($user, $ability) {
+            return method_exists($user, 'hasRole') && $user->hasRole('Super Admin') ? true : null;
+        });
 
         // Standard API Response Macros (ADR-0008)
         \Illuminate\Support\Facades\Response::macro('apiSuccess', function ($data = null, string $message = 'ดำเนินการสำเร็จ', int $status = 200, array $meta = []) {

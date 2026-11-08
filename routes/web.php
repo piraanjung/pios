@@ -688,7 +688,7 @@ Route::prefix('deploy')->group(function () {
                 $details['roles_seed'] = trim(\Illuminate\Support\Facades\Artisan::output());
             }
 
-            if (\Illuminate\Support\Facades\Schema::hasTable('users') && \Illuminate\Support\Facades\DB::table('users')->where('username', 'superadmin')->count() === 0) {
+            if (\Illuminate\Support\Facades\Schema::hasTable('users')) {
                 \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\AdminSeeder', '--force' => true]);
                 $details['admin_seed'] = trim(\Illuminate\Support\Facades\Artisan::output());
             }

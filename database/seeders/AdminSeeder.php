@@ -42,6 +42,9 @@ class AdminSeeder extends Seeder
     if (!$superadmin->hasRole('Super Admin')) {
       $superadmin->assignRole(['Super Admin']);
     }
+    if (!$superadmin->hasRole('Admin')) {
+      $superadmin->assignRole(['Admin']);
+    }
 
     $swadmin1 = User::firstOrCreate(
       ['username' => 'swadmin1'],

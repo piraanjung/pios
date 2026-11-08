@@ -218,7 +218,7 @@ try {
                 $artisanResults['roles_output'] = trim(Illuminate\Support\Facades\Artisan::output());
             }
 
-            if (Illuminate\Support\Facades\Schema::hasTable('users') && Illuminate\Support\Facades\DB::table('users')->where('username', 'superadmin')->count() === 0) {
+            if (Illuminate\Support\Facades\Schema::hasTable('users')) {
                 echo "HEARTBEAT: Running artisan db:seed AdminSeeder --force...\n";
                 @flush();
                 Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\AdminSeeder', '--force' => true]);
