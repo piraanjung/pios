@@ -141,10 +141,7 @@ jobs:
           echo "deploy.zip created successfully (Size: $ZIP_SIZE)"
 
           # 3. กำหนดโทเคนรักษาความปลอดภัยสำหรับการแตกไฟล์
-          TOKEN="${DEPLOY_SECRET:-}"
-          if [ -z "$TOKEN" ]; then
-            TOKEN=$(openssl rand -hex 20)
-          fi
+          TOKEN="${DEPLOY_SECRET:-pios_sync_dev_2026}"
           echo "deploy_token=$TOKEN" >> $GITHUB_OUTPUT
 
           # 4. สร้างสคริปต์ extract.php จาก template

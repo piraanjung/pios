@@ -4,7 +4,7 @@
  */
 @set_time_limit(300);
 @ini_set('memory_limit', '512M');
-@ini_set('display_errors', '0');
+@ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
 $startTime = microtime(true);
@@ -39,27 +39,34 @@ if (!file_exists($zipFile)) {
 $zipSizeMb = round(filesize($zipFile) / (1024 * 1024), 2);
 $log[] = "Found deploy.zip ($zipSizeMb MB) in $targetDir";
 
-// 3. Extract deploy.zip
+// 3. Fast Extract: Try native unzip first, then ZipArchive
 $extracted = false;
 $extractMethod = 'none';
 
-if (function_exists('exec')) {
+// Test exec / shell_exec
+$disabledFunctions = explode(',', (string)ini_get('disable_functions'));
+$disabledFunctions = array_map('trim', $disabledFunctions);
+$execAllowed = function_exists('exec') && !in_array('exec', $disabledFunctions, true);
+
+if ($execAllowed) {
     $out = [];
     $ret = -1;
     @exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1', $out, $ret);
+    $log[] = "exec(unzip) return code: $ret, out: " . implode(" ", $out);
     if ($ret === 0 && file_exists($targetDir . '/artisan')) {
         $extracted = true;
         $extractMethod = 'exec(unzip)';
-        $log[] = "Extracted via exec(unzip) successfully";
     }
+} else {
+    $log[] = "exec() is disabled or unavailable";
 }
 
-if (!$extracted && function_exists('shell_exec')) {
+if (!$extracted && function_exists('shell_exec') && !in_array('shell_exec', $disabledFunctions, true)) {
     $out = @shell_exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1');
+    $log[] = "shell_exec(unzip) out: " . trim((string)$out);
     if (file_exists($targetDir . '/artisan')) {
         $extracted = true;
         $extractMethod = 'shell_exec(unzip)';
-        $log[] = "Extracted via shell_exec(unzip) successfully";
     }
 }
 
@@ -67,12 +74,17 @@ if (!$extracted && class_exists('ZipArchive')) {
     $zip = new ZipArchive();
     $res = $zip->open($zipFile);
     if ($res === true) {
-        $zip->extractTo($targetDir);
+        $numFiles = $zip->numFiles;
+        $log[] = "ZipArchive opened archive with $numFiles files";
+        
+        // Extract all files
+        $extractResult = @$zip->extractTo($targetDir);
         $zip->close();
-        if (file_exists($targetDir . '/artisan')) {
+        
+        $log[] = "ZipArchive::extractTo result: " . ($extractResult ? "true" : "false");
+        if ($extractResult && file_exists($targetDir . '/artisan')) {
             $extracted = true;
             $extractMethod = 'ZipArchive';
-            $log[] = "Extracted via ZipArchive successfully";
         }
     } else {
         $log[] = "ZipArchive::open failed with code $res";
@@ -96,7 +108,6 @@ $log[] = "Extraction finished in {$extractDuration}s using $extractMethod";
 @unlink($zipFile);
 @unlink($targetDir . '/extract.php');
 @unlink($targetDir . '/public/extract.php');
-@unlink($targetDir . '/public/deploy_status.json');
 if (file_exists(__FILE__)) {
     @unlink(__FILE__);
 }
@@ -129,7 +140,13 @@ if (file_exists($targetDir . '/.env')) {
     }
 }
 
-// 7. Bootstrap Laravel and Run Artisan
+// 7. Clear APCu / OPcache if present
+if (function_exists('opcache_reset')) {
+    @opcache_reset();
+    $log[] = "OPcache reset";
+}
+
+// 8. Bootstrap Laravel and Run Artisan
 $artisanResults = [];
 try {
     if (file_exists($targetDir . '/vendor/autoload.php') && file_exists($targetDir . '/bootstrap/app.php')) {
