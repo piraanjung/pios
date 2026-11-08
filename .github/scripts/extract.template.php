@@ -115,16 +115,7 @@ $log[] = "Extraction finished in {$extractDuration}s using $extractMethod";
 echo "HEARTBEAT: Extraction complete in {$extractDuration}s\n";
 @flush();
 
-// 4. Cleanup temporary deploy files
-@unlink($zipFile);
-@unlink($targetDir . '/extract.php');
-@unlink($targetDir . '/public/extract.php');
-if (file_exists(__FILE__)) {
-    @unlink(__FILE__);
-}
-$log[] = "Self-cleaned deploy.zip and extract.php";
-
-// 5. Ensure Storage Directories & Symlinks
+// 4. Ensure Storage Directories & Symlinks
 @mkdir($targetDir . '/storage/framework/cache/data', 0775, true);
 @mkdir($targetDir . '/storage/framework/sessions', 0775, true);
 @mkdir($targetDir . '/storage/framework/views', 0775, true);
@@ -135,7 +126,7 @@ if (!file_exists($targetDir . '/public/storage') && file_exists($targetDir . '/s
     @symlink($targetDir . '/storage/app/public', $targetDir . '/public/storage');
 }
 
-// 6. Ensure .env exists with APP_KEY
+// 5. Ensure .env exists with APP_KEY
 if (!file_exists($targetDir . '/.env') && file_exists($targetDir . '/.env.example')) {
     @copy($targetDir . '/.env.example', $targetDir . '/.env');
     $log[] = "Created .env from .env.example";
@@ -151,13 +142,13 @@ if (file_exists($targetDir . '/.env')) {
     }
 }
 
-// 7. Clear APCu / OPcache if present
+// 6. Clear APCu / OPcache if present
 if (function_exists('opcache_reset')) {
     @opcache_reset();
     $log[] = "OPcache reset";
 }
 
-// 8. Bootstrap Laravel and Run Artisan
+// 7. Bootstrap Laravel and Run Artisan
 $artisanResults = [];
 try {
     if (file_exists($targetDir . '/vendor/autoload.php') && file_exists($targetDir . '/bootstrap/app.php')) {
@@ -219,11 +210,11 @@ try {
             Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             $artisanResults['migrate_output'] = trim(Illuminate\Support\Facades\Artisan::output());
 
-            // Run seeders if users table is empty
-            if (Illuminate\Support\Facades\Schema::hasTable('users') && Illuminate\Support\Facades\DB::table('users')->count() === 0) {
-                echo "HEARTBEAT: Running artisan db:seed --force...\n";
+            // Run seeders if users table has no superadmin
+            if (Illuminate\Support\Facades\Schema::hasTable('users') && Illuminate\Support\Facades\DB::table('users')->where('username', 'superadmin')->count() === 0) {
+                echo "HEARTBEAT: Running artisan db:seed AdminSeeder --force...\n";
                 @flush();
-                Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+                Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\AdminSeeder', '--force' => true]);
                 $artisanResults['seed_output'] = trim(Illuminate\Support\Facades\Artisan::output());
             }
         } catch (\Throwable $mEx) {
@@ -243,6 +234,15 @@ try {
 } catch (\Throwable $e) {
     $artisanResults['bootstrap_error'] = $e->getMessage();
 }
+
+// 8. Self-cleanup temporary deploy files
+@unlink($zipFile);
+@unlink($targetDir . '/extract.php');
+@unlink($targetDir . '/public/extract.php');
+if (file_exists(__FILE__)) {
+    @unlink(__FILE__);
+}
+$log[] = "Self-cleaned deploy.zip and extract.php";
 
 $totalDuration = round(microtime(true) - $startTime, 2);
 $log[] = "Deployment finished in {$totalDuration}s";
