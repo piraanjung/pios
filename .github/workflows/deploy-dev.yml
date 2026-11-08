@@ -13,7 +13,7 @@ on:
 
 concurrency:
   group: deploy-dev-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # =========================================================================
@@ -57,10 +57,10 @@ jobs:
         run: php artisan test
 
   # =========================================================================
-  # 2. CD BUILD & DEPLOY: คอมไพล์โปรเจกต์และอัปโหลดไปยัง z.com cPanel
+  # 2. CD BUILD & FAST ZIP DEPLOY: บิลด์ แพ็กเกจ ZIP และแตกไฟล์ผ่าน Webhook
   # =========================================================================
   deploy:
-    name: "2. Build & Deploy to z.com cPanel"
+    name: "2. Build & Fast Deploy to z.com cPanel"
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -89,14 +89,9 @@ jobs:
               exit 1
           fi
 
-          # แปลง path /home/user/public_html/... ให้เป็น relative path สำหรับ cPanel FTP (public_html/...)
-          FTP_PATH=$(echo "$DEPLOY_PATH" | sed -E 's|^/home/[^/]+/||' | sed -E 's|^/||')
-
           echo "deploy_path=$DEPLOY_PATH" >> $GITHUB_OUTPUT
-          echo "ftp_path=$FTP_PATH" >> $GITHUB_OUTPUT
           echo "target_key=$TARGET_KEY" >> $GITHUB_OUTPUT
           echo "Filesystem path: $DEPLOY_PATH"
-          echo "FTP relative path: $FTP_PATH"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -127,43 +122,108 @@ jobs:
       - name: Build Front-end Assets
         run: npm run build
 
-      - name: Prepare Storage and Cache Folders for Deployment
-        run: |
-          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
-          touch storage/framework/cache/data/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep bootstrap/cache/.gitkeep public/uploads/.gitkeep
-
-      - name: Deploy Code via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.DEV_FTP_HOST || secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_FTP_USER || secrets.DEV_SSH_USER }}
-          password: ${{ secrets.DEV_FTP_PASSWORD }}
-          port: ${{ secrets.DEV_FTP_PORT || 21 }}
-          protocol: ftp
-          server-dir: ${{ secrets.DEV_FTP_SERVER_DIR || '/' }}
-          dry-run: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/.env*
-            **/node_modules/**
-            **/tests/**
-            docs/database.sql
-            repomix-output.xml
-            **/.DS_Store
-
-      - name: Trigger Post-Deploy Sync & Optimization via Webhook
+      - name: Package Application into Fast Deploy ZIP
+        id: packager
         env:
           DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
         run: |
-          TARGET_KEY="${{ steps.target.outputs.target_key }}"
-          DOMAIN="${TARGET_KEY}.z25890-fg43st.ps10.zwhhosting.com"
-          if [ -n "$DEPLOY_SECRET" ]; then
-            echo "Invoking deploy sync endpoint on https://${DOMAIN}/deploy/sync ..."
-            RESPONSE=$(curl -k -s "https://${DOMAIN}/deploy/sync?token=${DEPLOY_SECRET}" || true)
-            echo "Sync Response: $RESPONSE"
+          # 1. สร้างไดเรกทอรีพื้นฐานของ storage ให้พร้อม
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
+          touch storage/framework/cache/data/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep bootstrap/cache/.gitkeep public/uploads/.gitkeep
+
+          # 2. บีบอัดไฟล์โปรเจกต์ทั้งหมด (ยกเว้น .git, tests, node_modules)
+          echo "Packaging project into deploy.zip..."
+          zip -q -r deploy.zip \
+            app bootstrap config database public resources routes storage vendor artisan composer.json composer.lock .htaccess \
+            -x "*.git*" "*/.git/*" "*node_modules*" "*/tests/*" "*.DS_Store" "docs/database.sql" "repomix-output.xml"
+
+          ZIP_SIZE=$(du -h deploy.zip | cut -f1)
+          echo "deploy.zip created successfully (Size: $ZIP_SIZE)"
+
+          # 3. กำหนดโทเคนรักษาความปลอดภัยสำหรับการแตกไฟล์
+          TOKEN="${DEPLOY_SECRET:-}"
+          if [ -z "$TOKEN" ]; then
+            TOKEN=$(openssl rand -hex 20)
+          fi
+          echo "deploy_token=$TOKEN" >> $GITHUB_OUTPUT
+
+          # 4. สร้างสคริปต์ extract.php จาก template
+          sed "s/TOKEN_PLACEHOLDER/${TOKEN}/g" .github/scripts/extract.template.php > extract.php
+          echo "extract.php generated with secure one-time token."
+
+      - name: Upload Fast Deploy Package via FTP
+        env:
+          DEV_FTP_HOST: ${{ secrets.DEV_FTP_HOST || secrets.DEV_SSH_HOST }}
+          DEV_FTP_USER: ${{ secrets.DEV_FTP_USER || secrets.DEV_SSH_USER }}
+          DEV_FTP_PASSWORD: ${{ secrets.DEV_FTP_PASSWORD }}
+          DEV_FTP_PORT: ${{ secrets.DEV_FTP_PORT || 21 }}
+          DEV_FTP_SERVER_DIR: ${{ secrets.DEV_FTP_SERVER_DIR || '' }}
+        run: |
+          SERVER_DIR="${DEV_FTP_SERVER_DIR}"
+          if [ -n "$SERVER_DIR" ] && [ "$SERVER_DIR" != "/" ]; then
+              SERVER_DIR="${SERVER_DIR#/}"
+              SERVER_DIR="${SERVER_DIR%/}/"
           else
-            echo "Notice: DEPLOY_SECRET is not configured in GitHub Secrets. You can trigger migrations manually in cPanel Terminal via: php artisan migrate --force"
+              SERVER_DIR=""
           fi
 
+          echo "Target FTP Host: $DEV_FTP_HOST:$DEV_FTP_PORT"
+          echo "Target FTP Dir: /${SERVER_DIR}"
+
+          echo "Uploading deploy.zip (~35 MB)..."
+          curl --fail --retry 3 --retry-delay 2 --ftp-pasv --ftp-create-dirs \
+            -T deploy.zip \
+            -u "${DEV_FTP_USER}:${DEV_FTP_PASSWORD}" \
+            "ftp://${DEV_FTP_HOST}:${DEV_FTP_PORT}/${SERVER_DIR}deploy.zip"
+
+          echo "Uploading extract.php to root..."
+          curl --fail --retry 3 --retry-delay 2 --ftp-pasv --ftp-create-dirs \
+            -T extract.php \
+            -u "${DEV_FTP_USER}:${DEV_FTP_PASSWORD}" \
+            "ftp://${DEV_FTP_HOST}:${DEV_FTP_PORT}/${SERVER_DIR}extract.php"
+
+          echo "Uploading extract.php to public/..."
+          curl --fail --retry 3 --retry-delay 2 --ftp-pasv --ftp-create-dirs \
+            -T extract.php \
+            -u "${DEV_FTP_USER}:${DEV_FTP_PASSWORD}" \
+            "ftp://${DEV_FTP_HOST}:${DEV_FTP_PORT}/${SERVER_DIR}public/extract.php" || true
+
+          echo "Upload complete!"
+
+      - name: Trigger Webhook to Extract and Finalize Deployment
+        env:
+          DEPLOY_TOKEN: ${{ steps.packager.outputs.deploy_token }}
+        run: |
+          TARGET_KEY="${{ steps.target.outputs.target_key }}"
+          DOMAIN="${TARGET_KEY}.z25890-fg43st.ps10.zwhhosting.com"
+
+          echo "Triggering extractor webhook on https://${DOMAIN} ..."
+
+          # ทดสอบเรียก extract.php จาก root ก่อน หากได้ 404 ให้เรียก public/extract.php
+          HTTP_CODE=$(curl -k -s -o response.json -w "%{http_code}" "https://${DOMAIN}/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Root extract.php returned HTTP $HTTP_CODE, trying public/extract.php..."
+            HTTP_CODE=$(curl -k -s -o response.json -w "%{http_code}" "https://${DOMAIN}/public/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
+          fi
+
+          echo "Webhook Response (HTTP $HTTP_CODE):"
+          cat response.json || true
+          echo ""
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Extraction webhook failed with HTTP status $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Verify Live Application Endpoint
+        run: |
+          TARGET_KEY="${{ steps.target.outputs.target_key }}"
+          DOMAIN="${TARGET_KEY}.z25890-fg43st.ps10.zwhhosting.com"
+          echo "Verifying live site https://${DOMAIN} ..."
+          STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" "https://${DOMAIN}" || echo "000")
+          echo "Live site HTTP status: $STATUS"
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
+            echo "Deployment verified successfully! (HTTP $STATUS)"
+          else
+            echo "Notice: Site returned HTTP $STATUS (Verify Laravel .env database credentials if necessary)"
+          fi
