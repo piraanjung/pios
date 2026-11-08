@@ -131,11 +131,11 @@ jobs:
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
           touch storage/framework/cache/data/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep bootstrap/cache/.gitkeep public/uploads/.gitkeep
 
-          # 2. บีบอัดไฟล์โปรเจกต์ทั้งหมด (ยกเว้น .git, tests, node_modules)
+          # 2. บีบอัดไฟล์โปรเจกต์ทั้งหมด (ยกเว้น .git, tests, node_modules, sample media)
           echo "Packaging project into deploy.zip..."
           zip -q -r deploy.zip \
             app bootstrap config database public resources routes storage vendor artisan composer.json composer.lock .htaccess \
-            -x "*.git*" "*/.git/*" "*node_modules*" "*/tests/*" "*/Tests/*" "*/.github/*" "*.DS_Store" "docs/database.sql" "repomix-output.xml"
+            -x "*.git*" "*/.git/*" "*node_modules*" "*/tests/*" "*/Tests/*" "*/.github/*" "*.DS_Store" "docs/database.sql" "repomix-output.xml" "public/videos/*" "public/meals/*"
 
           ZIP_SIZE=$(du -h deploy.zip | cut -f1)
           echo "deploy.zip created successfully (Size: $ZIP_SIZE)"
@@ -170,7 +170,7 @@ jobs:
           echo "Target FTP Host: $DEV_FTP_HOST:$DEV_FTP_PORT"
           echo "Target FTP Dir: /${SERVER_DIR}"
 
-          echo "Uploading deploy.zip (~35 MB)..."
+          echo "Uploading deploy.zip (~20 MB)..."
           curl --fail --retry 3 --retry-delay 2 --ftp-pasv --ftp-create-dirs \
             -T deploy.zip \
             -u "${DEV_FTP_USER}:${DEV_FTP_PASSWORD}" \
@@ -199,30 +199,57 @@ jobs:
 
           echo "Triggering extractor webhook on https://${DOMAIN} ..."
 
-          # ทดสอบเรียก extract.php จาก root ก่อน หากได้ 404 ให้เรียก public/extract.php
-          HTTP_CODE=$(curl -k -s --max-time 180 -o response.json -w "%{http_code}" "https://${DOMAIN}/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
+          # 1. Trigger extraction webhook (returns immediate ACK)
+          HTTP_CODE=$(curl -k -s --max-time 30 -o trigger.json -w "%{http_code}" "https://${DOMAIN}/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
           if [ "$HTTP_CODE" != "200" ]; then
             echo "Root extract.php returned HTTP $HTTP_CODE, trying public/extract.php..."
-            HTTP_CODE=$(curl -k -s --max-time 180 -o response.json -w "%{http_code}" "https://${DOMAIN}/public/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
+            HTTP_CODE=$(curl -k -s --max-time 30 -o trigger.json -w "%{http_code}" "https://${DOMAIN}/public/extract.php?token=${DEPLOY_TOKEN}" || echo "000")
           fi
 
-          echo "Webhook Response (HTTP $HTTP_CODE):"
-          cat response.json || true
+          echo "Trigger Response (HTTP $HTTP_CODE):"
+          cat trigger.json || true
           echo ""
 
-          SUCCESS=$(python3 -c "
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Triggering extraction webhook failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+          # 2. Poll deploy_status.json until completion (up to 180s)
+          echo "Polling deployment status on https://${DOMAIN}/deploy_status.json ..."
+          MAX_ATTEMPTS=36
+          ATTEMPT=0
+          FINAL_STATUS="pending"
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT+1))
+            sleep 5
+            STATUS_JSON=$(curl -k -s "https://${DOMAIN}/deploy_status.json" || echo "{}")
+            CURRENT_STATUS=$(python3 -c "
           import json, sys
           try:
-              with open('response.json') as f:
-                  data = json.load(f)
-              print('true' if data.get('success') else 'false')
-          except Exception as e:
-              print('error: ' + str(e))
+              data = json.loads('''$STATUS_JSON''')
+              print(data.get('status', 'unknown'))
+          except:
+              print('parsing_error')
           ")
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Status is '$CURRENT_STATUS'"
 
-          echo "Extraction Success Status: $SUCCESS"
-          if [ "$SUCCESS" != "true" ]; then
-            echo "::error::Extraction webhook did not succeed."
+            if [ "$CURRENT_STATUS" = "complete" ]; then
+              FINAL_STATUS="complete"
+              echo "Deployment completed successfully!"
+              echo "$STATUS_JSON"
+              break
+            elif [ "$CURRENT_STATUS" = "failed" ]; then
+              FINAL_STATUS="failed"
+              echo "::error::Deployment failed on server:"
+              echo "$STATUS_JSON"
+              exit 1
+            fi
+          done
+
+          if [ "$FINAL_STATUS" != "complete" ]; then
+            echo "::error::Deployment did not complete within the timeout window."
             exit 1
           fi
 
