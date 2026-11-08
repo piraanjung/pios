@@ -24,10 +24,6 @@ class AppServiceProvider extends ServiceProvider
             require_once $helperFile;
         }
 
-        if (env(key: 'APP_ENV') === 'local' && request()->server(key: 'HTTP_X_FORWARDED_PROTO') === 'https') {
-            URL::forceScheme(scheme: 'https');
-        }
-
         // Spatie Permission v5/v6 forward compatibility aliases
         if (!class_exists('\Spatie\Permission\Middleware\RoleMiddleware') && class_exists('\Spatie\Permission\Middlewares\RoleMiddleware')) {
             class_alias('\Spatie\Permission\Middlewares\RoleMiddleware', '\Spatie\Permission\Middleware\RoleMiddleware');

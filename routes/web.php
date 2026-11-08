@@ -683,9 +683,14 @@ Route::prefix('deploy')->group(function () {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             $details['migrate'] = trim(\Illuminate\Support\Facades\Artisan::output());
 
-            if (\Illuminate\Support\Facades\Schema::hasTable('users') && \Illuminate\Support\Facades\DB::table('users')->count() === 0) {
-                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-                $details['db_seed'] = trim(\Illuminate\Support\Facades\Artisan::output());
+            if (\Illuminate\Support\Facades\Schema::hasTable('roles')) {
+                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesSeeder', '--force' => true]);
+                $details['roles_seed'] = trim(\Illuminate\Support\Facades\Artisan::output());
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('users') && \Illuminate\Support\Facades\DB::table('users')->where('username', 'superadmin')->count() === 0) {
+                \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\AdminSeeder', '--force' => true]);
+                $details['admin_seed'] = trim(\Illuminate\Support\Facades\Artisan::output());
             }
 
             \Illuminate\Support\Facades\Artisan::call('optimize:clear');

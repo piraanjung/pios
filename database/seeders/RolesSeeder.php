@@ -15,9 +15,15 @@ class RolesSeeder extends Seeder
      */
     public function run()
     {
-        $roles =['Super Admin', 'Admin', 'Tabwater Header', 'Tabwater Staff', 
-                'Finance Header', 'Finance Staff', "User"];
-        foreach($roles as $role){
+        $roles = [
+            'Super Admin', 'super admin', 'Admin', 'admin', 'Staff', 'staff', 'User', 'user',
+            'Tabwater Header', 'Tabwater Staff', 'tabwater staff', 'Tabwater User',
+            'Finance Header', 'Finance Staff', 'finance staff', 'finance',
+            'Recycle Bank Staff', 'Recycle Bank User',
+            'Food Waste Staff', 'FoodWaste Staff', 'Food Waste User',
+            'Annual Trash Staff', 'Annual Staff', 'Annual Bin User', 'Annual Trash User',
+        ];
+        foreach ($roles as $role) {
             Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
         }
     }

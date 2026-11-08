@@ -210,7 +210,14 @@ try {
             Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             $artisanResults['migrate_output'] = trim(Illuminate\Support\Facades\Artisan::output());
 
-            // Run seeders if users table has no superadmin
+            // Run seeders for essential roles and admin
+            if (Illuminate\Support\Facades\Schema::hasTable('roles')) {
+                echo "HEARTBEAT: Running artisan db:seed RolesSeeder --force...\n";
+                @flush();
+                Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesSeeder', '--force' => true]);
+                $artisanResults['roles_output'] = trim(Illuminate\Support\Facades\Artisan::output());
+            }
+
             if (Illuminate\Support\Facades\Schema::hasTable('users') && Illuminate\Support\Facades\DB::table('users')->where('username', 'superadmin')->count() === 0) {
                 echo "HEARTBEAT: Running artisan db:seed AdminSeeder --force...\n";
                 @flush();
