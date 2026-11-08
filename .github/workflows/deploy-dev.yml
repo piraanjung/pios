@@ -225,13 +225,18 @@ jobs:
             exit 1
           fi
 
-      - name: Verify Live Application Endpoint
+      - name: Verify Live Application Endpoint and Trigger Migration Sync
         run: |
           TARGET_KEY="${{ steps.target.outputs.target_key }}"
           DOMAIN="${TARGET_KEY}.z25890-fg43st.ps10.zwhhosting.com"
+
+          echo "Triggering database migration sync on https://${DOMAIN}/deploy/sync ..."
+          SYNC_RES=$(curl -k -s "https://${DOMAIN}/deploy/sync?token=pios_sync_dev_2026" || echo "{}")
+          echo "Sync Response: $SYNC_RES"
+
           echo "Verifying live site https://${DOMAIN} ..."
-          STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" "https://${DOMAIN}" || echo "000")
-          echo "Live site HTTP status: $STATUS"
+          STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" "https://${DOMAIN}/login" || echo "000")
+          echo "Live login HTTP status: $STATUS"
           if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
             echo "Deployment verified successfully! (HTTP $STATUS)"
           else
