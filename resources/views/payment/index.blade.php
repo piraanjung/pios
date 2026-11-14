@@ -246,7 +246,7 @@ tr.selected td {
                                         $invIds = $meter->tw_invoices->pluck('id')->implode('|');
                                     @endphp
 
-                                    <tr class="{{ $meter->cutmeter == 1 ? 'text-cutmeter' : '' }}">
+                                    <tr class="{{ ($meter->cutmeter && $meter->cutmeter->isNotEmpty()) ? 'text-cutmeter' : '' }}">
                                         <td class="text-center">
                                             <input type="checkbox" class="form-check-input main_checkbox" name="datas[]"
                                                 value="{{ $meter->meter_id . '|' . $invIds }}"
@@ -293,7 +293,7 @@ tr.selected td {
                                         </td>
                                         
                                         <td class="text-center">
-                                            @if ($meter->cutmeter == 1)
+                                            @if ($meter->cutmeter && $meter->cutmeter->isNotEmpty())
                                                 <span class="badge bg-gradient-danger">ตัดมิเตอร์</span>
                                             @else
                                                 <span class="badge bg-gradient-warning text-dark">ค้างชำระ</span>

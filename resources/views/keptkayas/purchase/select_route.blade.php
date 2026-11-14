@@ -6,9 +6,11 @@
 
 @extends($layout)
 
-@section('nav-header', 'เลือกเขตรับซื้อขยะ')
+@section('nav-header', 'ธนาคารขยะ')
+@section('route-header', route('keptkayas.dashboard'))
+@section('route-back', route('keptkayas.dashboard'))
 @section('nav-current', 'เลือกเขตรับซื้อ')
-@section('page-topic', 'ออกหน่วยรับซื้อขยะ')
+@section('page-topic', 'ออกหน่วยรับซื้อขยะ - เลือกเขต')
 
 @section('content')
 <div class="container-fluid px-0" style="max-width: 650px; margin: 0 auto;">

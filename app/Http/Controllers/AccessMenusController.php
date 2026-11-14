@@ -28,10 +28,17 @@ class AccessMenusController extends Controller
     {
         $user = User::find(Auth::id());
 
-        $isStaff = $user->hasRole(['Recycle Bank Staff', 'Tabwater Staff', 'Staff']);
+        $isStaff = $user ? $user->hasRole(['Recycle Bank Staff', 'Tabwater Staff', 'Staff']) : false;
+
+        if ($request->get('mode') === 'desktop') {
+            Session::forget('is_mobile');
+        } elseif ($request->get('mode') === 'mobile') {
+            Session::put('is_mobile', true);
+            return redirect()->route('staff_accessmenu');
+        }
 
         // 2. เช็ค Session ก่อนเลย ว่าเคยถูกจำว่าเป็น mobile แล้วหรือยัง?
-        if (Session::get('is_mobile') && $isStaff) {
+        if (Session::get('is_mobile') && $isStaff && $request->get('mode') !== 'desktop') {
             return redirect()->route('staff_accessmenu');
         }
 
@@ -41,7 +48,7 @@ class AccessMenusController extends Controller
             "/(android|avantgo|blackberry|bolt|boost|cello|hiptop|irengin|mobi|mini|mo(bil|si)|ntellect|palm|pda|phone|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|wap|windows ce|xda|xiino)/i",
             $userAgent
         );
-        if ($isStaff && $isMobileDevice) {
+        if ($isStaff && $isMobileDevice && $request->get('mode') !== 'desktop') {
             // *** จำค่าลง Session ไว้เลย ***
             Session::put('is_mobile', true);
 
@@ -49,7 +56,7 @@ class AccessMenusController extends Controller
         }
 
         // --- Logic เดิมสำหรับ Desktop ---
-        $orgInfos = Organization::getOrgName($user->org_id_fk);
+        $orgInfos = $user ? Organization::getOrgName($user->org_id_fk) : null;
         return view('accessmenu', compact('orgInfos'));
     }
     public function dashboard(Request $request)
@@ -58,7 +65,7 @@ class AccessMenusController extends Controller
         $reportCtrl = new ReportsController();
         $org_id = Auth::user()->org_id_fk;
 
-        $tw_user_infos = TwMeterInfos::where('status', 'active')->get();
+        $tw_user_infos = TwMeterInfos::where('status', 'active')->where('org_id_fk', $org_id)->get();
         $user_count_sum = $tw_user_infos->count();
         $subzone_count = 0;
 
@@ -84,7 +91,7 @@ class AccessMenusController extends Controller
         foreach (collect($tw_user_infos)->groupBy('undertake_subzone_id') as $key => $subzone) {
             $subzoneName = Subzone::find($key)->subzone_name ?? 'ไม่ระบุโซน';
             $meterIds = $subzone->pluck('id');
-            $totalWaterUsed = TwInvoice::whereIn('meter_id_fk', $meterIds)->sum('water_used');
+            $totalWaterUsed = TwInvoice::where('org_id_fk', $org_id)->whereIn('meter_id_fk', $meterIds)->sum('water_used');
             $water_subzone_labels[] = $subzoneName;
             $water_subzone_data[] = $totalWaterUsed;
         }
@@ -94,16 +101,16 @@ class AccessMenusController extends Controller
             'data' => $water_subzone_data,
         ];
 
-        $paid_total = TwInvoice::where('status', 'paid')->sum('totalpaid');
-        $vat = TwInvoice::where('status', 'paid')->sum('vat');
+        $paid_total = TwInvoice::where('status', 'paid')->where('org_id_fk', $org_id)->sum('totalpaid');
+        $vat = TwInvoice::where('status', 'paid')->where('org_id_fk', $org_id)->sum('vat');
 
-        $budget_obj = BudgetYear::where('status', 'active')->first();
+        $budget_obj = BudgetYear::where('status', 'active')->where('org_id_fk', $org_id)->first();
         $current_budgetyear = $budget_obj ?: (object)['budgetyear_name' => '-'];
 
         $orgInfos = Organization::getOrgName($org_id);
 
         // ดึงรอบบิลปัจจุบันที่กำลัง Active อยู่ (ดูจากฟังก์ชัน store ของคุณที่เซ็ต status = 'active' ไว้ตอนสร้างรอบบิล)
-        $current_inv_prd = InvoicePeriod::where('status', 'active')->latest('id')->first();
+        $current_inv_prd = InvoicePeriod::where('status', 'active')->where('org_id_fk', $org_id)->latest('id')->first();
         $current_inv_period_id = $current_inv_prd ? $current_inv_prd->id : null;
 
 
@@ -114,7 +121,7 @@ class AccessMenusController extends Controller
 
         foreach ($zones as $zone) {
             $queryBase = DB::table('tw_invoice')
-                ->join('tw_meter_infos', 'tw_invoice.meter_id_fk', '=', 'tw_meter_infos.id')
+                ->join('tw_meter_infos', 'tw_invoice.meter_id_fk', '=', 'tw_meter_infos.meter_id')
                 ->where('tw_meter_infos.undertake_zone_id', $zone->id);
 
             // กรองตามรอบบิลปัจจุบัน (ถ้ามี)
@@ -151,7 +158,7 @@ class AccessMenusController extends Controller
 
         foreach ($subzones as $subzone) {
             $querySubzoneBase = DB::table('tw_invoice')
-                ->join('tw_meter_infos', 'tw_invoice.meter_id_fk', '=', 'tw_meter_infos.id')
+                ->join('tw_meter_infos', 'tw_invoice.meter_id_fk', '=', 'tw_meter_infos.meter_id')
                 ->where('tw_meter_infos.undertake_subzone_id', $subzone->id);
 
             if ($current_inv_period_id) {
@@ -185,7 +192,7 @@ class AccessMenusController extends Controller
 
         foreach ($subzones as $subzone) {
             $queryYtdBase = DB::table('tw_invoice')
-                ->join('tw_meter_infos', 'tw_invoice.meter_id_fk', '=', 'tw_meter_infos.id')
+                ->join('tw_meter_infos', 'tw_invoice.meter_id_fk', '=', 'tw_meter_infos.meter_id')
                 ->where('tw_meter_infos.undertake_subzone_id', $subzone->id);
 
             // ถ้าต้องการดูสะสมทุกรอบบิลที่มีการเปิดใช้งาน สามารถเอาเงื่อนไขช่วงเวลาออก หรือเช็คสถานะภาพรวมได้เลย
@@ -212,6 +219,7 @@ class AccessMenusController extends Controller
 
         $data = $reportCtrl->water_used($request, 'dashboard');
         $water_used_total = isset($water_by_subzone_data['data']) ? collect($water_by_subzone_data['data'])->sum() : 0;
+        $subzone_current_chart = $subzone_payment_chart_data;
 
         return view('dashboard', compact(
             'data',
@@ -226,6 +234,7 @@ class AccessMenusController extends Controller
             'orgInfos',
             'zone_chart_data',
             'subzone_payment_chart_data',
+            'subzone_current_chart',
             'subzone_ytd_chart'
         ));
     }

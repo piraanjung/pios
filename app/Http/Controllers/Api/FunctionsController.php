@@ -15,15 +15,27 @@ class FunctionsController extends Controller
 {
   public static function thaiDateToEngDateFormat($date)
   {
+    if (empty($date)) {
+        return '-';
+    }
     $dateExp = explode("/", $date);
+    if (count($dateExp) < 3) {
+        return '-';
+    }
     $cEyear = intval($dateExp[2]) - 543;
     return $cEyear . "-" . $dateExp[1] . "-" . $dateExp[0];
   }
 
   public function engDateToThaiDateFormat($date)
   {
+    if (empty($date)) {
+        return '-';
+    }
     $dateExp = explode("-", $date);
-    $cEyear = $dateExp[0] + 543;
+    if (count($dateExp) < 3) {
+        return '-';
+    }
+    $cEyear = intval($dateExp[0]) + 543;
     return $dateExp[2] . "/" . $dateExp[1] . "/" . $cEyear;
   }
 

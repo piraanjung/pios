@@ -17,6 +17,7 @@ use App\Models\Tabwater\TwMeterInfos;
 use App\Models\Tabwater\TwMeterType;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Excel;
@@ -175,6 +176,11 @@ public function exportExcel(Request $request)
         try {
             DB::beginTransaction();
 
+            $recordToken = $request->input('meter_record_token');
+            if ($recordToken && Cache::has('meter_record:' . $recordToken)) {
+                return response()->json(Cache::get('meter_record:' . $recordToken), 200);
+            }
+
             $invoiceId = $request->input('invoice_id');
             $currentReading = (int) $request->input('current_reading');
             $recorderId = Auth::id();
@@ -192,6 +198,9 @@ public function exportExcel(Request $request)
 
             // ตรวจสอบสถานะว่าต้องเป็น init เท่านั้น (ป้องกันการกดบันทึกซ้ำ)
             if ($invoice->status !== 'init') {
+                if ($recordToken && Cache::has('meter_record_inv:' . $invoice->id)) {
+                    return response()->json(Cache::get('meter_record_inv:' . $invoice->id), 200);
+                }
                 return response()->json([
                     'code' => 400,
                     'status' => 'error',
@@ -204,12 +213,32 @@ public function exportExcel(Request $request)
                 ->orWhere('id', $invoice->meter_id_fk)
                 ->first();
 
-            if (!$meter) {
+            if (!$meter || empty($invoice->meter_id_fk)) {
                 return response()->json([
-                    'code' => 404,
+                    'code' => 422,
                     'status' => 'error',
-                    'message' => 'ไม่พบข้อมูลมิเตอร์ที่เชื่อมโยงกับใบแจ้งหนี้นี้'
-                ], 404);
+                    'error_code' => 'REQUIRED_DATA_MISSING',
+                    'message' => 'ไม่พบข้อมูลมิเตอร์ที่เชื่อมโยงกับใบแจ้งหนี้นี้ (จำเป็นต้องมี meter_id_fk)',
+                    'workaround' => [
+                        'action' => 'link_member',
+                        'url' => '/tabwater/members',
+                        'label' => 'ไปหน้าผูกข้อมูลสมาชิก'
+                    ]
+                ], 422);
+            }
+
+            if (!$meter->user) {
+                return response()->json([
+                    'code' => 422,
+                    'status' => 'error',
+                    'error_code' => 'REQUIRED_DATA_MISSING',
+                    'message' => 'ไม่พบข้อมูลผู้ใช้น้ำที่ผูกกับมิเตอร์นี้ กรุณาผูกข้อมูลผู้ใช้งานก่อนทำการจดมิเตอร์',
+                    'workaround' => [
+                        'action' => 'link_member',
+                        'url' => '/tabwater/members',
+                        'label' => 'ไปหน้าผูกข้อมูลสมาชิก'
+                    ]
+                ], 422);
             }
 
             // 4. ตรวจสอบและคำนวณหน่วยน้ำที่ใช้ (water_used)
@@ -328,43 +357,47 @@ public function exportExcel(Request $request)
 
             DB::commit();
 
-            $oweLists = $invoice->where('status', 'owe')->get();
+            $oweLists = TwInvoice::where('meter_id_fk', $meter->id)
+                ->where('id', '!=', $invoice->id)
+                ->where('status', 'owe')
+                ->with('invoice_period')
+                ->get();
             $owePaidSum = 0;
             $owes = [];
             foreach ($oweLists as $owe) {
-                $owePaidSum += $owe->totalpaid;
-                $owes[] = ['invoice_period' => $owe->invoice_period->inv_p_name_int, 'totalpaid' => $owe->totalpaid];
+                $owePaidSum += (float) $owe->totalpaid;
+                $owes[] = [
+                    'invoice_period' => $owe->invoice_period?->inv_p_name_int ?? $owe->invoice_period?->inv_p_name ?? '-',
+                    'totalpaid' => (float) $owe->totalpaid,
+                ];
             }
-            $owes[] = ['invoice_period' => '09-69', 'totalpaid' => 100];
-            $owes[] = ['invoice_period' => '08-69', 'totalpaid' => 200];
-            $owePaidSum = 300;
 
-            return response()->json([
+            $responseData = [
                 'code' => 200,
                 'status' => 'success',
                 'message' => 'บันทึกข้อมูลและออกใบแจ้งหนี้เรียบร้อยแล้ว',
                 'data' => [
                     'user'              => [
-                        'name'    => $meter->user->prefix . "" . $meter->user->firstname . " " . $meter->user->lastname,
+                        'name'    => trim(($meter->user?->prefix ?? '') . ($meter->user?->firstname ?? '') . ' ' . ($meter->user?->lastname ?? '')),
                         'address' => $meter->meter_address,
-                        'zone'    => $meter->undertake_zone->zone_name,
+                        'zone'    => $meter->undertake_zone?->zone_name ?? '-',
                         'subname' => $meter->submeter_name,
                     ],
                     'owes'              => $owes,
                     'org'               => [
-                        'name'      => $meter->organization->orgType->name . "" . $meter->organization->org_name,
-                        'address'   => $meter->organization->org_address,
-                        'zone'      => $meter->organization->zones->zone_name,
-                        'tambon'    => $meter->organization->tambons->tambon_name,
-                        'district'  => $meter->organization->districts->district_name,
-                        'province'  => $meter->organization->provinces->province_name,
-                        'phone'     => $meter->organization->org_phone,
-                        'zipcode'   => $meter->organization->org_zipcode,
-                        'logo_img'  => $meter->organization->org_logo_img
+                        'name'      => ($meter->organization?->orgType?->name ?? '') . ($meter->organization?->org_name ?? ''),
+                        'address'   => $meter->organization?->org_address ?? '',
+                        'zone'      => $meter->organization?->zones?->zone_name ?? '',
+                        'tambon'    => $meter->organization?->tambons?->tambon_name ?? '',
+                        'district'  => $meter->organization?->districts?->district_name ?? '',
+                        'province'  => $meter->organization?->provinces?->province_name ?? '',
+                        'phone'     => $meter->organization?->org_phone ?? '',
+                        'zipcode'   => $meter->organization?->org_zipcode ?? '',
+                        'logo_img'  => $meter->organization?->org_logo_img ?? ''
                     ],
                     'owe_paid_sum'      => $owePaidSum,
                     'invoice_id'        => $invoice->id,
-                    'inv_period_name'   => $invoice->invoice_period->inv_p_name,
+                    'inv_period_name'   => $invoice->invoice_period?->inv_p_name ?? '',
                     'meternumber'       => $meter->meternumber,
                     'meter_id'          => $meter->meter_id ?? $meter->id,
                     'lastmeter'         => $lastMeter,
@@ -377,7 +410,14 @@ public function exportExcel(Request $request)
                     'status'            => $invoice->status,
                     'net_paid'          => number_format($totalPaid + $owePaidSum, 2)
                 ]
-            ], 200);
+            ];
+
+            if (!empty($recordToken)) {
+                Cache::put('meter_record:' . $recordToken, $responseData, now()->addHours(6));
+                Cache::put('meter_record_inv:' . $invoice->id, $responseData, now()->addHours(6));
+            }
+
+            return response()->json($responseData, 200);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

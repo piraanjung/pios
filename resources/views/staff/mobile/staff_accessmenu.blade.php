@@ -13,11 +13,34 @@
     <script>
         window.ASSET_URL = "{{ asset('') }}";
         window.API_BASE_URL = "{{ url('/api') }}";
+        @if(Auth::check())
+        window.INITIAL_STAFF_SESSION = {
+            token: "{{ session('_token') }}",
+            user: {
+                id: {{ Auth::id() }},
+                firstname: "{{ Auth::user()->firstname }}",
+                lastname: "{{ Auth::user()->lastname }}",
+                username: "{{ Auth::user()->username }}",
+                org_id_fk: {{ Auth::user()->org_id_fk ?? 'null' }},
+                role: "{{ Auth::user()->role ?? 'staff' }}",
+                prefix: "{{ Auth::user()->prefix ?? '' }}"
+            },
+            org_id: {{ Auth::user()->org_id_fk ?? 'null' }},
+            org_name: "{{ Auth::user()->organization?->org_name ?? '' }}"
+        };
+        @else
+        window.INITIAL_STAFF_SESSION = null;
+        @endif
     </script>
 @endsection
 
 @section('content')
     <div class="mobile-app-shell" id="mobileAppShell">
+
+        <!-- Offline Warning Banner -->
+        <div id="offlineAlertBanner" class="alert alert-warning text-center py-2 px-3 m-0 shadow-sm sticky-top d-none" style="z-index: 1050; font-size: 0.9rem;">
+            <i class="fas fa-wifi-slash me-1"></i> <strong>ไม่มีสัญญาณอินเทอร์เน็ต!</strong> ระบบกำลังทำงานในโหมดออฟไลน์ กรุณาเชื่อมต่อเครือข่ายก่อนทำการบันทึกข้อมูล
+        </div>
 
         <!-- 1. Floating Sidebar Navigation -->
         <div id="appSidebar" class="mobile-sidebar-wrapper is-hidden">
