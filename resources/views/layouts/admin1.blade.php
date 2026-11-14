@@ -20,7 +20,8 @@
     $tabTitle = $menuTitle ?: $pageTitle;
 
     $orgInfos = $orgInfos ?? [];
-    $orgLogo = $orgInfos['org_logo_img'] ?? 'ko_envsogo.png';
+    $rawLogo = $orgInfos['org_logo_img'] ?? 'ko_envsogo.png';
+    $orgLogo = (!empty($rawLogo) && file_exists(public_path('logo/' . $rawLogo))) ? $rawLogo : 'ko_envsogo.png';
     $orgName = trim(($orgInfos['org_short_type_name'] ?? '') . ($orgInfos['org_name'] ?? '')) ?: 'Envsogo';
     $me = Auth::user();
     $meName = trim(($me->firstname ?? '') . ' ' . ($me->lastname ?? '')) ?: ($me->username ?? '');
@@ -82,7 +83,7 @@
             <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
                 aria-hidden="true" id="iconSidenav"></i>
             <a class="navbar-brand m-0" href="{{ route('accessmenu') }}">
-                <img src="{{ asset('logo/' . $orgLogo) }}" class="navbar-brand-img h-100" alt="main_logo">
+                <img src="{{ asset('logo/' . $orgLogo) }}" class="navbar-brand-img h-100" alt="main_logo" onerror="this.onerror=null; this.src='{{ asset('logo/ko_envsogo.png') }}';">
                 <span class="ms-1 font-weight-bold">{{ $orgName }}</span>
             </a>
         </div>

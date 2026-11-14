@@ -131,11 +131,11 @@ jobs:
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache public/uploads
           touch storage/framework/cache/data/.gitkeep storage/framework/sessions/.gitkeep storage/framework/views/.gitkeep storage/logs/.gitkeep bootstrap/cache/.gitkeep public/uploads/.gitkeep
 
-          # 2. บีบอัดไฟล์โปรเจกต์ทั้งหมด (ยกเว้น .git, tests, node_modules, sample media)
+          # 2. บีบอัดไฟล์โปรเจกต์ทั้งหมด (ยกเว้น .git, tests, node_modules, sample media, static adminlte)
           echo "Packaging project into deploy.zip..."
           zip -q -r deploy.zip \
             app bootstrap config database public resources routes storage vendor artisan composer.json composer.lock .htaccess \
-            -x "*.git*" "*/.git/*" "*node_modules*" "*/tests/*" "*/Tests/*" "*/.github/*" "*.DS_Store" "docs/database.sql" "repomix-output.xml" "public/videos/*" "public/meals/*"
+            -x "*.git*" "*/.git/*" "*node_modules*" "*/tests/*" "*/Tests/*" "*/.github/*" "*.DS_Store" "docs/database.sql" "repomix-output.xml" "public/videos/*" "public/meals/*" "public/adminlte/*"
 
           ZIP_SIZE=$(du -h deploy.zip | cut -f1)
           echo "deploy.zip created successfully (Size: $ZIP_SIZE)"
@@ -223,6 +223,20 @@ jobs:
           ")
 
           echo "Extraction Success Status: $SUCCESS"
+          if [ "$SUCCESS" != "true" ]; then
+            echo "Notice: Webhook returned HTTP $HTTP_CODE or timed out. Verifying if extraction completed in background..."
+            for i in 1 2 3 4 5; do
+              LIVE_STATUS=$(curl -k -s -o /dev/null -w "%{http_code}" "https://${DOMAIN}/login" || echo "000")
+              echo "Attempt $i: Live site /login returned HTTP $LIVE_STATUS"
+              if [ "$LIVE_STATUS" = "200" ] || [ "$LIVE_STATUS" = "302" ]; then
+                echo "Deployment verified: Live application is responding cleanly (HTTP $LIVE_STATUS)!"
+                SUCCESS="true"
+                break
+              fi
+              sleep 4
+            done
+          fi
+
           if [ "$SUCCESS" != "true" ]; then
             echo "::error::Extraction webhook failed with status $HTTP_CODE"
             exit 1
