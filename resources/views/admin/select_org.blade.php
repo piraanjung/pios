@@ -35,12 +35,25 @@
                                 @foreach($organizations as $org)
                                 <tr>
                                     <td>
-                                        <div class="d-flex px-2 py-1">
-                                            <div>
-                                                <img src="{{ asset('logo/'.$org->org_logo_img) }}" class="avatar avatar-sm me-3">
+                                        <div class="d-flex px-2 py-1 align-items-center">
+                                            @php
+                                                $logoUrl = $org->getLogoUrl(true);
+                                                $orgInitial = mb_substr(trim($org->org_name ?? 'อ'), 0, 1, 'UTF-8');
+                                            @endphp
+                                            <div class="avatar avatar-sm me-3 border-radius-md bg-white shadow-xs d-flex align-items-center justify-content-center overflow-hidden" 
+                                                 style="width: 36px; height: 36px; min-width: 36px; border: 1px solid rgba(226, 232, 240, 0.8);">
+                                                @if($logoUrl)
+                                                    <img src="{{ $logoUrl }}" 
+                                                         class="w-100 h-100" 
+                                                         alt="{{ $org->org_name }}"
+                                                         style="object-fit: contain;"
+                                                         onerror="this.onerror=null; this.src='{{ asset('logo/ko_envsogo.png') }}';">
+                                                @else
+                                                    <span class="font-weight-bold text-xs text-primary">{{ $orgInitial }}</span>
+                                                @endif
                                             </div>
                                             <div class="d-flex flex-column justify-content-center">
-                                                <h6 class="mb-0 text-sm">{{ $org->org_name }}</h6>
+                                                <h6 class="mb-0 text-sm font-weight-bold text-dark">{{ $org->org_name }}</h6>
                                                 <p class="text-xs text-secondary mb-0">ID: {{ $org->id }}</p>
                                             </div>
                                         </div>

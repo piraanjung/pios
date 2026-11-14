@@ -55,20 +55,36 @@ if (!file_exists($zipFile)) {
 $zipSizeMb = round(filesize($zipFile) / (1024 * 1024), 2);
 $log[] = "Found deploy.zip ($zipSizeMb MB) in $targetDir";
 echo "HEARTBEAT: Found deploy.zip ($zipSizeMb MB). Extracting...\n";
-echo str_repeat(" ", 4096) . "\n";
+echo str_repeat(" ", 65536) . "\n";
 @flush();
 
-// 3. Fast Extract using ZipArchive
+// 3. Fast Extract: Try native system unzip first (10x faster), fallback to ZipArchive
 $extracted = false;
 $extractMethod = 'none';
 
-if (class_exists('ZipArchive')) {
+$disabledFunctions = explode(',', (string)ini_get('disable_functions'));
+$disabledFunctions = array_map('trim', $disabledFunctions);
+
+if (function_exists('exec') && !in_array('exec', $disabledFunctions, true)) {
+    $out = [];
+    $ret = -1;
+    @exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1', $out, $ret);
+    if ($ret === 0 && file_exists($targetDir . '/artisan')) {
+        $extracted = true;
+        $extractMethod = 'exec(unzip)';
+        $log[] = "Native unzip completed successfully";
+    } else {
+        $log[] = "Native unzip exited with code $ret, falling back to ZipArchive";
+    }
+}
+
+if (!$extracted && class_exists('ZipArchive')) {
     $zip = new ZipArchive();
     $res = $zip->open($zipFile);
     if ($res === true) {
         $numFiles = $zip->numFiles;
         $log[] = "ZipArchive opened archive with $numFiles files";
-        echo "HEARTBEAT: Uncompressing $numFiles files...\n";
+        echo "HEARTBEAT: Uncompressing $numFiles files via ZipArchive...\n";
         @flush();
         
         $extractResult = $zip->extractTo($targetDir);
@@ -81,21 +97,6 @@ if (class_exists('ZipArchive')) {
         }
     } else {
         $log[] = "ZipArchive::open failed with code $res";
-    }
-}
-
-// Fallback to exec/shell_exec unzip if needed
-if (!$extracted) {
-    $disabledFunctions = explode(',', (string)ini_get('disable_functions'));
-    $disabledFunctions = array_map('trim', $disabledFunctions);
-    if (function_exists('exec') && !in_array('exec', $disabledFunctions, true)) {
-        $out = [];
-        $ret = -1;
-        @exec('unzip -o -q ' . escapeshellarg($zipFile) . ' -d ' . escapeshellarg($targetDir) . ' 2>&1', $out, $ret);
-        if ($ret === 0 && file_exists($targetDir . '/artisan')) {
-            $extracted = true;
-            $extractMethod = 'exec(unzip)';
-        }
     }
 }
 
@@ -210,15 +211,15 @@ try {
             Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
             $artisanResults['migrate_output'] = trim(Illuminate\Support\Facades\Artisan::output());
 
-            // Run seeders for essential roles and admin
-            if (Illuminate\Support\Facades\Schema::hasTable('roles')) {
+            // Run seeders only if tables are empty
+            if (Illuminate\Support\Facades\Schema::hasTable('roles') && Illuminate\Support\Facades\DB::table('roles')->count() === 0) {
                 echo "HEARTBEAT: Running artisan db:seed RolesSeeder --force...\n";
                 @flush();
                 Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesSeeder', '--force' => true]);
                 $artisanResults['roles_output'] = trim(Illuminate\Support\Facades\Artisan::output());
             }
 
-            if (Illuminate\Support\Facades\Schema::hasTable('users')) {
+            if (Illuminate\Support\Facades\Schema::hasTable('users') && Illuminate\Support\Facades\DB::table('users')->where('username', 'superadmin')->count() === 0) {
                 echo "HEARTBEAT: Running artisan db:seed AdminSeeder --force...\n";
                 @flush();
                 Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\AdminSeeder', '--force' => true]);
@@ -228,11 +229,9 @@ try {
             $artisanResults['database_notice'] = $mEx->getMessage();
         }
 
-        // Cache optimization
+        // Cache clear & reload
         try {
             Illuminate\Support\Facades\Artisan::call('optimize:clear');
-            Illuminate\Support\Facades\Artisan::call('config:cache');
-            Illuminate\Support\Facades\Artisan::call('view:cache');
             $artisanResults['cache_optimized'] = true;
         } catch (\Throwable $cEx) {
             $artisanResults['cache_error'] = $cEx->getMessage();

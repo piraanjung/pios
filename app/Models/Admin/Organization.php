@@ -136,4 +136,41 @@ class Organization extends Model
     {
         return $this->hasMany(User::class, 'org_id_fk');
     }
+
+    /**
+     * Get organization logo URL with physical file existence check and fallback.
+     *
+     * @param bool $showDefault Whether to return default system logo if missing
+     * @return string|null
+     */
+    public function getLogoUrl(bool $showDefault = true): ?string
+    {
+        return self::resolveLogoUrl($this->org_logo_img, $showDefault);
+    }
+
+    /**
+     * Resolve logo image path with physical file existence check and fallback.
+     *
+     * @param string|null $logoImg
+     * @param bool $showDefault
+     * @return string|null
+     */
+    public static function resolveLogoUrl(?string $logoImg, bool $showDefault = true): ?string
+    {
+        $logoImg = trim((string)$logoImg);
+        if ($logoImg !== '' && file_exists(public_path('logo/' . $logoImg))) {
+            return asset('logo/' . $logoImg);
+        }
+
+        if ($showDefault) {
+            if (file_exists(public_path('logo/ko_envsogo.png'))) {
+                return asset('logo/ko_envsogo.png');
+            }
+            if (file_exists(public_path('logo/logo.png'))) {
+                return asset('logo/logo.png');
+            }
+        }
+
+        return null;
+    }
 }

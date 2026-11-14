@@ -19,7 +19,8 @@
 
     $me = Auth::user();
     $orgInfos = $me ? App\Models\Admin\Organization::getOrgName($me->org_id_fk) : [];
-    $orgLogo = $orgInfos['org_logo_img'] ?? 'ko_envsogo.png';
+    $rawLogo = $orgInfos['org_logo_img'] ?? 'ko_envsogo.png';
+    $orgLogo = (!empty($rawLogo) && file_exists(public_path('logo/' . $rawLogo))) ? $rawLogo : 'ko_envsogo.png';
     $meName = trim(($me->firstname ?? '') . ' ' . ($me->lastname ?? '')) ?: ($me->username ?? '');
 @endphp
 <!DOCTYPE html>
