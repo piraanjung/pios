@@ -49,6 +49,17 @@ class KeptKayaIntegrityTest extends TestCase
                 });
             }
 
+            if (\Illuminate\Support\Facades\Schema::hasTable('kp_bank_accounts')) {
+                \Illuminate\Support\Facades\Schema::table('kp_bank_accounts', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    if (!\Illuminate\Support\Facades\Schema::hasColumn('kp_bank_accounts', 'org_id_fk')) {
+                        $table->unsignedBigInteger('org_id_fk')->nullable()->index();
+                    }
+                    if (!\Illuminate\Support\Facades\Schema::hasColumn('kp_bank_accounts', 'entity_type')) {
+                        $table->string('entity_type', 50)->nullable();
+                    }
+                });
+            }
+
             if (!\Illuminate\Support\Facades\Schema::hasTable('kp_recycle_bank_members')) {
                 \Illuminate\Support\Facades\Schema::create('kp_recycle_bank_members', function (\Illuminate\Database\Schema\Blueprint $table) {
                     $table->id();
@@ -81,6 +92,92 @@ class KeptKayaIntegrityTest extends TestCase
                     $table->timestamps();
                 });
             }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_tbank_items')) {
+                \Illuminate\Support\Facades\Schema::create('kp_tbank_items', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->string('kp_itemscode', 191)->nullable();
+                    $table->string('kp_itemsname', 191);
+                    $table->unsignedBigInteger('org_id_fk')->index();
+                    $table->timestamps();
+                    $table->softDeletes();
+                });
+            }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_tbank_items_pricepoint')) {
+                \Illuminate\Support\Facades\Schema::create('kp_tbank_items_pricepoint', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->unsignedBigInteger('org_id_fk')->index();
+                    $table->unsignedBigInteger('kp_items_idfk')->index();
+                    $table->unsignedBigInteger('kp_units_idfk')->nullable();
+                    $table->decimal('price_for_member', 10, 2)->default(0);
+                    $table->decimal('price_from_dealer', 10, 2)->default(0);
+                    $table->decimal('point', 10, 2)->default(0);
+                    $table->dateTime('start_date')->nullable();
+                    $table->dateTime('end_date')->nullable();
+                    $table->string('status', 30)->default('active');
+                    $table->string('deleted', 1)->default('0');
+                    $table->timestamps();
+                });
+            }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_purchase_shops')) {
+                \Illuminate\Support\Facades\Schema::create('kp_purchase_shops', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->string('shop_name', 191);
+                    $table->unsignedBigInteger('org_id_fk')->index();
+                    $table->string('status', 30)->default('active');
+                    $table->timestamps();
+                });
+            }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_tbank_items_units')) {
+                \Illuminate\Support\Facades\Schema::create('kp_tbank_items_units', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->string('unitname', 191);
+                    $table->unsignedBigInteger('org_id_fk')->index();
+                    $table->string('status', 30)->default('active');
+                    $table->timestamps();
+                });
+            }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_sell_transactions')) {
+                \Illuminate\Support\Facades\Schema::create('kp_sell_transactions', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->unsignedBigInteger('org_id_fk')->index();
+                    $table->unsignedBigInteger('user_id_fk')->nullable();
+                    $table->string('kp_u_trans_no', 191);
+                    $table->unsignedBigInteger('shop_id_fk');
+                    $table->date('transaction_date');
+                    $table->decimal('total_weight', 10, 2);
+                    $table->decimal('total_amount', 10, 2);
+                    $table->unsignedBigInteger('recorder_id');
+                    $table->timestamps();
+                });
+            }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_sell_details')) {
+                \Illuminate\Support\Facades\Schema::create('kp_sell_details', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->unsignedBigInteger('kp_sell_trans_id');
+                    $table->unsignedBigInteger('kp_recycle_item_id');
+                    $table->unsignedBigInteger('org_id_fk')->index();
+                    $table->decimal('weight', 10, 2);
+                    $table->decimal('price_per_unit', 10, 2);
+                    $table->decimal('amount', 10, 2);
+                    $table->string('comment', 191)->nullable();
+                    $table->timestamps();
+                });
+            }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('staffs')) {
+                \Illuminate\Support\Facades\Schema::create('staffs', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->unsignedBigInteger('user_id')->nullable();
+                    $table->unsignedBigInteger('org_id_fk')->nullable();
+                    $table->timestamps();
+                });
+            }
             if (!\Illuminate\Support\Facades\Schema::hasTable('roles')) {
                 $this->artisan('migrate');
             }
@@ -105,6 +202,12 @@ class KeptKayaIntegrityTest extends TestCase
             ]
         );
         $this->adminUser->syncRoles(['Admin', 'Super Admin']);
+        \App\Models\Admin\Staff::firstOrCreate([
+            'user_id' => $this->adminUser->id,
+        ], [
+            'org_id_fk' => $this->org->id,
+        ]);
+
         $this->actingAs($this->adminUser);
     }
 
@@ -169,5 +272,76 @@ class KeptKayaIntegrityTest extends TestCase
         $transactions = $response->viewData('transactions');
         $this->assertTrue($transactions->contains('id', $transA->id));
         $this->assertFalse($transactions->contains('id', $transB->id), 'History must strictly isolate user transactions');
+    }
+
+    public function test_sell_form_blocks_and_warns_when_org_bank_account_is_missing(): void
+    {
+        // No KPBankAccount for org
+        $response = $this->get(route('keptkayas.sell.form'));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('hasOrgBankAccount', false);
+        $response->assertSee('ยังไม่ได้ตั้งค่าบัญชีกลางธนาคารขยะ', false);
+    }
+
+    public function test_sell_form_submits_cleanly_when_org_bank_account_exists(): void
+    {
+        $orgAccount = KPBankAccount::create([
+            'org_id_fk' => $this->org->id,
+            'user_id' => $this->adminUser->id,
+            'account_no' => 'ORG-ACC-01',
+            'balance' => 0,
+            'entity_type' => 'org_recycle_bank',
+            'status' => 'active',
+        ]);
+
+        $shop = \App\Models\KeptKaya\KpPurchaseShop::create([
+            'shop_name' => 'ร้านรับซื้อทดสอบ',
+            'org_id_fk' => $this->org->id,
+            'status' => 'active',
+        ]);
+
+        $staff = \App\Models\Admin\Staff::create([
+            'user_id' => $this->adminUser->id,
+            'org_id_fk' => $this->org->id,
+        ]);
+
+        $item = \App\Models\KeptKaya\KpTbankItems::create([
+            'kp_itemsname' => 'ขวดพลาสติกใส',
+            'org_id_fk' => $this->org->id,
+        ]);
+
+        $unit = \App\Models\KeptKaya\KpTbankUnits::create([
+            'unitname' => 'กิโลกรัม',
+            'org_id_fk' => $this->org->id,
+            'status' => 'active',
+        ]);
+
+        \App\Models\KeptKaya\KpTbankItemsPriceAndPoint::create([
+            'kp_items_idfk' => $item->id,
+            'kp_units_idfk' => $unit->id,
+            'org_id_fk' => $this->org->id,
+            'price_for_member' => 10,
+            'price_from_dealer' => 12,
+            'status' => 'active',
+        ]);
+
+        $response = $this->post(route('keptkayas.sell.store'), [
+            'shop_name' => $shop->id,
+            'sell_date' => now()->toDateString(),
+            'recorder_id' => $this->adminUser->id,
+            'details' => [
+                [
+                    'kp_recycle_item_id' => $item->id,
+                    'weight' => 20,
+                    'price_per_unit' => 12,
+                    'amount' => 240,
+                    'comment' => 'รอบเช้า',
+                ]
+            ]
+        ]);
+
+        $response->assertRedirect(route('keptkayas.sell.history'));
+        $this->assertEquals(240, $orgAccount->fresh()->balance);
     }
 }

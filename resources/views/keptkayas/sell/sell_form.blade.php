@@ -25,8 +25,20 @@
                 </div>
             @endif
 
+            @if (!$hasOrgBankAccount)
+                <div class="alert alert-danger text-white shadow-lg d-flex align-items-center mb-4" role="alert">
+                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                    <div>
+                        <h6 class="text-white mb-1">ยังไม่ได้ตั้งค่าบัญชีกลางธนาคารขยะของ อปท.</h6>
+                        <p class="mb-0 text-sm">ระบบไม่อนุญาตให้บันทึกการขายขยะได้เนื่องจากยังไม่มีบัญชีกลางสำหรับรับเงิน กรุณาติดต่อผู้ดูแลระบบเพื่อเปิดบัญชีกลางก่อนใช้งาน</p>
+                    </div>
+                    <a href="{{ route('keptkayas.settings.index') }}" class="btn btn-sm btn-white ms-auto mb-0">ไปหน้าตั้งค่า</a>
+                </div>
+            @endif
+
             <form action="{{ route('keptkayas.sell.store') }}" method="POST">
                 @csrf
+                <fieldset {{ !$hasOrgBankAccount ? 'disabled' : '' }}>
                 <div class="row">
                     {{-- Sell Transaction Header --}}
                     <div class="col-lg-3 mb-4">
@@ -58,7 +70,7 @@
                                         @foreach ($staffs as $staff)
                                             <option value="{{ $staff->user_id }}"
                                                 {{ old('recorder_id', Auth::id()) == $staff->user_id ? 'selected' : '' }}>
-                                                {{ $staff->user->firstname }} {{ $staff->user->lastname }} ({{ $staff->user->username }})
+                                                {{ $staff->user?->firstname ?? 'เจ้าหน้าที่' }} {{ $staff->user?->lastname ?? '' }} ({{ $staff->user?->username ?? 'ID:' . $staff->user_id }})
                                             </option>
                                         @endforeach
                                     </select>
@@ -100,7 +112,7 @@
                                                             <option value="">เลือกรายการขยะ</option>
                                                             @foreach ($recycleItems as $item)
                                                                 <option value="{{ $item->id }}"
-                                                                    data-units="{{ json_encode($item->items_price_and_point_infos[0]->kp_units_info->id) }}"
+                                                                    data-units="{{ json_encode($item->items_price_and_point_infos->first()?->kp_units_info?->id ?? 0) }}"
                                                                     {{ $detail['kp_recycle_item_id'] == $item->id ? 'selected' : '' }}>
                                                                     {{ $item->kp_itemsname }}</option>
                                                             @endforeach
@@ -121,7 +133,7 @@
                                                     <td><input type="text" name="details[{{ $old_index }}][comment]"
                                                             class="form-control" value="{{ $detail['comment'] }}"></td>
                                                     <td><button type="button" class="btn btn-link text-danger p-0 mb-0 remove-item"><i
-                                                                class="fa fa-trash"></i></button></td>
+                                                                 class="fa fa-trash"></i></button></td>
                                                 </tr>
                                                 @php $index++; @endphp
                                             @endforeach
@@ -133,7 +145,7 @@
                                                         <option value="">เลือกรายการขยะ</option>
                                                         @foreach ($recycleItems as $item)
                                                             <option value="{{ $item->id }}"
-                                                                data-units="{{ json_encode($item->items_price_and_point_infos[0]->kp_units_info->id) }}">
+                                                                data-units="{{ json_encode($item->items_price_and_point_infos->first()?->kp_units_info?->id ?? 0) }}">
                                                                 {{ $item->kp_itemsname }}</option>
                                                         @endforeach
                                                     </select>
@@ -168,10 +180,11 @@
                 </div>
                 <div class="d-flex justify-content-end gap-2">
                     <a href="{{ route('keptkayas.sell.history') }}" class="btn btn-outline-secondary mb-0">ยกเลิก</a>
-                    <button type="submit" class="btn bg-gradient-success mb-0">
+                    <button type="submit" class="btn bg-gradient-success mb-0" {{ !$hasOrgBankAccount ? 'disabled' : '' }}>
                         <i class="fas fa-save me-1"></i> บันทึกการขาย
                     </button>
                 </div>
+                </fieldset>
             </form>
     @endsection
     @section('script')

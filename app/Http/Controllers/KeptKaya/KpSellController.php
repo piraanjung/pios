@@ -26,14 +26,39 @@ class KpSellController extends Controller
      */
     public function showSellForm()
     {
+        $user = Auth::user();
+        $orgId = $user->org_id_fk ?? 1;
+
+        // ตรวจสอบบัญชีกลางของ อปท. (org_recycle_bank)
+        $orgRecycleBankAccount = KPBankAccount::where('org_id_fk', $orgId)
+            ->whereIn('entity_type', ['org_recycle_bank', 'recycle_bank'])
+            ->first();
+
+        $hasOrgBankAccount = !is_null($orgRecycleBankAccount);
+
         // Fetch necessary data for the form
-        $recycleItems = KpTbankItems::with(
-            'items_price_and_point_infos.kp_units_info')
-            ->whereHas('items_price_and_point_infos',)
-            ->get(); // Load all items with their units
-        $staffs = Staff::all(); // Get users with 'staff' role
-        $shops =  KpPurchaseShop::where('status', 'active')->get();
-        return view('keptkayas.sell.sell_form', compact('recycleItems', 'staffs', 'shops'));
+        $recycleItems = KpTbankItems::with('items_price_and_point_infos.kp_units_info')
+            ->where('org_id_fk', $orgId)
+            ->whereHas('items_price_and_point_infos')
+            ->get();
+
+        // กรองเฉพาะ Staff ที่มีข้อมูล user เชื่อมโยงอยู่จริง (ป้องกัน null pointer)
+        $staffs = Staff::with('user')
+            ->where('org_id_fk', $orgId)
+            ->whereHas('user')
+            ->get();
+
+        $shops = KpPurchaseShop::where('org_id_fk', $orgId)
+            ->where('status', 'active')
+            ->get();
+
+        return view('keptkayas.sell.sell_form', compact(
+            'recycleItems',
+            'staffs',
+            'shops',
+            'hasOrgBankAccount',
+            'orgRecycleBankAccount'
+        ));
     }
 
     /**
@@ -62,10 +87,17 @@ class KpSellController extends Controller
         DB::beginTransaction();
         try {
             // 1. Create the main sell transaction
-            $orgId = Auth::user()->org_id_fk;
-            $orgRecycleBankAccount = KpBankAccount::where('org_id_fk', $orgId)
-                                    ->where('entity_type', 'org_recycle_bank')
-                                    ->get()->first();
+            $orgId = Auth::user()->org_id_fk ?? 1;
+            $orgRecycleBankAccount = KPBankAccount::where('org_id_fk', $orgId)
+                ->whereIn('entity_type', ['org_recycle_bank', 'recycle_bank'])
+                ->lockForUpdate()
+                ->first();
+
+            if (!$orgRecycleBankAccount) {
+                DB::rollBack();
+                return back()->with('error', 'ไม่พบบัญชีกลางธนาคารขยะขององค์กร กรุณาตั้งค่าบัญชีกลางก่อนบันทึกรายการขาย')->withInput();
+            }
+
             $transaction = KpSellTransaction::create([
                 'org_id_fk'         => $orgId,
                 'user_id_fk'        => $orgRecycleBankAccount->user_id,
