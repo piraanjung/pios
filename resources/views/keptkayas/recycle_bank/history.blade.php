@@ -14,8 +14,8 @@
             <div class="row">
                 <div class="col-md-4"><strong>ที่อยู่:</strong> {{ $user->address }}</div>
                 <div class="col-md-4"><strong>โซน / โซนย่อย:</strong> {{ optional($user->user_zone)->name }} / {{ optional($user->user_subzone)->name }}</div>
-                <div class="col-md-2"><strong>ยอดเงินคงเหลือ:</strong> <span class="text-success">{{ number_format(optional($user->recycleBankAccount)->balance ?? 0, 2) }}</span> บาท</div>
-                <div class="col-md-2"><strong>แต้มคงเหลือ:</strong> <span class="text-primary">{{ number_format(optional($user->recycleBankAccount)->points ?? 0) }}</span> แต้ม</div>
+                <div class="col-md-2"><strong>ยอดเงินคงเหลือ:</strong> <span class="text-success">{{ number_format(optional($user->kpRecycleBankMember)->balance ?? optional($user->recycleBankAccount)->balance ?? 0, 2) }}</span> บาท</div>
+                <div class="col-md-2"><strong>แต้มคงเหลือ:</strong> <span class="text-primary">{{ number_format(optional($user->kpRecycleBankMember)->total_points ?? optional($user->recycleBankAccount)->points ?? 0) }}</span> แต้ม</div>
             </div>
         </div>
     </div>

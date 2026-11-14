@@ -56,7 +56,7 @@ class RecycleBankController extends Controller
                 $q->where('org_id_fk', $orgId);
             })
             ->whereDoesntHave('kpUserPreference', function ($q) {
-                $q->where('is_recycle_bank', 1);
+                $q->where('is_waste_bank', 1);
             });
 
         if ($request->filled('search')) {
@@ -118,10 +118,23 @@ class RecycleBankController extends Controller
     /**
      * แสดงประวัติการขายขยะ แยกตามปีงบประมาณ
      */
-    public function history(Request $request, $userId)
+    public function history(Request $request, $userId = null)
     {
-        $user = User::with(['user_zone', 'user_subzone', 'recycleBankAccount'])
-            ->findOrFail($userId);
+        $orgId = getAuthOrgId();
+
+        if (empty($userId)) {
+            return redirect()->route('keptkayas.recycle-bank.members.index')
+                ->with('error', 'กรุณาระบุรหัสสมาชิกธนาคารขยะที่ต้องการดูประวัติ');
+        }
+
+        $user = User::where('org_id_fk', $orgId)
+            ->with(['user_zone', 'user_subzone', 'recycleBankAccount', 'kpRecycleBankMember'])
+            ->find($userId);
+
+        if (!$user) {
+            return redirect()->route('keptkayas.recycle-bank.members.index')
+                ->with('error', 'ไม่พบข้อมูลสมาชิกในระบบ หรือสมาชิกไม่ได้อยู่ในองค์กรนี้ กรุณาเลือกสมาชิกใหม่');
+        }
 
         // ปีงบประมาณปัจจุบัน (ถ้าเดือน >= 10 ถือเป็นปีงบประมาณถัดไป)
         $currentMonth = now()->month;
@@ -134,11 +147,10 @@ class RecycleBankController extends Controller
         $startDate = Carbon::create($selectedFiscalYear - 1, 10, 1)->startOfDay();
         $endDate   = Carbon::create($selectedFiscalYear, 9, 30)->endOfDay();
 
-        // ดึงรายการบิลประวัติการขายขยะ
+        // ดึงรายการบิลประวัติการขายขยะของสมาชิกคนนี้เท่านั้นอย่างเคร่งครัด
         $transactions = KpPurchaseTransaction::with(['details.item', 'details.unit', 'recorder'])
-            ->whereHas('user.recycleBankAccount', function ($q) {
-                $q->where('status', 'active');
-            })
+            ->where('user_id', $userId)
+            ->where('org_id_fk', $orgId)
             ->whereBetween('transaction_date', [$startDate, $endDate])
             ->orderBy('transaction_date', 'desc')
             ->get();
