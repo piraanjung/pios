@@ -5,7 +5,7 @@ namespace App\Http\Controllers\KeptKaya;
 use App\Http\Controllers\Controller;
 use App\Models\Admin\Zone;
 use App\Models\KeptKaya\KpPurchaseTransaction;
-use App\Models\Keptkaya\KpRecycleBankMember;
+use App\Models\KeptKaya\KpRecycleBankMember;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;

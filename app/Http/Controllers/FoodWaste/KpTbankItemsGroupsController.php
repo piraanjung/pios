@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\KeptKaya;
 
 use App\Http\Controllers\Controller;
-use App\Models\Keptkaya\KpTbankItemsGroups;
+use App\Models\KeptKaya\KpTbankItemsGroups;
 use Illuminate\Http\Request;
 
 class KpTbankItemsGroupsController extends Controller

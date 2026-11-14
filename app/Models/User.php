@@ -27,7 +27,7 @@ use App\Models\FoodWaste\FoodAnnualTrash;
 use App\Models\FoodWaste\FoodWasteAccount;
 use App\Models\FoodWaste\FoodWasteLog;
 use App\Models\KeptKaya\KpPurchaseTransaction;
-use App\Models\Keptkaya\KpRecycleBankMember;
+use App\Models\KeptKaya\KpRecycleBankMember;
 use App\Models\Tabwater\TwNotifies;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany; // <--- สำคัญ: ตรวจสอบว่ามีการ use นี้หรือไม่
 

@@ -31,6 +31,23 @@ class AppServiceProvider extends ServiceProvider
             class_alias('\Spatie\Permission\Middlewares\PermissionMiddleware', '\Spatie\Permission\Middleware\PermissionMiddleware');
             class_alias('\Spatie\Permission\Middlewares\RoleOrPermissionMiddleware', '\Spatie\Permission\Middleware\RoleOrPermissionMiddleware');
         }
+
+        // Case-insensitive PSR-4 fallback for Linux environments (e.g. Keptkaya -> KeptKaya, KpBankAccount -> KPBankAccount)
+        spl_autoload_register(function (string $class): void {
+            if (!str_starts_with($class, 'App\\')) {
+                return;
+            }
+            $normalized = str_replace(
+                ['App\\Models\\Keptkaya\\', 'App\\Http\\Controllers\\Keptkaya\\', 'App\\Models\\KpBankAccount'],
+                ['App\\Models\\KeptKaya\\', 'App\\Http\\Controllers\\KeptKaya\\', 'App\\Models\\KPBankAccount'],
+                $class
+            );
+            $relativePath = str_replace('\\', '/', substr($normalized, 4)) . '.php';
+            $fullPath = app_path($relativePath);
+            if (file_exists($fullPath)) {
+                require_once $fullPath;
+            }
+        }, true, false);
     }
 
     /**

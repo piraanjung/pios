@@ -5,7 +5,7 @@ namespace App\Http\Controllers\KeptKaya;
 use App\Http\Controllers\Controller; 
 use App\Models\KeptKaya\KpPurchaseTransactionDetail; 
 use App\Models\KeptKaya\KpPurchaseTransaction; 
-use App\Models\Keptkaya\KpRecycleBankMember; // เรียกใช้ Model ใหม่
+use App\Models\KeptKaya\KpRecycleBankMember; // เรียกใช้ Model ใหม่
 use App\Models\User; 
 use Illuminate\Support\Facades\Auth; 
 use Illuminate\Support\Facades\DB; 

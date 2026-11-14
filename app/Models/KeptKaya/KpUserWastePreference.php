@@ -6,7 +6,7 @@ use App\Models\Admin\Organization;
 use App\Models\Admin\Subzone;
 use App\Models\Admin\Zone;
 use App\Models\AnnualTrash\AnnualTrash;
-use App\Models\KpBankAccount;
+use App\Models\KPBankAccount;
 use App\Models\User;
 use App\Shared\Tenancy\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

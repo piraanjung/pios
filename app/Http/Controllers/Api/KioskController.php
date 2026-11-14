@@ -16,7 +16,7 @@ use App\Models\KeptKaya\KpTbankItemsPriceAndPoint;
 use App\Models\KeptKaya\KpTbankUnits;
 use App\Models\KeptKaya\KpUserWastePreference;
 use App\Models\Kiosk;
-use App\Models\KpBankAccount;
+use App\Models\KPBankAccount;
 use App\Models\User;
 use App\Shared\Http\ApiResponse;
 use Illuminate\Support\Facades\DB;

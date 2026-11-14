@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\KeptKaya;
 
 use App\Http\Controllers\Controller;
-use App\Models\Keptkaya\KpTbankUnits;
+use App\Models\KeptKaya\KpTbankUnits;
 use Illuminate\Http\Request;
 
 class KpTbankUnitsController extends Controller

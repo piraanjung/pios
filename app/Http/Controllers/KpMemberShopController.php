@@ -7,7 +7,7 @@ use App\Models\KeptKaya\KpShopCategory;
 use App\Models\KeptKaya\KpShopProduct;
 use App\Models\KeptKaya\KpShopOrder;
 use App\Models\KeptKaya\KpShopOrderDetail;
-use App\Models\KpBankAccount;
+use App\Models\KPBankAccount;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;

@@ -82,5 +82,14 @@ class SecurityAndRuntimeHotfixesTest extends TestCase
         $this->assertTrue(Route::has('keptkayas.kp_usergroup.index'));
         $this->assertTrue(Route::has('usermeter_infos.store_edited_invoice'));
     }
+
+    public function test_keptkaya_models_use_strict_psr4_case_sensitive_namespaces(): void
+    {
+        $this->assertTrue(class_exists(\App\Models\KeptKaya\KpRecycleBankMember::class));
+        $this->assertTrue(class_exists(\App\Models\KPBankAccount::class));
+
+        $reflection = new \ReflectionClass(\App\Models\KeptKaya\KpRecycleBankMember::class);
+        $this->assertSame('App\\Models\\KeptKaya\\KpRecycleBankMember', $reflection->getName());
+    }
 }
 

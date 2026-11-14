@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\KeptKaya\KpSellTransaction;
 use App\Models\KeptKaya\KpSellDetail;
 use App\Models\KeptKaya\KpTbankItems;
-use App\Models\KpBankAccount;
+use App\Models\KPBankAccount;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

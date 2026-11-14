@@ -7,7 +7,7 @@ use App\Http\Controllers\FunctionsController;
 use App\Models\FoodWaste\FoodAnnualTrash;
 use App\Models\FoodWaste\FoodAnnualTrashStocks;
 use App\Models\FoodWaste\FoodwastIotbox;
-use App\Models\Keptkaya\KpUserGroup;
+use App\Models\KeptKaya\KpUserGroup;
 use App\Models\User;
 use App\Models\KeptKaya\AnnualTrashSubscription; // Import AnnualTrashSubscription model
 use App\Models\KeptKaya\AnnualTrash;

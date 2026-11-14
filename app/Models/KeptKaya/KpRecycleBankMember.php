@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Keptkaya;
+namespace App\Models\KeptKaya;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;

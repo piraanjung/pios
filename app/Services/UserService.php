@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\KpBankAccount;
-use App\Models\Keptkaya\KpRecycleBankMember;
+use App\Models\KPBankAccount;
+use App\Models\KeptKaya\KpRecycleBankMember;
 use App\Models\KeptKaya\KpUserWastePreference;
 use App\Models\KeptKaya\KpUserGroup;
 use App\Models\FoodWaste\FoodWasteAccount;

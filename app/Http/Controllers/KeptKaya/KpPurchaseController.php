@@ -13,7 +13,7 @@ use App\Models\KeptKaya\KpTbankItemsGroups;
 use App\Models\KeptKaya\KpTbankItemsPriceAndPoint; 
 use App\Models\KeptKaya\KpTbankUnits; 
 use App\Models\KeptKaya\Machine; 
-use App\Models\Keptkaya\KpRecycleBankMember; // เรียกใช้ Model ใหม่
+use App\Models\KeptKaya\KpRecycleBankMember; // เรียกใช้ Model ใหม่
 use App\Models\User; 
 use Carbon\Carbon; 
 use Illuminate\Http\Request; 
