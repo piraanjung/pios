@@ -91,5 +91,18 @@ class SecurityAndRuntimeHotfixesTest extends TestCase
         $reflection = new \ReflectionClass(\App\Models\KeptKaya\KpRecycleBankMember::class);
         $this->assertSame('App\\Models\\KeptKaya\\KpRecycleBankMember', $reflection->getName());
     }
+
+    public function test_plan_first_hard_gate_rules_are_enforced(): void
+    {
+        $planFirstRulePath = base_path('.agents/rules/plan-first-gate.md');
+        $this->assertFileExists($planFirstRulePath);
+
+        $geminiMd = file_get_contents(base_path('GEMINI.md'));
+        $this->assertStringContainsString('Universal Plan-First Hard Gate', $geminiMd);
+        $this->assertStringContainsString('.agents/rules/plan-first-gate.md', $geminiMd);
+
+        $autonomousEditingMd = file_get_contents(base_path('.agents/rules/autonomous-editing.md'));
+        $this->assertStringContainsString('ONLY AFTER the user has explicitly approved the plan', $autonomousEditingMd);
+    }
 }
 
