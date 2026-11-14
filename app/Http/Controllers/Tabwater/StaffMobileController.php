@@ -54,11 +54,16 @@ class StaffMobileController extends Controller
 
     public function meter_reading($meter_id)
     {
-        $currentInvPeriod = InvoicePeriod::where('status', 'active')->get('id')->first();
+        $currentInvPeriod = InvoicePeriod::where('status', 'active')->first();
 
-        $meter = UserMerterInfo::where('meter_id', $meter_id)
-            ->get(['meter_id', 'last_meter_recording']);
-        return view('tabwater.staff.mobile.meter_reading', compact('meter'));
+        $meterInfo = UserMerterInfo::where('meter_id', $meter_id)
+            ->with(['user', 'undertake_subzone', 'undertake_zone'])
+            ->first();
+
+        // Pass both for backward compatibility
+        $meter = $meterInfo ? collect([$meterInfo]) : collect();
+
+        return view('tabwater.staff.mobile.meter_reading', compact('meter', 'meterInfo', 'currentInvPeriod'));
     }
 
     public function members($subzone_id, $status)

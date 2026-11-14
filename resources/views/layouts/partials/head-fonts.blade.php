@@ -2,6 +2,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
+<!-- FontAwesome 6 Core Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
     /* Universal Kanit Typography Across Application (ADR-0009) */
     html, body,
@@ -24,9 +26,9 @@
     [class*="fa-"], [class^="fa-"],
     .ni, [class*="ni-"], [class^="ni-"],
     .nucleo, .material-icons, [class*="bi-"], [class^="bi-"] {
-        font-family: 'Font Awesome 5 Free', 'FontAwesome', 'NucleoIcons', 'bootstrap-icons' !important;
+        font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', 'FontAwesome', 'NucleoIcons', 'bootstrap-icons' !important;
     }
     .fab {
-        font-family: 'Font Awesome 5 Brands', 'FontAwesome' !important;
+        font-family: 'Font Awesome 6 Brands', 'Font Awesome 5 Brands', 'FontAwesome' !important;
     }
 </style>
