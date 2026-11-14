@@ -11,8 +11,9 @@ This file sets the standard operational rules for all AI agents working on the *
 All AI agents working on this repository **MUST EXCLUSIVELY USE THE SUPERPOWERS METHODOLOGY AND SKILLS FRAMEWORK**. No improvised, ad-hoc, or non-superpowers workflows are permitted.
 
 > [!IMPORTANT]
-> **Extremely Important Rule (`superpowers:using-superpowers`):**
-> If you think there is even a 1% chance a Superpowers skill applies to what you are doing, you **ABSOLUTELY MUST** invoke the skill. This is not negotiable. Check and invoke relevant skills **BEFORE** any response, file change, or action.
+> **Extremely Important Rule (`superpowers:using-superpowers` & Universal Plan-First Hard Gate):**
+> 1. If you think there is even a 1% chance a Superpowers skill applies to what you are doing, you **ABSOLUTELY MUST** invoke the skill. This is not negotiable. Check and invoke relevant skills **BEFORE** any response, file change, or action.
+> 2. **Universal Plan-First Hard Gate (`.agents/rules/plan-first-gate.md`):** You MUST ALWAYS present a clear plan and **WAIT FOR EXPLICIT USER APPROVAL** before editing any files, fixing any bugs, running database migrations, or installing packages. Never skip planning!
 
 ### 1.1 Superpowers End-to-End Development Lifecycle
 
@@ -38,10 +39,10 @@ flowchart TD
 | **Session Start / Triage** | `using-superpowers` | Check for applicable skills before asking questions, exploring files, or writing code. Announce `"Using [skill] to [purpose]"`. |
 | **New Features / Architecture / UI** | `brainstorming` | **HARD GATE:** Understand true goal, explore codebase, lay out 2-3 approaches with tradeoffs, size the work, draft design doc. **Nothing gets built until user approves.** |
 | **Branch / Workspace Isolation** | `using-git-worktrees` | Create clean isolated workspace / branch (`feat/...`, `fix/...`, `chore/...`) from primary branch before executing multi-step plans. |
-| **Planning & Task Breakdown** | `writing-plans` | Break approved design into bite-sized tasks (2-5 min each) with exact file paths, full code, and verification steps in `docs/superpowers/plans/`. |
-| **Implementation Engine** | `subagent-driven-development` or `executing-plans` | Execute tasks strictly against the plan. Dispatch fresh subagents per task with review, or execute inline with final review. |
+| **Planning & Task Breakdown** | `writing-plans` | **HARD GATE:** Break approved design/fix into bite-sized tasks (2-5 min each) with exact file paths, full code, and verification steps in `docs/superpowers/plans/`. Wait for user approval before executing. |
+| **Implementation Engine** | `subagent-driven-development` or `executing-plans` | Execute tasks strictly against the approved plan. Dispatch fresh subagents per task with review, or execute inline with final review. |
 | **Coding & Changes** | `test-driven-development` | **RED-GREEN-REFACTOR:** Write failing test first, watch it fail, write minimal code, watch it pass, refactor, commit. Code written before tests must be deleted. |
-| **Bugs / Test Failures** | `systematic-debugging` | 4-phase root cause analysis before proposing fixes (root-cause tracing, defense-in-depth). No speculative fixes. |
+| **Bugs / Test Failures** | `systematic-debugging` | **HARD GATE:** 4-phase root cause analysis before proposing fixes. Present root cause & fix plan to the user and wait for approval before modifying code. No speculative fixes. |
 | **Code Review & Quality Gate** | `requesting-code-review` & `receiving-code-review` | Rigorous verification against spec. Verify suggestions technically before implementing. |
 | **Pre-Completion Proof** | `verification-before-completion` | **Evidence before assertions:** Run verification test commands (e.g. `php artisan test`) and verify passing output before claiming work is complete. |
 | **Task / Branch Completion** | `finishing-a-development-branch` | Run full test suite, commit with conventional commit, push branch, merge into primary branch, and push primary branch to origin. |
@@ -55,12 +56,14 @@ flowchart TD
 
 The detailed modular rules located in `.agents/rules/` are active and mandatory:
 
-1. **Autonomous File Editing (`.agents/rules/autonomous-editing.md`):**
-   - Proactively edit and apply changes to files directly without asking for user confirmation or permission to accept changes.
-2. **Full Autonomous Git Workflow (`.agents/rules/git-workflow.md`):**
+1. **Universal Plan-First Hard Gate (`.agents/rules/plan-first-gate.md`):**
+   - Always investigate (read-only), present a clear plan, and wait for explicit user approval BEFORE modifying any files, fixing any bugs, or running state-changing commands.
+2. **Autonomous File Editing After Plan Approval (`.agents/rules/autonomous-editing.md`):**
+   - ONLY AFTER the user has explicitly approved the plan, proactively edit and apply changes to files directly without asking for per-file confirmation or acceptance.
+3. **Full Autonomous Git Workflow (`.agents/rules/git-workflow.md`):**
    - Always create a dedicated branch from primary branch (`main`).
    - Upon verification passing, autonomously commit, push task branch, merge into `main`, and push `main` to remote `origin` immediately.
-3. **Architecture Decision Records (`.agents/rules/adr-tracking.md`):**
+4. **Architecture Decision Records (`.agents/rules/adr-tracking.md`):**
    - Before writing any ADR in `docs/adr/`, ALWAYS read `docs/adr/template.md` and strictly follow its pattern. Maintain the index table in `docs/adr/README.md`.
 
 ---
