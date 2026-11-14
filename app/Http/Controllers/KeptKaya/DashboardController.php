@@ -33,9 +33,13 @@ class DashboardController extends Controller
             ->take(5) 
             ->get(); 
 
-        // 2. แนวโน้มการลดคาร์บอนรายเดือน
+        // 2. แนวโน้มการลดคาร์บอนรายเดือน (รองรับทั้ง MySQL และ SQLite)
+        $monthSql = DB::getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', transaction_date) as month"
+            : "DATE_FORMAT(transaction_date, '%Y-%m') as month";
+
         $monthlyTrend = KpPurchaseTransaction::select( 
-            DB::raw("DATE_FORMAT(transaction_date, '%Y-%m') as month"), 
+            DB::raw($monthSql), 
             DB::raw('SUM(total_carbon_saved) as total_carbon') 
         ) 
         ->where('org_id_fk', $orgId) 
