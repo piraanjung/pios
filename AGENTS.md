@@ -61,8 +61,9 @@ The detailed modular rules located in `.agents/rules/` are active and mandatory:
 2. **Autonomous File Editing After Plan Approval (`.agents/rules/autonomous-editing.md`):**
    - ONLY AFTER the user has explicitly approved the plan, proactively edit and apply changes to files directly without asking for per-file confirmation or acceptance.
 3. **Full Autonomous Git Workflow (`.agents/rules/git-workflow.md`):**
-   - Always create a dedicated branch from primary branch (`main`).
-   - Upon verification passing, autonomously commit, push task branch, merge into `main`, and push `main` to remote `origin` immediately.
+   - Always create a dedicated branch from the primary integration branch (`develop`).
+   - Upon verification passing, autonomously commit, push task branch, merge into `develop`, and push `develop` to remote `origin`.
+   - **DO NOT push to `main` directly.** The `main` branch is reserved strictly for production release deployments via `release/*` branches from `develop`.
 4. **Architecture Decision Records (`.agents/rules/adr-tracking.md`):**
    - Before writing any ADR in `docs/adr/`, ALWAYS read `docs/adr/template.md` and strictly follow its pattern. Maintain the index table in `docs/adr/README.md`.
 
@@ -70,7 +71,8 @@ The detailed modular rules located in `.agents/rules/` are active and mandatory:
 
 ## 4. Repository-Specific Architecture & Guidelines
 
-- **Primary Branch:** `main`
+- **Primary Integration Branch:** `develop`
+- **Production Branch:** `main` (for deployment prod only, merged via release branch)
 - **Stack:** PHP 8.2+ / Laravel 11 / Vite / Docker
 - **Design System & UI Tokens:**
   - Adhere strictly to Soft UI Dashboard Pro and tokens in `resources/css/tokens.css` (never use arbitrary inline styles).
