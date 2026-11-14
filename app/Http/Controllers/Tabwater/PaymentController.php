@@ -13,6 +13,7 @@ use App\Models\Tabwater\TwMeterInfos;
 use App\Models\Admin\Zone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Admin\Organization;
 use App\Models\Tabwater\TwAccTransactions;
 use App\Models\Tabwater\TwCutmeter;
@@ -172,6 +173,12 @@ class PaymentController extends Controller
             'meter_id' => 'required', // ตรวจสอบ meter_id ด้วย
         ]);
 
+        $paymentToken = $request->input('payment_token');
+        if (!empty($paymentToken) && Cache::has('payment_store_trans:' . $paymentToken)) {
+            $cachedTransId = Cache::get('payment_store_trans:' . $paymentToken);
+            return $this->receipt_print_by_trans($cachedTransId);
+        }
+
         // 1. ดึง ID ของ Invoice ที่เลือกมาทั้งหมด
         $selected_payments = collect($request->get('payments'))->filter(function ($v) {
             return isset($v['on']);
@@ -199,9 +206,13 @@ class PaymentController extends Controller
         $sum_paid = $invoices->sum('paid'); // ค่าน้ำ
         $sum_total = $invoices->sum('totalpaid'); // ยอดสุทธิ
 
+        $twUserInfo = TwMeterInfos::find($meter_id) ?? TwMeterInfos::where('id', $meter_id)->first();
+        $userOrgId = Auth::user()->org_id_fk ?? $twUserInfo?->org_id_fk;
+
         // 4. สร้าง Transaction (ใบเสร็จรับเงิน Header) เพียง 1 รายการ
         $accTrans = new TwAccTransactions();
-        $accTrans->meter_id_fk       = $meter_id;
+        $accTrans->org_id_fk         = $userOrgId;
+        $accTrans->meter_id_fk       = $twUserInfo ? ($twUserInfo->meter_id ?? $twUserInfo->id) : $meter_id;
         $accTrans->vatsum            = $sum_vat;
         $accTrans->reserve_meter_sum = $sum_reserve;
         $accTrans->paidsum           = $sum_paid;
@@ -212,10 +223,13 @@ class PaymentController extends Controller
         $accTrans->updated_at        = now();
         $accTrans->save();
 
+        if (!empty($paymentToken)) {
+            Cache::put('payment_store_trans:' . $paymentToken, $accTrans->id, now()->addHours(6));
+        }
+
         // 5. เตรียมข้อมูล User และ Running Number ใบเสร็จ
-        $twUserInfo = TwMeterInfos::find($meter_id);
-        $receipt_running_no = (new FunctionsController())->nextOrgInvoiceSequence(Auth::user()->org_id_fk); // เลขที่ใบเสร็จรับเงินตาม org
-        $nextLastmeter = $twUserInfo->last_meter_recording;
+        $receipt_running_no = (new FunctionsController())->nextOrgInvoiceSequence($userOrgId); // เลขที่ใบเสร็จรับเงินตาม org
+        $nextLastmeter = $twUserInfo?->last_meter_recording ?? 0;
 
         // 6. Loop Update Invoice (Link ไปหา Transaction)
 
@@ -270,18 +284,20 @@ class PaymentController extends Controller
         }
 
         // 8. Update User Info สุดท้าย
-        $twUserInfo->owe_count            = $remaining_owe_count;
-        // Update สถานะตัดมิเตอร์ (ถ้าไม่ได้เข้าเงื่อนไขข้างบน ก็เช็คตามจำนวนบิล)
-        // หมายเหตุ: ตรงนี้ต้องระวัง Logic ตีกันกับข้างบน ถ้าข้างบน set active แล้ว ตรงนี้อาจจะทับ
-        // แต่ตาม Code เดิมคุณทำแบบนี้ ผมคงไว้ก่อน
-        if (!$cutmeter) {
-            $twUserInfo->cutmeter = $remaining_owe_count < 2 ? '0' : '1';
-        }
+        if ($twUserInfo) {
+            $twUserInfo->owe_count            = $remaining_owe_count;
+            // Update สถานะตัดมิเตอร์ (ถ้าไม่ได้เข้าเงื่อนไขข้างบน ก็เช็คตามจำนวนบิล)
+            // หมายเหตุ: ตรงนี้ต้องระวัง Logic ตีกันกับข้างบน ถ้าข้างบน set active แล้ว ตรงนี้อาจจะทับ
+            // แต่ตาม Code เดิมคุณทำแบบนี้ ผมคงไว้ก่อน
+            if (!$cutmeter) {
+                $twUserInfo->cutmeter = $remaining_owe_count < 2 ? '0' : '1';
+            }
 
-        $twUserInfo->last_meter_recording = $nextLastmeter;
-        $twUserInfo->inv_no_index         = $receipt_running_no; // เก็บค่ารันของ org ล่าสุดไว้เพื่อ fallback
-        $twUserInfo->updated_at           = now();
-        $twUserInfo->save();
+            $twUserInfo->last_meter_recording = $nextLastmeter;
+            $twUserInfo->inv_no_index         = $receipt_running_no; // เก็บค่ารันของ org ล่าสุดไว้เพื่อ fallback
+            $twUserInfo->updated_at           = now();
+            $twUserInfo->save();
+        }
 
         // 9. ส่งไปพิมพ์ใบเสร็จ (ส่ง Transaction ID ไปเลย แม่นยำกว่า)
         return $this->receipt_print_by_trans($accTrans->id);
@@ -572,13 +588,18 @@ class PaymentController extends Controller
 
     public function destroy($acc_trans_id_fk)
     {
-        TwAccTransactions::where('id', $acc_trans_id_fk)->update([
-            'status'        => 2,
-            'paidsum'       => 0,
-            'vatsum'        => 0,
-            'totalpaidsum'  => 0,
-            'updated_at'    => date('Y-m-d H:i:s'),
-        ]);
+        $accTrans = TwAccTransactions::find($acc_trans_id_fk);
+        if (!$accTrans || $accTrans->status == '2') {
+            return redirect()->route('payment.search')->with(['color' => 'info', 'message' => 'ใบเสร็จนี้ถูกยกเลิกไปแล้ว']);
+        }
+
+        $accTrans->status       = '2';
+        $accTrans->paidsum      = 0;
+        $accTrans->vatsum       = 0;
+        $accTrans->totalpaidsum = 0;
+        $accTrans->updated_at   = now();
+        $accTrans->save();
+
         TwInvoice::where('acc_trans_id_fk', $acc_trans_id_fk)->update([
             'status'            => 'owe',
             'recorder_id'       => Auth::id(),

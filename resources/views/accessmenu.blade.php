@@ -320,6 +320,23 @@
                 transform: none !important;
             }
         }
+
+        /* Card Mode for Non-Tech-Savvy Officers */
+        .hover-elevate {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .hover-elevate:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12) !important;
+        }
+        body.card-mode-active {
+            overflow-y: auto !important;
+            display: block !important;
+            min-height: 100vh;
+        }
+        body.card-mode-active #org {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -327,10 +344,16 @@
 
     <!-- Header / Brand Section -->
     <div id="otp-connect" class="wow fadeInDown" data-wow-delay="0.1s">
-        <div class="card card-body blur shadow-blur p-3 d-flex flex-row align-items-center gap-3">
+        <div class="card card-body blur shadow-blur p-3 d-flex flex-row align-items-center gap-2">
             <div>
-                <h3 class="font-weight-bolder text-gradient text-primary mb-0">{{ $orgInfos['org_code'] }}:PIOS</h3>
+                <h3 class="font-weight-bolder text-gradient text-primary mb-0 me-2">{{ $orgInfos['org_code'] }}:PIOS</h3>
             </div>
+            <button id="toggleViewModeBtn" type="button" class="btn btn-sm btn-outline-primary mb-0 px-3">
+                <i class="fas fa-th-large me-1"></i> มุมมองการ์ด
+            </button>
+            <a href="{{ route('staff_accessmenu') }}" class="btn btn-sm btn-outline-info mb-0 px-3" title="สำหรับเจ้าหน้าที่ภาคสนาม">
+                <i class="fas fa-mobile-alt me-1"></i> ภาคสนาม
+            </a>
             <form action="{{ route('logout') }}" method="POST" class="m-0">
                 @csrf
                 <button type="submit" class="btn btn-sm bg-gradient-danger mb-0 px-3">
@@ -515,13 +538,197 @@
 
     </div>
 
+    <!-- Card Mode Container for Non-Tech-Savvy Officers -->
+    <div id="cardContainer" class="container py-5 d-none" style="max-width: 1200px; margin-top: 5rem;">
+        <div class="text-center mb-5">
+            <span class="badge bg-gradient-primary px-3 py-2 text-uppercase mb-2">{{ $orgInfos['org_type_name'] }}</span>
+            <h1 class="font-weight-bolder text-dark mb-1">{{ $orgInfos['org_name'] }}</h1>
+            <p class="text-muted fs-6">
+                <i class="fas fa-map-marker-alt text-primary me-1"></i> ตำบล{{ $orgInfos['org_tambon'] }} อำเภอ{{ $orgInfos['org_district'] }} จังหวัด{{ $orgInfos['org_province'] }}
+            </p>
+            <p class="lead text-secondary mx-auto" style="max-width: 700px;">
+                ยินดีต้อนรับเจ้าหน้าที่ กรุณาเลือกเมนูระบบงานที่ต้องการปฏิบัติงานด้านล่าง
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- 1. งานประปา -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-primary rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 1</span>
+                            <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
+                                <i class="fas fa-tint text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">งานประปา</h4>
+                        <p class="text-muted small flex-grow-1">
+                            จัดการระบบน้ำประปา จดบันทึกเลขมิเตอร์ คำนวณค่าน้ำ รับชำระเงิน และออกใบแจ้งหนี้/ใบเสร็จ
+                        </p>
+                        <a href="{{ route('dashboard') }}" class="btn btn-primary w-100 mb-0 mt-3 rounded-pill">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. ธนาคารขยะรีไซเคิล -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-success rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 2</span>
+                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
+                                <i class="fas fa-recycle text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">ธนาคารขยะรีไซเคิล</h4>
+                        <p class="text-muted small flex-grow-1">
+                            รับซื้อขยะรีไซเคิล จัดการสมาชิก สมุดบัญชีเงินฝาก บันทึกแต้มสะสม และถอนเงิน
+                        </p>
+                        <a href="{{ route('keptkayas.dashboard', 'recycle') }}" class="btn btn-success w-100 mb-0 mt-3 rounded-pill">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ตู้คืนขวดอัตโนมัติ -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-info rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 3</span>
+                            <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
+                                <i class="fas fa-robot text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">ตู้คืนขวดอัตโนมัติ</h4>
+                        <p class="text-muted small flex-grow-1">
+                            ตรวจสอบสถานะเครื่อง RVM สถิติการคืนขวดพลาสติก/กระป๋อง และจัดการข้อมูลแต้ม
+                        </p>
+                        <a href="{{ route('keptkayas.kiosks.dashboard') }}" class="btn btn-info w-100 mb-0 mt-3 rounded-pill">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. ถังขยะเปียกครัวเรือน -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-success rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 4</span>
+                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
+                                <i class="fas fa-leaf text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">ถังขยะเปียก</h4>
+                        <p class="text-muted small flex-grow-1">
+                            ติดตามการจัดทำถังขยะเปียกลดโลกร้อน สถิติการลดคาร์บอนเครดิตระดับครัวเรือน
+                        </p>
+                        <a href="{{ auth()->user()->can('access food waste') || auth()->user()->hasRole('Super Admin') ? route('foodwaste.executive_dashboard') : 'javascript:void(0)' }}" class="btn btn-outline-success w-100 mb-0 mt-3 rounded-pill">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. ค่าจัดการถังขยะรายปี -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 5</span>
+                            <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
+                                <i class="fas fa-trash-alt text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">ค่าจัดการถังขยะ</h4>
+                        <p class="text-muted small flex-grow-1">
+                            จัดเก็บและบันทึกค่าธรรมเนียมการเก็บขยะมูลฝอยประจำปีของแต่ละครัวเรือน
+                        </p>
+                        <a href="{{ route('annual_trash.index') }}" class="btn btn-warning w-100 mb-0 mt-3 rounded-pill text-white">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. กองทุนฌาปนกิจสงเคราะห์ -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-dark rounded-pill px-3 py-2 font-weight-bold" style="background-color: #7928ca !important;">ลำดับที่ 6</span>
+                            <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md centralized" style="width: 48px; height: 48px; background: linear-gradient(310deg, #7928ca 0%, #b07219 100%);">
+                                <i class="fas fa-hands-helping text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">กองทุนฌาปนกิจ</h4>
+                        <p class="text-muted small flex-grow-1">
+                            บริหารจัดการสมาชิกกองทุนฌาปนกิจสงเคราะห์ ตรวจสอบเงินสงเคราะห์และสิทธิประโยชน์
+                        </p>
+                        <a href="{{ route('admin.welfare.dashboard') }}" class="btn btn-outline-dark w-100 mb-0 mt-3 rounded-pill">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. คลังพัสดุ -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-secondary rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 7</span>
+                            <div class="icon icon-shape bg-gradient-secondary shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
+                                <i class="fas fa-boxes text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">คลังพัสดุ</h4>
+                        <p class="text-muted small flex-grow-1">
+                            ระบบบันทึกรับพัสดุ ทะเบียนคุมทรัพย์สิน การเบิกจ่าย และตรวจนับสต็อกพัสดุคงเหลือ
+                        </p>
+                        <a href="{{ route('inventory.dashboard') }}" class="btn btn-secondary w-100 mb-0 mt-3 rounded-pill">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. ผู้ดูแลระบบ -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-danger rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 8</span>
+                            <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
+                                <i class="fas fa-user-shield text-white fs-5"></i>
+                            </div>
+                        </div>
+                        <h4 class="font-weight-bolder text-dark mb-1">ตั้งค่าระบบ</h4>
+                        <p class="text-muted small flex-grow-1">
+                            จัดการสิทธิ์เจ้าหน้าที่ ผู้ใช้งาน การตั้งค่าทั่วไป และการดูแลรักษาความปลอดภัยระบบ
+                        </p>
+                        <a href="{{ route('superadmin.dashboard') }}" class="btn btn-danger w-100 mb-0 mt-3 rounded-pill">
+                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Core JS Files -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="{{ asset('soft-ui/assets/js/core/popper.min.js') }}"></script>
     <script src="{{ asset('soft-ui/assets/js/core/bootstrap.min.js') }}"></script>
     <script src="{{ asset('Applight/js/wow.min.js') }}"></script>
 
-    <!-- Script คำนวณองศากระจายแบบวงกลม 360 องศารอบโลโก้ -->
+    <!-- Script คำนวณองศากระจายแบบวงกลม 360 องศารอบโลโก้ และระบบสลับมุมมอง -->
     <script>
         new WOW().init();
 
@@ -547,10 +754,35 @@
                 }
             }
 
-            renderWheelLayout();
+            function setViewMode(mode) {
+                if (mode === 'card') {
+                    $('body').addClass('card-mode-active');
+                    $('.main-container').addClass('d-none');
+                    $('#cardContainer').removeClass('d-none');
+                    $('#toggleViewModeBtn').html('<i class="fas fa-circle-notch me-1"></i> มุมมองวงล้อ');
+                    localStorage.setItem('accessmenu_view_mode', 'card');
+                } else {
+                    $('body').removeClass('card-mode-active');
+                    $('.main-container').removeClass('d-none');
+                    $('#cardContainer').addClass('d-none');
+                    $('#toggleViewModeBtn').html('<i class="fas fa-th-large me-1"></i> มุมมองการ์ด');
+                    localStorage.setItem('accessmenu_view_mode', 'wheel');
+                    renderWheelLayout();
+                }
+            }
+
+            $('#toggleViewModeBtn').on('click', function () {
+                const current = localStorage.getItem('accessmenu_view_mode') || 'wheel';
+                setViewMode(current === 'wheel' ? 'card' : 'wheel');
+            });
+
+            const savedMode = localStorage.getItem('accessmenu_view_mode') || 'wheel';
+            setViewMode(savedMode);
 
             $(window).on('resize', function () {
-                renderWheelLayout();
+                if ((localStorage.getItem('accessmenu_view_mode') || 'wheel') === 'wheel') {
+                    renderWheelLayout();
+                }
             });
         });
     </script>

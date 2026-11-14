@@ -147,6 +147,32 @@ function selectOrgAndContinue(orgId, staffId, fullName, profileIndex = null) {
 }
 
 async function checkExistingSession() {
+    // 🟢 ถ้ามี Session จาก Laravel Web Auth ให้ใช้งานทันที ไม่ต้องให้เจ้าหน้าที่ล็อกอินซ้ำ
+    if (window.INITIAL_STAFF_SESSION && window.INITIAL_STAFF_SESSION.user) {
+        const initUser = window.INITIAL_STAFF_SESSION.user;
+        const orgId = window.INITIAL_STAFF_SESSION.org_id || initUser.org_id_fk || 1;
+        const fullName = `${initUser.prefix || ''}${initUser.firstname || ''} ${initUser.lastname || ''}`.trim() || initUser.username;
+        sessionStorage.setItem('staff_token', window.INITIAL_STAFF_SESSION.token || 'web_auth_session');
+        sessionStorage.setItem('staff_user_id', initUser.id);
+        sessionStorage.setItem('staff_name', fullName);
+        sessionStorage.setItem('staff_org_id', orgId);
+        sessionStorage.setItem('staff_id', initUser.id);
+        sessionStorage.setItem('staff_org_name', window.INITIAL_STAFF_SESSION.org_name || `องค์กร #${orgId}`);
+        setStaffActiveOrg(orgId, initUser.id, {
+            org: {
+                id: orgId,
+                org_name: window.INITIAL_STAFF_SESSION.org_name || `องค์กร #${orgId}`
+            }
+        });
+        currentScreenGlobal = sessionStorage.getItem('current_screen');
+        if (!currentScreenGlobal || currentScreenGlobal === 'loginScreen') {
+            navigateTo('mainScreen');
+        } else {
+            navigateTo(currentScreenGlobal);
+        }
+        return;
+    }
+
     const staffToken = sessionStorage.getItem('staff_token') || localStorage.getItem('staff_token');
     const staffUserId = sessionStorage.getItem('staff_user_id') || localStorage.getItem('staff_user_id');
     const savedName = sessionStorage.getItem('staff_name') || localStorage.getItem('staff_name');
@@ -369,8 +395,7 @@ const screenAliases = {
     'settings': 'settingsScreen',
     'recycle': 'recycleBankScreen',
     'recycleScreen': 'recycleBankScreen',
-    'water': 'tabwaterScreen',
-    'water-complain': 'tabwaterRecordScreen'
+    'water': 'tabwaterScreen'
 };
 
 const authenticatedScreens = [
@@ -385,6 +410,26 @@ const authenticatedScreens = [
 ];
 
 async function navigateTo(rawModuleName) {
+    if (rawModuleName === 'water-complain') {
+        closeFullSidebar();
+        const modalEl = document.getElementById('staffDashboardModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            const staffModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            staffModal.show();
+            const contentEl = document.getElementById('modal-staff-content');
+            if (contentEl) {
+                contentEl.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2 text-muted">กำลังโหลดข้อมูลเรื่องร้องเรียน...</div></div>';
+                fetch('/staff/dashboard')
+                    .then(res => res.text())
+                    .then(html => { contentEl.innerHTML = html; })
+                    .catch(err => {
+                        contentEl.innerHTML = '<div class="alert alert-danger m-3">ไม่สามารถโหลดข้อมูลเรื่องร้องเรียนได้</div>';
+                    });
+            }
+        }
+        return;
+    }
+
     const moduleName = screenAliases[rawModuleName] || rawModuleName;
 
     sessionStorage.setItem('current_screen', moduleName);
@@ -704,6 +749,32 @@ async function loadWaterMembersList() {
     }
 }
 
+function showMissingDataAlert(meterId, userName) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'ข้อมูลมิเตอร์ไม่สมบูรณ์',
+        html: `
+            <div class="text-start">
+                <p class="mb-2"><strong>ผู้ใช้น้ำ:</strong> ${userName}</p>
+                <p class="text-muted small mb-3">ไม่พบข้อมูลผู้ใช้น้ำหรือมิเตอร์ที่ผูกกับใบแจ้งหนี้รอบนี้ กรุณาตรวจสอบตามขั้นตอนต่อไปนี้:</p>
+                <div class="d-flex flex-column gap-2">
+                    <a href="/tabwater/members" class="btn btn-primary btn-sm rounded-pill py-2 text-white text-decoration-none">
+                        <i class="fas fa-link me-1"></i> 1. ไปหน้าผูกข้อมูลสมาชิก (/tabwater/members)
+                    </a>
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill py-2" onclick="Swal.close(); loadWaterMembersList();">
+                        <i class="fas fa-sync-alt me-1"></i> 2. รีเฟรชข้อมูลล่าสุด
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm rounded-pill py-2" onclick="Swal.close();">
+                        <i class="fas fa-forward me-1"></i> 3. ข้ามไปจดบ้านถัดไป
+                    </button>
+                </div>
+            </div>
+        `,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
 function renderMembersCardList(members) {
     const container = document.getElementById('membersListContainer');
     if (!container) return;
@@ -727,12 +798,25 @@ function renderMembersCardList(members) {
 
         const invoiceId = currentInvoice ? currentInvoice.id : null;
         const isMeterRecorded = currentInvoice && currentInvoice.status !== 'init';
+        const hasMissingData = !item.user || !item.meternumber || !invoiceId;
 
-        const statusBadge = isMeterRecorded
-            ? `<span class="badge bg-success rounded-pill">จดแล้ว (${currentInvoice.currentmeter})</span>`
-            : `<span class="badge bg-warning text-dark rounded-pill">ยังไม่จด</span>`;
+        const statusBadge = hasMissingData
+            ? `<span class="badge bg-danger rounded-pill">⚠️ ข้อมูลไม่สมบูรณ์</span>`
+            : (isMeterRecorded
+                ? `<span class="badge bg-success rounded-pill">จดแล้ว (${currentInvoice.currentmeter})</span>`
+                : `<span class="badge bg-warning text-dark rounded-pill">ยังไม่จด</span>`);
 
         const safeUserName = userName.replace(/'/g, "\\'");
+
+        const actionBtn = hasMissingData
+            ? `<button type="button" onclick="showMissingDataAlert(${item.id || item.meter_id}, '${safeUserName}')"
+                      class="btn btn-outline-danger w-100 rounded-pill fw-bold">
+                   ⚠️ ข้อมูลไม่สมบูรณ์ (ดูวิธีแก้)
+               </button>`
+            : `<button type="button" onclick="openRecordMeterModal(${item.id || item.meter_id}, '${safeUserName}', ${lastMeter}, ${invoiceId})"
+                      class="btn ${isMeterRecorded ? 'btn-outline-secondary' : 'btn-primary'} w-100 rounded-pill fw-bold">
+                   ${isMeterRecorded ? '✏️ แก้ไขเลขมิเตอร์' : '📝 บันทึกเลขมิเตอร์'}
+               </button>`;
 
         const cardHtml = `
             <div class="col-12 member-card-item mb-2">
@@ -750,10 +834,7 @@ function renderMembersCardList(members) {
                         <small class="text-muted">รหัสมิเตอร์: <strong class="text-dark">${item.meternumber || '-'}</strong></small>
                     </div>
 
-                    <button type="button" onclick="openRecordMeterModal(${item.id}, '${safeUserName}', ${lastMeter}, ${invoiceId})"
-                            class="btn ${isMeterRecorded ? 'btn-outline-secondary' : 'btn-primary'} w-100 rounded-pill fw-bold">
-                        ${isMeterRecorded ? '✏️ แก้ไขเลขมิเตอร์' : '📝 บันทึกเลขมิเตอร์'}
-                    </button>
+                    ${actionBtn}
                 </div>
             </div>
         `;
@@ -969,26 +1050,64 @@ function openRecordMeterModal(meterId, userName, lastMeter, invoiceId) {
 }
 
 async function saveMeterRecord(isPrint = false) {
+    if (!navigator.onLine) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ไม่มีสัญญาณอินเทอร์เน็ต',
+            text: 'อุปกรณ์อยู่ในโหมดออฟไลน์ ไม่สามารถบันทึกข้อมูลมิเตอร์ไปยังเซิร์ฟเวอร์ได้ในขณะนี้ กรุณารอเน็ตกลับมาแล้วกดบันทึกใหม่อีกครั้ง',
+            confirmButtonText: 'รับทราบ',
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
+    }
+
     const invoiceId = window.selectedInvoiceId;
     const currentMeter = document.getElementById('modalCurrentMeterInput')?.value;
     const lastMeter = document.getElementById('modalLastMeterInput')?.value;
 
     if (!invoiceId) {
-        alert('ไม่พบข้อมูลใบแจ้งหนี้รอบปัจจุบัน');
+        Swal.fire({
+            icon: 'error',
+            title: 'ไม่พบใบแจ้งหนี้',
+            text: 'ไม่พบข้อมูลใบแจ้งหนี้รอบปัจจุบัน'
+        });
         return;
     }
     if (currentMeter === '' || currentMeter === null) {
-        alert('กรุณากรอกเลขมิเตอร์ครั้งนี้');
+        Swal.fire({
+            icon: 'warning',
+            title: 'กรุณากรอกเลขมิเตอร์',
+            text: 'กรุณากรอกเลขมิเตอร์ครั้งนี้ก่อนทำการบันทึก'
+        });
         return;
     }
     if (parseInt(currentMeter, 10) < parseInt(lastMeter || 0, 10)) {
-        if (!confirm('เลขมิเตอร์ครั้งนี้น้อยกว่าครั้งก่อน คุณแน่ใจหรือไม่ที่จะบันทึก?')) {
-            return;
-        }
+        const result = await Swal.fire({
+            icon: 'question',
+            title: 'ยืนยันการบันทึกหรือไม่?',
+            text: `เลขมิเตอร์ครั้งนี้ (${currentMeter}) น้อยกว่าครั้งก่อน (${lastMeter}) คุณแน่ใจหรือไม่ที่จะบันทึก?`,
+            showCancelButton: true,
+            confirmButtonText: 'ยืนยันบันทึก',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33'
+        });
+        if (!result.isConfirmed) return;
     }
 
     const btnSaveOnly = document.getElementById('btn-save-only');
+    const btnSavePrint = document.getElementById('btn-save-and-print');
     if (btnSaveOnly) btnSaveOnly.disabled = true;
+    if (btnSavePrint) btnSavePrint.disabled = true;
+
+    Swal.fire({
+        title: 'กำลังบันทึกข้อมูล...',
+        text: 'กรุณารอสักครู่',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    const meterRecordToken = 'MRT-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
 
     try {
         const response = await fetch(`${API_BASE_URL}/staff/tabwater/meter-records`, {
@@ -1000,13 +1119,14 @@ async function saveMeterRecord(isPrint = false) {
             },
             body: JSON.stringify({
                 invoice_id: invoiceId,
-                current_reading: parseInt(currentMeter, 10)
+                current_reading: parseInt(currentMeter, 10),
+                meter_record_token: meterRecordToken
             })
         });
 
         const resData = await response.json();
 
-        if (response.ok && (resData.code === 200 || resData.success)) {
+        if (response.ok && (resData.code === 200 || resData.status === 'success' || resData.success)) {
             generateWaterBillHTML(resData.data);
 
             await new Promise(resolve => setTimeout(resolve, 200));
@@ -1024,16 +1144,47 @@ async function saveMeterRecord(isPrint = false) {
             $('#card-reciept').html('');
             Swal.close();
             await loadWaterMembersList();
+            Swal.fire({
+                icon: 'success',
+                title: 'บันทึกสำเร็จ',
+                text: 'บันทึกเลขมิเตอร์เรียบร้อยแล้ว',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else if (resData.error_code === 'REQUIRED_DATA_MISSING') {
+            Swal.close();
+            Swal.fire({
+                icon: 'warning',
+                title: 'ข้อมูลไม่สมบูรณ์',
+                text: resData.message || 'ไม่พบข้อมูลผู้ใช้น้ำหรือมิเตอร์ที่ผูกกับใบแจ้งหนี้นี้',
+                showCancelButton: true,
+                confirmButtonText: '🔗 ไปหน้าผูกข้อมูลสมาชิก',
+                cancelButtonText: 'ปิดหน้าต่าง',
+                confirmButtonColor: '#3b82f6'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = resData.workaround?.url || '/tabwater/members';
+                }
+            });
         } else {
             Swal.close();
-            alert(resData.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: resData.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล'
+            });
         }
     } catch (err) {
         console.error('Save Meter Record Error:', err);
         Swal.close();
-        alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง'
+        });
     } finally {
         if (btnSaveOnly) btnSaveOnly.disabled = false;
+        if (btnSavePrint) btnSavePrint.disabled = false;
     }
 }
 
@@ -1596,10 +1747,25 @@ async function submitFinalPurchase(print_bill) {
         return;
     }
 
+    if (!navigator.onLine) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'ไม่มีสัญญาณอินเทอร์เน็ต',
+            text: 'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหน้างานก่อนกดบันทึก เพื่อความถูกต้องของยอดเงินและแต้มสะสม',
+            confirmButtonText: 'ตกลง'
+        });
+        return;
+    }
+
     if (print_bill === 1 && !printCharacteristic) {
         BluethoothConnectedModal('recycle');
         return;
     }
+
+    const submitBtn = document.querySelector('#customCartModal button[onclick*="submitFinalPurchase(0)"]');
+    const submitPrintBtn = document.getElementById('submit_and_print');
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitPrintBtn) submitPrintBtn.disabled = true;
 
     hydrateStaffInfo();
 
@@ -1610,11 +1776,14 @@ async function submitFinalPurchase(print_bill) {
     const totalAmount = purchaseCart.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
     const totalPoints = purchaseCart.reduce((sum, item) => sum + parseInt(item.point || 0, 10), 0);
 
+    const transactionToken = 'txn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
     const payload = {
         org_id_fk: orgId,
         kp_user_w_pref_id_fk: currentActiveMember?.waste_preference?.id,
         user_id: currentActiveMember?.id,
         recorder_id: recorderId,
+        transaction_token: transactionToken,
         total_weight: totalWeight,
         cashback: document.getElementById('cashback')?.checked || false,
         total_amount: totalAmount,
@@ -1678,11 +1847,15 @@ async function submitFinalPurchase(print_bill) {
             backToRecycleScreen();
         } else {
             Swal.close();
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitPrintBtn) submitPrintBtn.disabled = false;
             alert('❌ เซิร์ฟเวอร์ปฏิเสธการบันทึก: ' + (resData.message || ''));
         }
     } catch (error) {
         console.error('Submit Purchase Error:', error);
         Swal.close();
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitPrintBtn) submitPrintBtn.disabled = false;
         alert('❌ ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาเช็กอินเทอร์เน็ตหน้างาน');
     }
 }
@@ -1945,16 +2118,21 @@ function BluethoothConnectedModal(from) {
         });
         return;
     }
+}
 
-    Swal.fire({
-        title: 'กำลังบันทึกข้อมูล...',
-        text: 'กรุณารอสักครู่ ห้ามปิดหน้าต่างนี้',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-            Swal.showLoading();
+function setupNetworkResilience() {
+    function updateNetworkStatus() {
+        const banner = document.getElementById('offlineAlertBanner');
+        if (!banner) return;
+        if (!navigator.onLine) {
+            banner.classList.remove('d-none');
+        } else {
+            banner.classList.add('d-none');
         }
-    });
+    }
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
 }
 
 // =========================================================================
@@ -1962,6 +2140,21 @@ function BluethoothConnectedModal(from) {
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 0. ตรวจสอบสถานะเครือข่าย & กู้คืนตะกร้า
+    setupNetworkResilience();
+
+    try {
+        const savedCart = localStorage.getItem('current_purchase_cart');
+        if (savedCart) {
+            purchaseCart = JSON.parse(savedCart);
+            if (Array.isArray(purchaseCart) && purchaseCart.length > 0) {
+                renderFloatingCart();
+            }
+        }
+    } catch (e) {
+        console.warn('Error restoring purchase cart:', e);
+    }
+
     // 1. ตรวจสอบ Session ทันทีเมื่อเปิดแอป
     checkExistingSession();
 
@@ -2107,7 +2300,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 9. ปุ่มสแกน QR ขยะ
     document.getElementById('btnScanTrashQR')?.addEventListener('click', () => {
-        selectTrashItem('P001');
+        const scannerContainer = document.getElementById('qr-reader-container');
+        if (!scannerContainer) {
+            if (recycleItemsList.length > 0) {
+                selectTrashItem(recycleItemsList[0].item_code || recycleItemsList[0].id || 'P001');
+            } else {
+                selectTrashItem('P001');
+            }
+            return;
+        }
+        scannerContainer.style.display = 'flex';
+
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode('reader');
+        }
+
+        html5QrCode.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            (decodedText) => {
+                selectTrashItem(decodedText);
+                stopWebScanner();
+            },
+            () => {}
+        ).catch(err => {
+            console.warn('Cannot open camera for item scan, fallback to select item:', err);
+            stopWebScanner();
+            if (recycleItemsList.length > 0) {
+                selectTrashItem(recycleItemsList[0].item_code || recycleItemsList[0].id || 'P001');
+            } else {
+                selectTrashItem('P001');
+            }
+        });
     });
 
     // 10. ปุ่มเชื่อมต่อ Bluetooth Printer

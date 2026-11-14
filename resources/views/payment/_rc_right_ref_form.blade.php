@@ -286,10 +286,9 @@ style="margin-top:10px !important;"
             </td>
             <td class="text-center inf">
                 <?php
-                $date = Str::substr($item->created_at, 0, 10);
+                $date = !empty($item->created_at) ? Str::substr($item->created_at, 0, 10) : date('Y-m-d');
                 $dateArray = explode("/", $fnc->engDateToThaiDateFormat($date));
-                // {{ dd($dateArray); }}
-                echo $dateArray[0]."/".$dateArray[1]."/".Str::substr($dateArray[2],2,2);
+                echo (count($dateArray) >= 3) ? ($dateArray[0]."/".$dateArray[1]."/".Str::substr($dateArray[2],2,2)) : '-';
                 ?>
                 <!-- {{-- &nbsp; --}} -->
             </td>
