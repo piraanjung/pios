@@ -22,6 +22,8 @@
         </div>
     @endif
 
+    @include('keptkayas.purchase.partials.stepper', ['currentStep' => 1])
+
     {{-- Active Route Card --}}
     <div class="card bg-gradient-info text-white mb-3 mx-2 mt-2 overflow-hidden">
         <div class="card-body p-4 position-relative">

@@ -34,22 +34,22 @@
         <a data-bs-toggle="collapse" href="#kpBankMenu" class="nav-link collapsed" aria-controls="kpBankMenu"
             role="button" aria-expanded="false">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                <i class="fas fa-recycle"></i>
+                <i class="fas fa-recycle text-success"></i>
             </div>
-            <span class="nav-link-text ms-1">ธนาคารขยะรีไซเคิล</span>
+            <span class="nav-link-text ms-1 font-weight-bold">1. รับซื้อขยะรีไซเคิล</span>
         </a>
         <div class="collapse" id="kpBankMenu">
             <ul class="nav ms-4 ps-3">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('keptkayas.purchase.select_route') }}">
-                        <span class="sidenav-mini-icon"> B </span>
-                        <span class="sidenav-normal">รับซื้อขยะรีไซเคิล</span>
+                        <i class="fas fa-cart-plus text-primary me-2"></i>
+                        <span class="sidenav-normal">บันทึกรับซื้อขยะหน้างาน</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('keptkayas.recycle-bank.members.index') }}">
-                        <span class="sidenav-mini-icon"> M </span>
-                        <span class="sidenav-normal">รายชื่อสมาชิกธนาคารขยะ</span>
+                        <i class="fas fa-users text-info me-2"></i>
+                        <span class="sidenav-normal">ทะเบียนสมาชิกธนาคารขยะ</span>
                     </a>
                 </li>
             </ul>
@@ -60,22 +60,22 @@
         <a data-bs-toggle="collapse" href="#kpSellMenu" class="nav-link collapsed" aria-controls="kpSellMenu"
             role="button" aria-expanded="false">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                <i class="fas fa-truck"></i>
+                <i class="fas fa-truck text-primary"></i>
             </div>
-            <span class="nav-link-text ms-1">ขายให้ร้านรับซื้อขยะ</span>
+            <span class="nav-link-text ms-1 font-weight-bold">2. ขายให้ร้านรับซื้อขยะ</span>
         </a>
         <div class="collapse" id="kpSellMenu">
             <ul class="nav ms-4 ps-3">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('keptkayas.sell.form') }}">
-                        <span class="sidenav-mini-icon"> S </span>
-                        <span class="sidenav-normal">บันทึกการขายขยะรีไซเคิล</span>
+                        <i class="fas fa-truck-loading text-success me-2"></i>
+                        <span class="sidenav-normal">บันทึกการขายให้ร้าน</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('keptkayas.sell.history') }}">
-                        <span class="sidenav-mini-icon"> H </span>
-                        <span class="sidenav-normal">ประวัติการขายขยะรีไซเคิล</span>
+                        <i class="fas fa-file-invoice text-secondary me-2"></i>
+                        <span class="sidenav-normal">ประวัติการขายให้ร้าน</span>
                     </a>
                 </li>
             </ul>
@@ -86,27 +86,27 @@
         <a data-bs-toggle="collapse" href="#kpWithdrawMenu" class="nav-link collapsed" aria-controls="kpWithdrawMenu"
             role="button" aria-expanded="false">
             <div class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
-                <i class="fas fa-wallet"></i>
+                <i class="fas fa-wallet text-danger"></i>
             </div>
-            <span class="nav-link-text ms-1">ถอนเงินธนาคารขยะ</span>
+            <span class="nav-link-text ms-1 font-weight-bold">3. ถอนเงินธนาคารขยะ</span>
         </a>
         <div class="collapse" id="kpWithdrawMenu">
             <ul class="nav ms-4 ps-3">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('keptkayas.withdraw.create') }}">
-                        <span class="sidenav-mini-icon"> W </span>
-                        <span class="sidenav-normal">ถอนเงิน</span>
+                        <i class="fas fa-hand-holding-usd text-danger me-2"></i>
+                        <span class="sidenav-normal">ส่งคำขอถอนเงินสด</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('keptkayas.batches.index', 'current_batches') }}">
-                        <span class="sidenav-mini-icon"> P </span>
-                        <span class="sidenav-normal">รายการรอจ่ายเงิน</span>
+                        <i class="fas fa-clock text-warning me-2"></i>
+                        <span class="sidenav-normal">รายการรอจ่ายเงินสด</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('keptkayas.batches.index', 'histoty_batches') }}">
-                        <span class="sidenav-mini-icon"> H </span>
+                        <i class="fas fa-history text-secondary me-2"></i>
                         <span class="sidenav-normal">ประวัติการเบิกถอนเงิน</span>
                     </a>
                 </li>

@@ -47,6 +47,7 @@
     </style>
 
     <div class="container-fluid px-0" style="max-width: 800px; margin: 0 auto;">
+        @include('keptkayas.purchase.partials.stepper', ['currentStep' => 2])
 
         {{-- [MOBILE ONLY] Header Bar --}}
         <div class="d-md-none d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom px-2">

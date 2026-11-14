@@ -47,6 +47,32 @@
         body, .btn, .form-control, .form-select, .dropdown-menu, .table, h1, h2, h3, h4, h5, h6 {
             font-family: 'Kanit', 'Open Sans', sans-serif;
         }
+        /* Mobile-First Touch Targets for Officers (44px-48px min height) */
+        .btn {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+        .btn-lg {
+            min-height: 52px;
+        }
+        .form-control, .form-select {
+            min-height: 44px;
+            font-size: 1rem;
+        }
+        .navbar-vertical .navbar-nav .nav-link {
+            min-height: 44px;
+            padding-top: 0.6rem;
+            padding-bottom: 0.6rem;
+        }
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+            }
+        }
         /* sidebar ยาว: ให้เลื่อนในตัวเอง */
         .navbar-vertical.navbar-expand-xs .navbar-collapse { max-height: calc(100vh - 6rem); overflow-y: auto; }
         .navbar-vertical .navbar-nav .nav-item .collapse .nav .nav-item .nav-link,
@@ -138,6 +164,15 @@
         <!-- End Navbar -->
 
         <div class="container-fluid py-4">
+            <!-- Offline / Network Status Banner -->
+            <div id="offline-alert" class="alert alert-danger text-white d-none shadow-sm mb-3" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-wifi-slash fa-2x me-3"></i>
+                    <div>
+                        <strong>ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้:</strong> สัญญาณอินเทอร์เน็ตขาดหาย ข้อมูลอาจยังไม่ถูกบันทึก กรุณารอเชื่อมต่ออินเทอร์เน็ตก่อนทำรายการต่อ
+                    </div>
+                </div>
+            </div>
             {{-- success แต่ละหน้าแสดงเอง (layout เดิมแสดงเฉพาะ error) --}}
             {{-- @if (session('error'))
                 <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
@@ -167,6 +202,15 @@
     <script>
         $(function () {
             $('.js-example-basic-single').select2();
+
+            window.addEventListener('offline', function () {
+                var el = document.getElementById('offline-alert');
+                if (el) el.classList.remove('d-none');
+            });
+            window.addEventListener('online', function () {
+                var el = document.getElementById('offline-alert');
+                if (el) el.classList.add('d-none');
+            });
         });
     </script>
 

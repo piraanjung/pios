@@ -12,6 +12,7 @@
 
 @section('content') 
 <div class="container-fluid px-0" style="max-width: 650px; margin: 0 auto;"> 
+    @include('keptkayas.purchase.partials.stepper', ['currentStep' => 3]) 
 
     {{-- Header Bar --}}
     <div class="d-flex justify-content-between align-items-center mb-2 mt-2 px-2"> 
