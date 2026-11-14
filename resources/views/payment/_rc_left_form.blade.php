@@ -256,9 +256,9 @@ $receipt_th_date = $fnc->engDateToThaiDateFormat($exp[0]);
             </td>
             <td class="text-center inf" >
                 <?php
-                $date = Str::substr($item->created_at, 0, 10);
+                $date = !empty($item->created_at) ? Str::substr($item->created_at, 0, 10) : date('Y-m-d');
                 $dateArray = explode("/", $fnc->engDateToThaiDateFormat($date));
-                echo $dateArray[0]."/".$dateArray[1]."/".Str::substr($dateArray[2],2,2);
+                echo (count($dateArray) >= 3) ? ($dateArray[0]."/".$dateArray[1]."/".Str::substr($dateArray[2],2,2)) : '-';
                 ?>
             </td>
 

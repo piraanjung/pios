@@ -102,9 +102,7 @@ Route::get('/login_staff', function () {
 });
 
 Route::get('acc', function () {
-    Auth::logout();
-    return view('staff.mobile.staff_accessmenu');
-    // return view('staff.mobile');
+    return redirect()->route('staff_accessmenu');
 });
 Route::post('/inventory/items/iframe/session', [InvItemController::class, 'startIframeSession'])
     ->name('inventory.items.iframe.session');

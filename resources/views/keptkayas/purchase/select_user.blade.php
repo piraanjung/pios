@@ -6,9 +6,11 @@
 
 @extends($layout)
 
-@section('nav-header', 'รับซื้อขยะรีไซเคิล')
+@section('nav-header', 'ธนาคารขยะ')
+@section('route-header', route('keptkayas.dashboard'))
+@section('route-back', route('keptkayas.purchase.select_route'))
 @section('nav-current', 'เลือกสมาชิก')
-@section('page-topic', 'ธุรกรรมรับซื้อ')
+@section('page-topic', 'ออกหน่วยรับซื้อขยะ - เลือกสมาชิก')
 
 @section('content')
     <style>

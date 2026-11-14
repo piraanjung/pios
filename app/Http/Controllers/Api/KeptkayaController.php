@@ -7,10 +7,12 @@ use Carbon\Carbon;
 use App\Http\Controllers\Controller;
 use App\Models\KeptKaya\KpPurchaseTransaction;
 use App\Models\KeptKaya\KpPurchaseTransactionDetail;
+use App\Models\KeptKaya\KpRecycleBankMember;
 use App\Models\KeptKaya\KpTbankItems;
 use App\Models\KeptKaya\KpUserWastePreference;
 use App\Models\KPBankAccount;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
@@ -133,6 +135,11 @@ class KeptkayaController extends Controller
 
     public function store_purchase(Request $request)
     {
+        $transToken = $request->input('transaction_token');
+        if (!empty($transToken) && Cache::has('kp_store_purchase:' . $transToken)) {
+            return response()->json(Cache::get('kp_store_purchase:' . $transToken), 200);
+        }
+
         // 🟢 เปิด Transaction ป้องกันข้อมูลบันทึกครึ่งๆ กลางๆ
         DB::beginTransaction();
         try {
@@ -191,8 +198,11 @@ class KeptkayaController extends Controller
             // 5. อัปเดต Carbon รวม
             $transaction->update(['total_carbon_saved' => $carbonSavedTotal]); //
 
-            // 6. อัปเดตสมุดบัญชีธนาคารขยะ (KpBankAccount)
-            $recycleAcc = KpBankAccount::firstOrCreate(
+            // 6. อัปเดตสมุดบัญชีธนาคารขยะ (KPBankAccount & KpRecycleBankMember)
+            $totalAmount = (float) collect($request->cart_items)->sum('amount');
+            $totalPoints = (int) collect($request->cart_items)->sum('points');
+
+            $recycleAcc = KPBankAccount::firstOrCreate(
                 ['user_id' => $sellerUserId, 'entity_type' => 'recycle_bank'],
                 [
                     'org_id_fk'  => $request->org_id_fk,
@@ -204,19 +214,41 @@ class KeptkayaController extends Controller
                 ]
             );
 
-            $recycleAcc->increment('points', collect($request->cart_items)->sum('points'));
+            $recycleAcc->increment('points', $totalPoints);
             if (!$request->cashback) {
-                $recycleAcc->increment('balance', collect($request->cart_items)->sum('amount'));
+                $recycleAcc->increment('balance', $totalAmount);
+            }
+
+            // ซิงค์ตารางสมาชิกธนาคารขยะ KpRecycleBankMember
+            $recycleMember = KpRecycleBankMember::firstOrCreate(
+                ['user_id' => $sellerUserId, 'org_id_fk' => $request->org_id_fk],
+                [
+                    'balance' => 0,
+                    'points' => 0,
+                    'status' => 'active',
+                ]
+            );
+            $recycleMember->increment('points', $totalPoints);
+            if (!$request->cashback) {
+                $recycleMember->increment('balance', $totalAmount);
+            }
+
+            // หักเงินจากบัญชีกลางธนาคารขยะขององค์กร (ถ้ามีและไม่ใช่เงินสด)
+            if (!$request->cashback && $totalAmount > 0) {
+                $orgRecycleAcc = KPBankAccount::where('org_id_fk', $request->org_id_fk)
+                    ->where('entity_type', 'org_recycle_bank')
+                    ->first();
+                if ($orgRecycleAcc) {
+                    $orgRecycleAcc->decrement('balance', $totalAmount);
+                }
             }
 
             Session::forget(['purchase_cart', 'purchase_user_id']);
 
-
             // ถ้าทุกอย่างผ่านฉลุยให้เซฟลงฐานข้อมูลจริง
             DB::commit();
 
-            // 🟢 ส่งข้อมูลบิลที่สมบูรณ์กลับไปให้ฝั่ง JavaScript นำไปปริ้นออกเครื่องบลูทูธ
-            return response()->json([
+            $responseData = [
                 'code' => 200,
                 'message' => 'บันทึกข้อมูลสำเร็จ',
                 'data'    => [
@@ -226,9 +258,17 @@ class KeptkayaController extends Controller
                     'total_amount'      => $transaction->total_amount,
                     'total_points'      => $transaction->total_points
                 ]
-            ], 200);
+            ];
+
+            if (!empty($transToken)) {
+                Cache::put('kp_store_purchase:' . $transToken, $responseData, now()->addHours(6));
+            }
+
+            // 🟢 ส่งข้อมูลบิลที่สมบูรณ์กลับไปให้ฝั่ง JavaScript นำไปปริ้นออกเครื่องบลูทูธ
+            return response()->json($responseData, 200);
         } catch (\Exception $e) {
             DB::rollBack(); // พังตรงไหนให้ยกเลิกทั้งหมดทันที
+            Log::error('KeptkayaController store_purchase error: ' . $e->getMessage());
             return response()->json([
                 'code' => 500,
                 'message' => 'เกิดข้อผิดพลาดหลังบ้าน: ' . $e->getMessage()
