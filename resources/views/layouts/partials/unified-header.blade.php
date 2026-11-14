@@ -16,23 +16,25 @@
 
     $me = Auth::user();
     $orgInfos = $me ? App\Models\Admin\Organization::getOrgName($me->org_id_fk) : [];
-    $orgLogo = $orgInfos['org_logo_img'] ?? 'ko_envsogo.png';
+    $rawLogo = $orgInfos['org_logo_img'] ?? 'ko_envsogo.png';
+    $orgLogo = (!empty($rawLogo) && file_exists(public_path('logo/' . $rawLogo))) ? $rawLogo : 'ko_envsogo.png';
     $orgName = $orgInfos['org_name'] ?? 'KU:PI-OS';
     $meName = trim(($me->firstname ?? '') . ' ' . ($me->lastname ?? '')) ?: ($me->username ?? 'เจ้าหน้าที่');
+    $meInitial = mb_substr($meName, 0, 1, 'UTF-8');
 @endphp
 
 <!-- Unified Soft UI Header -->
 <nav class="navbar navbar-main navbar-expand-lg px-0 mx-2 mx-md-4 shadow-none border-radius-xl" id="navbarBlur" navbar-scroll="true">
-    <div class="container-fluid py-2 px-2 px-md-3 d-flex align-items-center justify-content-between flex-wrap">
+    <div class="container-fluid py-2 px-2 px-md-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
 
         <!-- Left: Hamburger (Mobile) + Back Button + Breadcrumbs -->
-        <div class="d-flex align-items-center gap-2 flex-grow-1" style="min-width: 0;">
+        <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
             
             <!-- Mobile/Tablet Hamburger Sidenav Toggler (ALWAYS OUTSIDE COLLAPSE) -->
-            <a href="javascript:;" class="nav-link text-body p-2 d-xl-none d-flex align-items-center justify-content-center border-radius-md hover-elevate" 
+            <a href="javascript:;" class="nav-link text-body p-2 d-xl-none d-flex align-items-center justify-content-center border-radius-md hover-elevate me-2" 
                id="iconNavbarSidenav" 
                aria-label="เปิดเมนูด้านข้าง"
-               style="min-width: 44px; min-height: 44px; background: rgba(255, 255, 255, 0.85); box-shadow: 0 2px 5px rgba(0,0,0,0.06);">
+               style="min-width: 44px; min-height: 44px; background: rgba(255, 255, 255, 0.9); box-shadow: 0 2px 5px rgba(0,0,0,0.06);">
                 <div class="sidenav-toggler-inner">
                     <i class="sidenav-toggler-line bg-dark"></i>
                     <i class="sidenav-toggler-line bg-dark"></i>
@@ -41,47 +43,57 @@
             </a>
 
             @if($backRoute)
-            <!-- Back Button for Step / Sub-views -->
-            <a href="{{ $backRoute }}" class="btn btn-sm btn-white mb-0 px-2 py-2 d-flex align-items-center rounded-pill shadow-xs" title="ย้อนกลับ">
-                <i class="fas fa-chevron-left me-1 text-primary"></i> <span class="d-none d-sm-inline">ย้อนกลับ</span>
+            <!-- Back Button with Distinct Spacing & Clear Navigation Arrow -->
+            <a href="{{ $backRoute }}" class="btn btn-sm btn-white mb-0 px-3 py-2 d-flex align-items-center rounded-pill shadow-xs me-3 text-primary font-weight-bold hover-elevate" title="ย้อนกลับ">
+                <i class="fas fa-arrow-left me-2"></i> <span class="d-none d-sm-inline">ย้อนกลับ</span>
             </a>
             @endif
 
             <!-- Breadcrumbs & Page Topic -->
-            <nav aria-label="breadcrumb" class="d-flex flex-column justify-content-center text-truncate ms-1">
-                <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-0 px-0 d-none d-sm-flex text-xs">
+            <nav aria-label="breadcrumb" class="d-flex flex-column justify-content-center text-truncate">
+                <ol class="breadcrumb bg-transparent mb-1 pb-0 pt-0 px-0 d-none d-sm-flex text-xs">
                     <li class="breadcrumb-item text-muted">
                         <a class="opacity-6 text-dark" href="{{ $__env->yieldContent('route-header') ?: route('accessmenu') }}">{{ $crumbParent }}</a>
                     </li>
                     <li class="breadcrumb-item text-dark font-weight-bold active" aria-current="page">{{ $crumbCurrent }}</li>
                 </ol>
-                <h5 class="font-weight-bolder text-dark mb-0 text-truncate" style="letter-spacing: -0.3px;">
+                <h4 class="font-weight-bolder text-dark mb-0 text-truncate" style="letter-spacing: -0.3px;">
                     {{ $pageTitle ?: $crumbCurrent }}
-                </h5>
+                </h4>
             </nav>
         </div>
 
         <!-- Right: Portal Shortcut + User Profile Dropdown -->
-        <div class="d-flex align-items-center gap-2 mt-sm-0">
+        <div class="d-flex align-items-center gap-3 mt-sm-0">
             
             <!-- Quick Link to Portal / Accessmenu -->
-            <a href="{{ route('accessmenu') }}" class="btn btn-sm btn-outline-primary mb-0 d-flex align-items-center rounded-pill px-3 py-2 shadow-xs" title="กลับไปหน้าเมนูรวม">
-                <i class="fas fa-th-large me-1"></i>
-                <span class="d-none d-md-inline">เมนูรวมระบบ</span>
+            <a href="{{ route('accessmenu') }}" class="btn btn-sm btn-outline-primary mb-0 d-flex align-items-center rounded-pill px-3 py-2 shadow-xs hover-elevate" title="กลับไปหน้าเมนูรวม">
+                <i class="fas fa-th-large me-2"></i>
+                <span class="d-none d-md-inline font-weight-bold">เมนูรวมระบบ</span>
             </a>
 
             <!-- User Profile Dropdown -->
             <div class="dropdown">
-                <a href="javascript:;" class="nav-link text-body font-weight-bold px-2 py-1 d-flex align-items-center bg-white border-radius-pill shadow-xs" 
-                   id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 40px;">
-                    <img src="{{ asset('logo/' . $orgLogo) }}" class="avatar avatar-xs rounded-circle me-md-2" alt="org_logo" style="width: 28px; height: 28px; object-fit: cover;">
-                    <div class="d-none d-md-flex flex-column text-start me-1" style="line-height: 1.1;">
+                <a href="javascript:;" class="nav-link text-body font-weight-bold py-1 ps-2 pe-3 d-flex align-items-center bg-white border-radius-pill shadow-xs hover-elevate" 
+                   id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="min-height: 42px; border: 1px solid rgba(226, 232, 240, 0.8);">
+                    
+                    <div class="avatar avatar-sm rounded-circle bg-gradient-primary text-white d-flex align-items-center justify-content-center me-2 shadow-xs overflow-hidden" 
+                         style="width: 32px; height: 32px; min-width: 32px;">
+                        <img src="{{ asset('logo/' . $orgLogo) }}" 
+                             class="w-100 h-100" 
+                             alt="org_logo" 
+                             style="object-fit: cover;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <span class="d-none font-weight-bold text-xs" style="line-height: 1;">{{ $meInitial }}</span>
+                    </div>
+
+                    <div class="d-none d-md-flex flex-column text-start me-2" style="line-height: 1.15;">
                         <span class="text-xs font-weight-bolder text-dark">{{ $meName }}</span>
-                        <span class="text-xxs text-secondary">{{ Str::limit($orgName, 18) }}</span>
+                        <span class="text-xxs text-secondary">{{ Str::limit($orgName, 20) }}</span>
                     </div>
                     <i class="fas fa-chevron-down text-xxs text-secondary ms-1"></i>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end px-2 py-3 shadow-lg border-0 border-radius-xl" aria-labelledby="userMenuButton" style="min-width: 220px; z-index: 1060;">
+                <ul class="dropdown-menu dropdown-menu-end px-2 py-3 shadow-lg border-0 border-radius-xl" aria-labelledby="userMenuButton" style="min-width: 240px; z-index: 1060;">
                     <li class="px-3 py-2 border-bottom mb-2">
                         <div class="font-weight-bold text-dark text-sm">{{ $meName }}</div>
                         <div class="text-xs text-muted">{{ $orgName }}</div>
@@ -100,7 +112,7 @@
                     <li>
                         <form method="POST" action="{{ route('logout') }}" class="m-0">
                             @csrf
-                            <button type="submit" class="dropdown-item border-radius-md py-2 text-danger d-flex align-items-center w-100 bg-transparent border-0">
+                            <button type="submit" class="dropdown-item border-radius-md py-2 text-danger d-flex align-items-center w-100 bg-transparent border-0 font-weight-bold">
                                 <i class="fas fa-sign-out-alt me-2"></i> ออกจากระบบ
                             </button>
                         </form>

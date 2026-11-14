@@ -31,18 +31,18 @@
             left: 0;
             right: 0;
             z-index: 1030;
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.8);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-            padding: 0.65rem 1.5rem;
+            padding: 0.75rem 1.75rem;
         }
 
         /* Page Container */
         .portal-content {
-            padding-top: 5.5rem;
-            padding-bottom: 3rem;
+            padding-top: 6rem;
+            padding-bottom: 3.5rem;
             min-height: 100vh;
         }
 
@@ -73,17 +73,17 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
         }
 
-        /* Wheel Mode Styling */
+        /* Wheel Mode: Trigonometric Absolute Layout */
         .wheel-section {
-            min-height: calc(100vh - 7rem);
+            min-height: calc(100vh - 8rem);
             display: flex;
             align-items: center;
         }
 
-        .wheel-container {
+        .wheel-container-trig {
             position: relative;
-            width: 440px;
-            height: 440px;
+            width: 500px;
+            height: 500px;
             margin: 0 auto;
         }
 
@@ -92,12 +92,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
+            width: 190px;
+            height: 190px;
             border-radius: 50%;
             background: #ffffff;
             border: 6px solid rgba(255, 255, 255, 0.95);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(0, 0, 0, 0.04);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -105,58 +105,42 @@
             z-index: 10;
         }
 
-        .wheel-bubble-arm {
+        .wheel-item-node {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .wheel-bubble-arm a {
-            pointer-events: auto;
-            text-decoration: none;
-        }
-
-        .wheel-bubble {
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            top: -60px;
-            left: calc(50% - 60px);
+            width: 98px;
+            height: 98px;
             border-radius: 50%;
-            border: 3px solid #ffffff;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border: 3.5px solid #ffffff;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #ffffff;
-            padding: 8px;
+            color: #ffffff !important;
+            text-decoration: none !important;
             text-align: center;
-            transition: all 0.25s ease;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            z-index: 20;
             cursor: pointer;
         }
 
-        .wheel-bubble:hover {
+        .wheel-item-node:hover {
             transform: scale(1.15) !important;
-            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2) !important;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22) !important;
         }
 
-        .wheel-bubble i {
-            font-size: 1.6rem;
-            margin-bottom: 4px;
+        .wheel-item-node i {
+            font-size: 1.5rem;
+            margin-bottom: 2px;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
 
-        .wheel-bubble span {
-            font-size: 0.85rem;
-            font-weight: 600;
-            line-height: 1.15;
+        .wheel-item-node span {
+            font-size: 0.8rem;
+            font-weight: 700;
+            line-height: 1.1;
             color: #ffffff;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         }
 
         /* Specific Gradients */
@@ -184,13 +168,20 @@
 </head>
 
 <body>
+    @php
+        $rawLogo = $orgInfos['org_logo_img'] ?? 'ko_envsogo.png';
+        $orgLogo = (!empty($rawLogo) && file_exists(public_path('logo/' . $rawLogo))) ? $rawLogo : 'ko_envsogo.png';
+    @endphp
 
     <!-- 1. Top Navigation Bar -->
     <header class="top-navbar-portal">
         <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <!-- Brand & Org -->
-            <div class="d-flex align-items-center gap-2">
-                <img src="{{ asset('logo/' . ($orgInfos['org_logo_img'] ?? 'ko_envsogo.png')) }}" alt="Logo" style="height: 38px; width: auto; object-fit: contain;">
+            <!-- Brand & Org with Logo Fallback -->
+            <div class="d-flex align-items-center gap-3">
+                <img src="{{ asset('logo/' . $orgLogo) }}" 
+                     alt="Logo" 
+                     style="height: 42px; width: auto; object-fit: contain;"
+                     onerror="this.onerror=null; this.src='{{ asset('logo/ko_envsogo.png') }}';">
                 <div>
                     <h5 class="mb-0 font-weight-bolder text-dark lh-1">{{ $orgInfos['org_name'] ?? 'เทศบาลเมืองสมาร์ทซิตี้' }}</h5>
                     <small class="text-secondary">{{ $orgInfos['org_code'] ?? 'PIOS' }}: ระบบบริหารจัดการเมืองอัจฉริยะ</small>
@@ -431,94 +422,75 @@
                         </div>
                     </div>
 
-                    <!-- Right: Balanced Orbital Wheel -->
+                    <!-- Right: Balanced Trigonometric Orbital Wheel (500x500px) -->
                     <div class="col-lg-7 d-flex justify-content-center">
-                        <div class="wheel-container">
-                            <!-- Center Logo Circle -->
+                        <div class="wheel-container-trig">
+                            <!-- Center Logo Circle with Fallback -->
                             <div class="wheel-center-circle">
-                                <img src="{{ asset('logo/' . ($orgInfos['org_logo_img'] ?? 'ko_envsogo.png')) }}" class="img-fluid" style="max-height: 140px; object-fit: contain;" alt="Org Logo">
+                                <img src="{{ asset('logo/' . $orgLogo) }}" 
+                                     class="img-fluid" 
+                                     style="max-height: 130px; max-width: 130px; object-fit: contain;" 
+                                     alt="Org Logo"
+                                     onerror="this.onerror=null; this.src='{{ asset('logo/ko_envsogo.png') }}';">
                             </div>
 
-                            <!-- 8 Orbital Bubbles -->
-                            <!-- 1. งานประปา -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ route('dashboard') }}">
-                                    <div class="wheel-bubble grad-tabwater">
-                                        <i class="fas fa-tint"></i>
-                                        <span>งานประปา</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 8 Symmetrical Orbital Bubbles (Calculated with Radius R = 195px, 8 directions) -->
+                            <!-- 1. งานประปา (12:00, Top) -> X=0, Y=-195 -->
+                            <a href="{{ route('dashboard') }}" class="wheel-item-node grad-tabwater" 
+                               style="top: calc(50% - 195px - 49px); left: calc(50% + 0px - 49px);" title="งานประปา">
+                                <i class="fas fa-tint"></i>
+                                <span>งานประปา</span>
+                            </a>
 
-                            <!-- 2. ธนาคารขยะรีไซเคิล -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ route('keptkayas.dashboard', 'recycle') }}">
-                                    <div class="wheel-bubble grad-recycle">
-                                        <i class="fas fa-recycle"></i>
-                                        <span>ธนาคารขยะ</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 2. ธนาคารขยะรีไซเคิล (01:30, Top-Right) -> X=+138, Y=-138 -->
+                            <a href="{{ route('keptkayas.dashboard', 'recycle') }}" class="wheel-item-node grad-recycle" 
+                               style="top: calc(50% - 138px - 49px); left: calc(50% + 138px - 49px);" title="ธนาคารขยะรีไซเคิล">
+                                <i class="fas fa-recycle"></i>
+                                <span>ธนาคารขยะ</span>
+                            </a>
 
-                            <!-- 3. ตู้คืนขวดอัตโนมัติ -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ route('keptkayas.kiosks.dashboard') }}">
-                                    <div class="wheel-bubble grad-rvm">
-                                        <i class="fas fa-robot"></i>
-                                        <span>ตู้คืนขวด</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 3. ตู้คืนขวดอัตโนมัติ (03:00, Right) -> X=+195, Y=0 -->
+                            <a href="{{ route('keptkayas.kiosks.dashboard') }}" class="wheel-item-node grad-rvm" 
+                               style="top: calc(50% + 0px - 49px); left: calc(50% + 195px - 49px);" title="ตู้คืนขวดอัตโนมัติ">
+                                <i class="fas fa-robot"></i>
+                                <span>ตู้คืนขวด</span>
+                            </a>
 
-                            <!-- 4. ถังขยะเปียกครัวเรือน -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ auth()->user()->can('access food waste') || auth()->user()->hasRole('Super Admin') ? route('foodwaste.executive_dashboard') : 'javascript:void(0)' }}">
-                                    <div class="wheel-bubble grad-foodwaste">
-                                        <i class="fas fa-leaf"></i>
-                                        <span>ถังขยะเปียก</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 4. ถังขยะเปียกครัวเรือน (04:30, Bottom-Right) -> X=+138, Y=+138 -->
+                            <a href="{{ auth()->user()->can('access food waste') || auth()->user()->hasRole('Super Admin') ? route('foodwaste.executive_dashboard') : 'javascript:void(0)' }}" 
+                               class="wheel-item-node grad-foodwaste" 
+                               style="top: calc(50% + 138px - 49px); left: calc(50% + 138px - 49px);" title="ถังขยะเปียก">
+                                <i class="fas fa-leaf"></i>
+                                <span>ถังขยะเปียก</span>
+                            </a>
 
-                            <!-- 5. ค่าจัดการถังขยะรายปี -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ route('annual_trash.index') }}">
-                                    <div class="wheel-bubble grad-trash">
-                                        <i class="fas fa-trash-alt"></i>
-                                        <span>จัดการขยะ</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 5. ค่าจัดการถังขยะรายปี (06:00, Bottom) -> X=0, Y=+195 -->
+                            <a href="{{ route('annual_trash.index') }}" class="wheel-item-node grad-trash" 
+                               style="top: calc(50% + 195px - 49px); left: calc(50% + 0px - 49px);" title="ค่าจัดการถังขยะ">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>จัดการขยะ</span>
+                            </a>
 
-                            <!-- 6. กองทุนฌาปนกิจสงเคราะห์ -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ route('admin.welfare.dashboard') }}">
-                                    <div class="wheel-bubble grad-welfare">
-                                        <i class="fas fa-hands-helping"></i>
-                                        <span>ฌาปนกิจ</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 6. กองทุนฌาปนกิจสงเคราะห์ (07:30, Bottom-Left) -> X=-138, Y=+138 -->
+                            <a href="{{ route('admin.welfare.dashboard') }}" class="wheel-item-node grad-welfare" 
+                               style="top: calc(50% + 138px - 49px); left: calc(50% - 138px - 49px);" title="กองทุนฌาปนกิจ">
+                                <i class="fas fa-hands-helping"></i>
+                                <span>ฌาปนกิจ</span>
+                            </a>
 
-                            <!-- 7. คลังพัสดุ -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ route('inventory.dashboard') }}">
-                                    <div class="wheel-bubble grad-inventory">
-                                        <i class="fas fa-boxes"></i>
-                                        <span>คลังพัสดุ</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 7. คลังพัสดุ (09:00, Left) -> X=-195, Y=0 -->
+                            <a href="{{ route('inventory.dashboard') }}" class="wheel-item-node grad-inventory" 
+                               style="top: calc(50% + 0px - 49px); left: calc(50% - 195px - 49px);" title="คลังพัสดุ">
+                                <i class="fas fa-boxes"></i>
+                                <span>คลังพัสดุ</span>
+                            </a>
 
-                            <!-- 8. ผู้ดูแลระบบ -->
-                            <div class="wheel-bubble-arm">
-                                <a href="{{ route('superadmin.dashboard') }}">
-                                    <div class="wheel-bubble grad-admin">
-                                        <i class="fas fa-user-shield"></i>
-                                        <span>ตั้งค่าระบบ</span>
-                                    </div>
-                                </a>
-                            </div>
+                            <!-- 8. ผู้ดูแลระบบ (10:30, Top-Left) -> X=-138, Y=-138 -->
+                            <a href="{{ route('superadmin.dashboard') }}" class="wheel-item-node grad-admin" 
+                               style="top: calc(50% - 138px - 49px); left: calc(50% - 138px - 49px);" title="ตั้งค่าระบบ">
+                                <i class="fas fa-user-shield"></i>
+                                <span>ตั้งค่าระบบ</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -534,30 +506,12 @@
 
     <script>
         $(document).ready(function () {
-            function renderWheel() {
-                const arms = $('.wheel-bubble-arm');
-                const count = arms.length;
-                const startDeg = -90; // Start at top (12 o'clock)
-                const step = 360 / count;
-
-                arms.each(function (index) {
-                    const deg = startDeg + (index * step);
-                    const invertDeg = -deg;
-                    $(this).css({
-                        'transform': `rotate(${deg}deg)`,
-                        'opacity': '1'
-                    });
-                    $(this).find('.wheel-bubble').css('transform', `rotate(${invertDeg}deg)`);
-                });
-            }
-
             function setMode(mode) {
                 if (mode === 'wheel' && $(window).width() >= 992) {
                     $('#cardContainer').addClass('d-none');
                     $('#wheelContainer').removeClass('d-none');
                     $('#toggleViewModeBtn').html('<i class="fas fa-th-large me-1"></i> มุมมองการ์ด');
                     localStorage.setItem('pios_portal_mode', 'wheel');
-                    setTimeout(renderWheel, 50);
                 } else {
                     $('#cardContainer').removeClass('d-none');
                     $('#wheelContainer').addClass('d-none');
@@ -578,8 +532,6 @@
             $(window).on('resize', function () {
                 if ($(window).width() < 992) {
                     setMode('card');
-                } else if (localStorage.getItem('pios_portal_mode') === 'wheel') {
-                    renderWheel();
                 }
             });
         });

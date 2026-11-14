@@ -18,7 +18,7 @@
     <div class="col-12 col-md-8 col-lg-6">
 
         <!-- 1. Customer & Meter Info Card -->
-        <div class="card border-0 shadow-sm border-radius-xl mb-4 overflow-hidden">
+        <div class="card border-0 shadow-sm border-radius-xl mb-4 overflow-hidden bg-white">
             <div class="card-header bg-gradient-primary p-3 text-white d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
                     <div class="icon icon-shape icon-sm bg-white text-primary rounded-circle shadow-sm d-flex align-items-center justify-content-center">
@@ -26,7 +26,7 @@
                     </div>
                     <div>
                         <h6 class="text-white mb-0 font-weight-bold">{{ $customerName }}</h6>
-                        <small class="text-white opacity-8">เลขที่มิเตอร์: {{ $m->meter_id ?? '-' }}</small>
+                        <small class="text-white opacity-9 font-weight-bold">เลขที่มิเตอร์: {{ $m->meter_id ?? '-' }}</small>
                     </div>
                 </div>
                 <span class="badge bg-white text-primary rounded-pill px-3 py-1 font-weight-bold">
@@ -37,12 +37,12 @@
             <div class="card-body p-3 bg-white">
                 <div class="row g-2 text-sm">
                     <div class="col-6">
-                        <span class="text-muted small">ที่อยู่/สถานที่ติดตั้ง:</span>
-                        <p class="font-weight-bold text-dark mb-0">{{ $m->meter_address ?? ($m->user->address ?? 'ตามฐานข้อมูลผู้ใช้น้ำ') }}</p>
+                        <span class="text-secondary small font-weight-bold d-block">ที่อยู่/สถานที่ติดตั้ง:</span>
+                        <p class="font-weight-bolder text-dark mb-0 fs-6">{{ $m->meter_address ?? ($m->user->address ?? 'ตามฐานข้อมูลผู้ใช้น้ำ') }}</p>
                     </div>
                     <div class="col-6 text-end">
-                        <span class="text-muted small">โซน/สายส่งน้ำ:</span>
-                        <p class="font-weight-bold text-dark mb-0">{{ $m->undertake_zone->zone_name ?? 'โซนหลัก' }}</p>
+                        <span class="text-secondary small font-weight-bold d-block">โซน/สายส่งน้ำ:</span>
+                        <p class="font-weight-bolder text-dark mb-0 fs-6">{{ $m->undertake_zone->zone_name ?? 'โซนหลัก' }}</p>
                     </div>
                 </div>
             </div>
@@ -60,47 +60,55 @@
 
                 <!-- Previous Reading (Read-only) -->
                 <div class="mb-3">
-                    <label class="form-label text-secondary font-weight-bold d-flex justify-content-between">
+                    <label class="form-label text-dark font-weight-bolder d-flex justify-content-between mb-1">
                         <span><i class="fas fa-history me-1 text-secondary"></i> เลขมิเตอร์ครั้งก่อน</span>
-                        <span class="badge bg-light text-secondary rounded-pill px-2">อ่านอย่างเดียว</span>
+                        <span class="badge bg-gray-200 text-dark rounded-pill px-2">อ่านอย่างเดียว</span>
                     </label>
                     <div class="input-group">
-                        <input type="text" id="last_meter_recording" class="form-control form-control-lg bg-light text-dark font-weight-bolder text-center fs-4 border-0"
-                            readonly value="{{ $lastRecording }}">
-                        <span class="input-group-text bg-light border-0 text-secondary font-weight-bold">หน่วย</span>
+                        <input type="text" id="last_meter_recording" class="form-control form-control-lg bg-gray-100 text-dark font-weight-bolder text-center fs-3 border"
+                            readonly value="{{ $lastRecording }}" style="color: #0f172a !important;">
+                        <span class="input-group-text bg-gray-200 border text-dark font-weight-bold px-3">หน่วย</span>
                     </div>
                 </div>
 
                 <!-- Current Reading (Large Touch Input) -->
                 <div class="mb-3">
-                    <label for="currentmeter" class="form-label text-dark font-weight-bolder fs-6">
+                    <label for="currentmeter" class="form-label text-dark font-weight-bolder fs-6 mb-1">
                         <i class="fas fa-pencil-alt text-primary me-1"></i> เลขมิเตอร์ครั้งนี้ <span class="text-danger">*</span>
                     </label>
                     <div class="input-group input-group-lg shadow-sm border-radius-lg overflow-hidden">
                         <input type="number" step="any" inputmode="numeric" pattern="[0-9]*" name="currentmeter" id="currentmeter"
-                            class="form-control form-control-lg text-center font-weight-bolder text-primary fs-2 py-3"
+                            class="form-control form-control-lg text-center font-weight-bolder fs-2 py-3"
                             placeholder="กรอกเลขมิเตอร์" required autofocus autocomplete="off"
-                            style="border: 2px solid #2152ff; letter-spacing: 2px;">
-                        <span class="input-group-text bg-primary text-white font-weight-bold px-3">หน่วย</span>
+                            style="border: 2px solid #2152ff; letter-spacing: 2px; color: #0f172a !important; background-color: #ffffff;">
+                        <span class="input-group-text bg-primary text-white font-weight-bold px-3 fs-6">หน่วย</span>
                     </div>
-                    <div class="form-text text-muted small mt-1">
+                    <div class="form-text text-secondary small mt-1 font-weight-bold">
                         พิมพ์ตัวเลขมาตรวัดน้ำปัจจุบันที่อ่านได้จากหน้าปัดมิเตอร์
                     </div>
                 </div>
 
-                <!-- Live Consumption Calculation Display -->
-                <div id="consumptionBox" class="alert alert-secondary border-0 p-3 my-3 border-radius-lg d-flex align-items-center justify-content-between">
-                    <div>
-                        <span class="d-block small text-secondary font-weight-bold">ปริมาณน้ำที่ใช้ในงวดนี้:</span>
-                        <h4 class="mb-0 font-weight-bolder text-dark" id="unitsDisplay">0.00 หน่วย</h4>
-                    </div>
-                    <div id="statusBadge">
-                        <span class="badge bg-secondary rounded-pill px-3 py-2">รอระบุตัวเลข</span>
+                <!-- High-Contrast Live Consumption Summary Display -->
+                <div id="consumptionBox" class="card border border-2 border-gray-300 p-3 my-3 border-radius-xl bg-white shadow-xs">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="d-block text-secondary font-weight-bold text-xs" style="letter-spacing: 0.5px;">
+                                ปริมาณน้ำที่ใช้ในงวดนี้:
+                            </span>
+                            <h2 class="mb-0 font-weight-bolder" id="unitsDisplay" style="color: #0f172a !important; font-size: 2.25rem;">
+                                0.00 หน่วย
+                            </h2>
+                        </div>
+                        <div id="statusBadge">
+                            <span class="badge bg-gray-200 text-secondary rounded-pill px-3 py-2 font-weight-bold">
+                                รอระบุตัวเลข
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Validation Alert -->
-                <div id="errorAlert" class="alert alert-danger text-white border-0 py-2 px-3 mb-3 d-none border-radius-lg">
+                <div id="errorAlert" class="alert alert-danger text-white border-0 py-2 px-3 mb-3 d-none border-radius-lg font-weight-bold">
                     <i class="fas fa-exclamation-triangle me-1"></i>
                     <strong>ข้อผิดพลาด:</strong> เลขมิเตอร์ครั้งนี้ต้องไม่น้อยกว่าเลขครั้งก่อน (<span id="prevValText">{{ $lastRecording }}</span>)
                 </div>
@@ -131,11 +139,11 @@
             const rawVal = $(this).val();
 
             if (rawVal === '' || isNaN(rawVal)) {
-                unitsDisplay.text('0.00 หน่วย').removeClass('text-success text-danger').addClass('text-dark');
-                statusBadge.html('<span class="badge bg-secondary rounded-pill px-3 py-2">รอระบุตัวเลข</span>');
+                unitsDisplay.text('0.00 หน่วย').css('color', '#0f172a');
+                statusBadge.html('<span class="badge bg-gray-200 text-secondary rounded-pill px-3 py-2 font-weight-bold">รอระบุตัวเลข</span>');
                 errorAlert.addClass('d-none');
                 btnSubmit.prop('disabled', false);
-                consumptionBox.removeClass('alert-success alert-danger').addClass('alert-secondary');
+                consumptionBox.removeClass('border-success border-danger').addClass('border-gray-300');
                 return;
             }
 
@@ -144,18 +152,18 @@
 
             if (diff < 0) {
                 // Invalid: Current < Last
-                unitsDisplay.text(diff.toFixed(2) + ' หน่วย').removeClass('text-success text-dark').addClass('text-danger');
-                statusBadge.html('<span class="badge bg-danger rounded-pill px-3 py-2"><i class="fas fa-times me-1"></i> ค่าน้อยกว่าครั้งก่อน</span>');
+                unitsDisplay.text(diff.toFixed(2) + ' หน่วย').css('color', '#dc2626');
+                statusBadge.html('<span class="badge bg-danger text-white rounded-pill px-3 py-2 font-weight-bold fs-6"><i class="fas fa-times me-1"></i> ค่าน้อยกว่าครั้งก่อน</span>');
                 errorAlert.removeClass('d-none');
                 btnSubmit.prop('disabled', true);
-                consumptionBox.removeClass('alert-secondary alert-success').addClass('alert-danger');
+                consumptionBox.removeClass('border-gray-300 border-success').addClass('border-danger');
             } else {
-                // Valid
-                unitsDisplay.text('+' + diff.toFixed(2) + ' หน่วย').removeClass('text-danger text-dark').addClass('text-success');
-                statusBadge.html('<span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check me-1"></i> ปกติ</span>');
+                // Valid: High contrast dark text with green badge
+                unitsDisplay.text('+' + diff.toFixed(2) + ' หน่วย').css('color', '#0f172a');
+                statusBadge.html('<span class="badge bg-success text-white rounded-pill px-3 py-2 font-weight-bold fs-6"><i class="fas fa-check-circle me-1"></i> ปกติ</span>');
                 errorAlert.addClass('d-none');
                 btnSubmit.prop('disabled', false);
-                consumptionBox.removeClass('alert-secondary alert-danger').addClass('alert-success');
+                consumptionBox.removeClass('border-gray-300 border-danger').addClass('border-success');
             }
         });
 
