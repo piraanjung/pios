@@ -1,6 +1,7 @@
 <?php
 
 // Suppress deprecation notices from leaking into HTML in PHP 8.5+
+ini_set('display_errors', '0');
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 use Illuminate\Contracts\Http\Kernel;
