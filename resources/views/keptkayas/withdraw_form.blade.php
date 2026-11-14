@@ -80,9 +80,10 @@
                     </div>
                 @endif
 
-                <form action="{{ route('keptkayas.withdraw.store') }}" method="POST">
+                <form action="{{ route('keptkayas.withdraw.store') }}" method="POST" onsubmit="const btn = document.getElementById('btn-submit-withdraw'); if(btn){ btn.disabled = true; btn.innerHTML = '<i class=\'fas fa-spinner fa-spin me-2\'></i>กำลังส่งคำขอ...'; }">
                     @csrf
                     <input type="hidden" name="target_user_id" value="{{ $targetUserId }}">
+                    <input type="hidden" name="withdraw_token" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     
                     <div class="mb-3">
                         <label class="form-label">ระบุจำนวนเงินที่ต้องการถอน (บาท)</label>
@@ -133,7 +134,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn bg-gradient-success btn-lg w-100 mb-0" {{ (!$hasRecentWasteSale || $withdrawableAmount < $minWithdraw) ? 'disabled' : '' }}>
+                    <button type="submit" id="btn-submit-withdraw" class="btn bg-gradient-success btn-lg w-100 mb-0" {{ (!$hasRecentWasteSale || $withdrawableAmount < $minWithdraw) ? 'disabled' : '' }}>
                         <i class="fas fa-paper-plane me-2"></i>ยืนยันส่งคำขอถอนเงิน
                     </button>
                 </form>

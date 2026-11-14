@@ -44,8 +44,10 @@
             </a>
         </div>
     @else
-        <form action="{{ route('keptkayas.purchase.save_transaction') }}" method="POST">
+        <form action="{{ route('keptkayas.purchase.save_transaction') }}" method="POST" id="purchase-save-form" onsubmit="const btn = document.getElementById('btn-submit-purchase'); if(btn){ btn.disabled = true; btn.innerHTML = '<i class=\'bi bi-arrow-repeat spin me-2\'></i>กำลังบันทึกข้อมูล...'; }">
             @csrf
+            <input type="hidden" name="user_id" value="{{ $seller->id }}">
+            <input type="hidden" name="transaction_token" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
             
             {{-- 1. Seller Info Card (Design ใหม่: สะอาดตา) --}}
             <div class="card border-0 shadow-sm rounded-4 mb-3 mx-2">
@@ -147,7 +149,7 @@
 
             {{-- 4. Action Buttons --}}
             <div class="d-grid gap-2 px-2 pb-4">
-                <button type="submit" class="btn btn-success btn-lg rounded-4 shadow py-3">
+                <button type="submit" id="btn-submit-purchase" class="btn btn-success btn-lg rounded-4 shadow py-3">
                     <i class="bi bi-save-fill me-2"></i>ยืนยันบันทึกรายการ
                 </button>
                 <a href="{{ route('keptkayas.purchase.form', $seller->id) }}" class="btn btn-outline-secondary btn-lg rounded-4 border-0 py-2">
@@ -160,6 +162,7 @@
         @foreach ($cart as $index => $item)
             <form id="delete-form-{{ $index }}" action="{{ route('keptkayas.purchase.remove_from_cart', $index) }}" method="POST" class="d-none">
                 @csrf @method('DELETE')
+                <input type="hidden" name="user_id" value="{{ $seller->id }}">
             </form>
         @endforeach
 

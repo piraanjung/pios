@@ -14,10 +14,12 @@ use App\Models\KeptKaya\KpTbankItemsPriceAndPoint;
 use App\Models\KeptKaya\KpTbankUnits; 
 use App\Models\KeptKaya\Machine; 
 use App\Models\KeptKaya\KpRecycleBankMember; // เรียกใช้ Model ใหม่
+use App\Models\KPBankAccount;
 use App\Models\User; 
 use Carbon\Carbon; 
 use Illuminate\Http\Request; 
 use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Facades\Session; 
 use Illuminate\Support\Str; 
@@ -147,20 +149,27 @@ class KpPurchaseController extends Controller
             'kp_tbank_items_pricepoint_id' => $priceConfig->id, 
         ]; 
 
-        Session::push('purchase_cart', $cartItem); 
+        $userId = $validated['user_id'];
+        Session::put('purchase_user_id', $userId);
+        $userCartKey = "purchase_cart_{$userId}";
+        $userCart = Session::get($userCartKey, []);
+        $userCart[] = $cartItem;
+        Session::put($userCartKey, $userCart);
+        Session::put('purchase_cart', $userCart);
+
         return back()->with('success', 'เพิ่มรายการขยะลงในรถเข็นแล้ว'); 
     } 
 
-    public function showCart() 
+    public function showCart(Request $request) 
     { 
-        $cart = Session::get('purchase_cart', []); 
-        $userId = Session::get('purchase_user_id'); 
+        $userId = $request->query('user_id') ?: Session::get('purchase_user_id'); 
 
         if (!$userId) { 
             return redirect()->route('keptkayas.purchase.select_user') 
                 ->with('warning', 'กรุณาเลือกผู้ขายก่อนเปิดตะกร้า'); 
         } 
 
+        $cart = Session::get("purchase_cart_{$userId}", Session::get('purchase_cart', [])); 
         $seller = User::where('id', $userId)->with('user_zone')->firstOrFail(); 
         $user = Auth::user(); 
 
@@ -169,14 +178,21 @@ class KpPurchaseController extends Controller
 
     public function saveTransaction(Request $request) 
     { 
-        $cart = Session::get('purchase_cart', []); 
-        $userId = Session::get('purchase_user_id'); 
+        // Idempotency Token check (prevent duplicate credit / network retries even if cart was already cleared)
+        $token = $request->input('transaction_token');
+        if ($token && $cachedId = Cache::get("purchase_tx_{$token}")) {
+            return redirect()->route('keptkayas.purchase.receipt', $cachedId)
+                ->with('info', 'รายการนี้ได้รับการบันทึกแล้ว (ป้องกันการบันทึกซ้ำ)');
+        }
+
+        $userId = $request->input('user_id', Session::get('purchase_user_id')); 
+        $cart = Session::get("purchase_cart_{$userId}", Session::get('purchase_cart', [])); 
 
         if (empty($cart) || !$userId) { 
             return redirect()->route('keptkayas.purchase.select_user')->with('error', 'ไม่พบรายการในรถเข็น'); 
-        } 
+        }
 
-        return DB::transaction(function () use ($request, $cart, $userId) { 
+        return DB::transaction(function () use ($request, $cart, $userId, $token) { 
             $seller = User::findOrFail($userId); 
             $recorder = Auth::user(); 
             $totalWeight = array_sum(array_column($cart, 'amount_in_units')); 
@@ -224,10 +240,30 @@ class KpPurchaseController extends Controller
 
             $transaction->update(['total_carbon_saved' => $carbonSavedTotal]); 
 
-            // อัปเดตยอดเงินสะสมและแต้มเข้าตาราง kp_recycle_bank_members โดยตรง
+            // Concurrency Lock: Lock both ledgers to prevent race conditions & out-of-sync balances
             $recycleMember = KpRecycleBankMember::where('user_id', $userId)
                 ->where('org_id_fk', $recorder->org_id_fk)
+                ->lockForUpdate()
                 ->first();
+
+            $bankAccount = KPBankAccount::where('user_id', $userId)
+                ->where('org_id_fk', $recorder->org_id_fk)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$bankAccount) {
+                $accountNo = 'ACC-' . ($recorder->org_id_fk) . '-' . str_pad($userId, 6, '0', STR_PAD_LEFT);
+                $bankAccount = KPBankAccount::create([
+                    'user_id' => $userId,
+                    'org_id_fk' => $recorder->org_id_fk,
+                    'account_no' => $accountNo,
+                    'member_number' => $recycleMember?->member_number,
+                    'balance' => $recycleMember ? $recycleMember->balance : 0,
+                    'points' => $recycleMember ? (int)$recycleMember->total_points : 0,
+                    'status' => 'active',
+                    'entity_type' => 'recycle_bank_member',
+                ]);
+            }
 
             if ($recycleMember) {
                 $recycleMember->increment('total_points', $totalPoints); 
@@ -236,7 +272,18 @@ class KpPurchaseController extends Controller
                 } 
             }
 
-            Session::forget(['purchase_cart', 'purchase_user_id']); 
+            if ($bankAccount) {
+                $bankAccount->increment('points', (int)$totalPoints);
+                if ($isCashBack == 0) {
+                    $bankAccount->increment('balance', $totalAmount);
+                }
+            }
+
+            if ($token) {
+                Cache::put("purchase_tx_{$token}", $transaction->id, now()->addMinutes(15));
+            }
+
+            Session::forget(["purchase_cart_{$userId}", 'purchase_cart', 'purchase_user_id']); 
             return redirect()->route('keptkayas.purchase.receipt', $transaction->id) 
                 ->with('success', 'บันทึกสำเร็จ! ลดคาร์บอนได้ ' . number_format($carbonSavedTotal, 4) . ' kgCO2e'); 
         }); 
@@ -244,18 +291,23 @@ class KpPurchaseController extends Controller
 
     public function removeFromCart(Request $request, $index) 
     { 
-        $cart = Session::get('purchase_cart', []); 
+        $userId = $request->input('user_id', Session::get('purchase_user_id')); 
+        $userCartKey = "purchase_cart_{$userId}";
+        $cart = Session::get($userCartKey, Session::get('purchase_cart', [])); 
         if (isset($cart[$index])) { 
             unset($cart[$index]); 
-            Session::put('purchase_cart', array_values($cart)); 
+            $newCart = array_values($cart);
+            Session::put($userCartKey, $newCart);
+            Session::put('purchase_cart', $newCart); 
             return back()->with('success', 'ลบรายการขยะออกจากรถเข็นแล้ว'); 
         } 
         return back()->with('error', 'ไม่พบรายการที่ต้องการลบ'); 
     } 
 
-    public function clearCart() 
+    public function clearCart(Request $request) 
     { 
-        Session::forget(['purchase_cart', 'purchase_user_id']); 
+        $userId = $request->input('user_id', Session::get('purchase_user_id')); 
+        Session::forget(["purchase_cart_{$userId}", 'purchase_cart', 'purchase_user_id']); 
         return redirect()->route('keptkayas.purchase.select_user'); 
     } 
 

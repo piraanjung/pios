@@ -170,6 +170,56 @@ class KeptKayaIntegrityTest extends TestCase
                 });
             }
 
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_settings')) {
+                \Illuminate\Support\Facades\Schema::create('kp_settings', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->unsignedBigInteger('org_id_fk')->index();
+                    $table->string('key_name', 100);
+                    $table->text('key_value')->nullable();
+                    $table->string('description')->nullable();
+                    $table->timestamps();
+                });
+            }
+
+            if (!\Illuminate\Support\Facades\Schema::hasTable('kp_money_requests')) {
+                \Illuminate\Support\Facades\Schema::create('kp_money_requests', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->id();
+                    $table->unsignedBigInteger('org_id_fk')->default(1)->index();
+                    $table->unsignedBigInteger('user_id')->nullable()->index();
+                    $table->decimal('amount', 12, 2)->default(0.00);
+                    $table->string('verification_code', 10)->default('');
+                    $table->string('status')->nullable();
+                    $table->string('hold_status')->default('held');
+                    $table->boolean('is_proxy')->default(false);
+                    $table->string('proxy_name')->nullable();
+                    $table->string('proxy_id_card', 20)->nullable();
+                    $table->string('proxy_relationship', 100)->nullable();
+                    $table->date('payout_date')->nullable();
+                    $table->unsignedBigInteger('admin_id')->nullable();
+                    $table->timestamp('completed_at')->nullable();
+                    $table->timestamps();
+                });
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('kp_purchase_transactions')) {
+                \Illuminate\Support\Facades\Schema::table('kp_purchase_transactions', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    if (!\Illuminate\Support\Facades\Schema::hasColumn('kp_purchase_transactions', 'total_carbon_saved')) {
+                        $table->decimal('total_carbon_saved', 10, 4)->default(0);
+                    }
+                });
+            }
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('kp_purchase_transactions_details')) {
+                \Illuminate\Support\Facades\Schema::table('kp_purchase_transactions_details', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    if (!\Illuminate\Support\Facades\Schema::hasColumn('kp_purchase_transactions_details', 'carbon_saved')) {
+                        $table->decimal('carbon_saved', 10, 4)->default(0);
+                    }
+                    if (!\Illuminate\Support\Facades\Schema::hasColumn('kp_purchase_transactions_details', 'recorder_id')) {
+                        $table->unsignedBigInteger('recorder_id')->nullable();
+                    }
+                });
+            }
+
             if (!\Illuminate\Support\Facades\Schema::hasTable('staffs')) {
                 \Illuminate\Support\Facades\Schema::create('staffs', function (\Illuminate\Database\Schema\Blueprint $table) {
                     $table->id();
@@ -343,5 +393,202 @@ class KeptKayaIntegrityTest extends TestCase
 
         $response->assertRedirect(route('keptkayas.sell.history'));
         $this->assertEquals(240, $orgAccount->fresh()->balance);
+    }
+
+    public function test_purchase_synchronizes_balance_across_recycle_bank_member_and_bank_account(): void
+    {
+        $member = User::factory()->create(['org_id_fk' => $this->org->id]);
+        $recycleMember = KpRecycleBankMember::create([
+            'user_id' => $member->id,
+            'org_id_fk' => $this->org->id,
+            'member_number' => 2001,
+            'status' => 'active',
+            'balance' => 100,
+            'total_points' => 10,
+        ]);
+
+        $bankAccount = KPBankAccount::create([
+            'user_id' => $member->id,
+            'org_id_fk' => $this->org->id,
+            'account_no' => 'ACC-TEST-2001',
+            'member_number' => 2001,
+            'balance' => 100,
+            'points' => 10,
+            'status' => 'active',
+            'entity_type' => 'recycle_bank_member',
+        ]);
+
+        $item = \App\Models\KeptKaya\KpTbankItems::create([
+            'kp_itemsname' => 'กระดาษขาวดำ',
+            'org_id_fk' => $this->org->id,
+        ]);
+
+        $unit = \App\Models\KeptKaya\KpTbankUnits::create([
+            'unitname' => 'กก.',
+            'org_id_fk' => $this->org->id,
+            'status' => 'active',
+        ]);
+
+        $price = \App\Models\KeptKaya\KpTbankItemsPriceAndPoint::create([
+            'kp_items_idfk' => $item->id,
+            'kp_units_idfk' => $unit->id,
+            'org_id_fk' => $this->org->id,
+            'price_for_member' => 5,
+            'point' => 2,
+            'status' => 'active',
+        ]);
+
+        // Add to cart
+        $this->post(route('keptkayas.purchase.add_to_cart'), [
+            'user_id' => $member->id,
+            'kp_tbank_item_id' => $item->id,
+            'kp_units_idfk' => $unit->id,
+            'amount_in_units' => 10,
+        ]);
+
+        // Save transaction
+        $response = $this->post(route('keptkayas.purchase.save_transaction'), [
+            'user_id' => $member->id,
+            'transaction_token' => 'token-sync-1',
+        ]);
+
+        $response->assertStatus(302);
+        // Balance was 100, added 10 * 5 = 50 -> 150
+        // Points was 10, added 10 * 2 = 20 -> 30
+        $this->assertEquals(150, (float) $recycleMember->fresh()->balance);
+        $this->assertEquals(150, (float) $bankAccount->fresh()->balance);
+        $this->assertEquals(30, (int) $recycleMember->fresh()->total_points);
+        $this->assertEquals(30, (int) $bankAccount->fresh()->points);
+    }
+
+    public function test_purchase_idempotency_token_prevents_duplicate_submission(): void
+    {
+        $member = User::factory()->create(['org_id_fk' => $this->org->id]);
+        $recycleMember = KpRecycleBankMember::create([
+            'user_id' => $member->id,
+            'org_id_fk' => $this->org->id,
+            'member_number' => 2002,
+            'status' => 'active',
+            'balance' => 0,
+            'total_points' => 0,
+        ]);
+
+        $item = \App\Models\KeptKaya\KpTbankItems::create([
+            'kp_itemsname' => 'ลังกระดาษ',
+            'org_id_fk' => $this->org->id,
+        ]);
+
+        $unit = \App\Models\KeptKaya\KpTbankUnits::create([
+            'unitname' => 'กก.',
+            'org_id_fk' => $this->org->id,
+            'status' => 'active',
+        ]);
+
+        \App\Models\KeptKaya\KpTbankItemsPriceAndPoint::create([
+            'kp_items_idfk' => $item->id,
+            'kp_units_idfk' => $unit->id,
+            'org_id_fk' => $this->org->id,
+            'price_for_member' => 4,
+            'point' => 1,
+            'status' => 'active',
+        ]);
+
+        $this->post(route('keptkayas.purchase.add_to_cart'), [
+            'user_id' => $member->id,
+            'kp_tbank_item_id' => $item->id,
+            'kp_units_idfk' => $unit->id,
+            'amount_in_units' => 10,
+        ]);
+
+        $token = 'idempotent-tx-999';
+
+        $firstResponse = $this->post(route('keptkayas.purchase.save_transaction'), [
+            'user_id' => $member->id,
+            'transaction_token' => $token,
+        ]);
+        $firstResponse->assertStatus(302);
+        $this->assertEquals(40, (float) $recycleMember->fresh()->balance);
+
+        // Immediate retry with same token
+        $secondResponse = $this->post(route('keptkayas.purchase.save_transaction'), [
+            'user_id' => $member->id,
+            'transaction_token' => $token,
+        ]);
+
+        $secondResponse->assertRedirect($firstResponse->headers->get('Location'));
+        // Balance remains 40, not doubled to 80
+        $this->assertEquals(40, (float) $recycleMember->fresh()->balance);
+    }
+
+    public function test_withdraw_deducts_held_requests_and_prevents_overdrawing(): void
+    {
+        $member = User::factory()->create(['org_id_fk' => $this->org->id]);
+        $recycleMember = KpRecycleBankMember::create([
+            'user_id' => $member->id,
+            'org_id_fk' => $this->org->id,
+            'member_number' => 2003,
+            'status' => 'active',
+            'balance' => 1000,
+            'total_points' => 50,
+        ]);
+
+        $bankAccount = KPBankAccount::create([
+            'user_id' => $member->id,
+            'org_id_fk' => $this->org->id,
+            'account_no' => 'ACC-TEST-2003',
+            'member_number' => 2003,
+            'balance' => 1000,
+            'points' => 50,
+            'status' => 'active',
+            'entity_type' => 'recycle_bank_member',
+        ]);
+
+        // Insert recent sale to satisfy activity condition
+        KpPurchaseTransaction::create([
+            'org_id_fk' => $this->org->id,
+            'user_id' => $member->id,
+            'kp_u_trans_no' => 'TRA-WITHDRAW-CHK',
+            'transaction_date' => now()->toDateString(),
+            'total_weight' => 10,
+            'total_amount' => 100,
+            'total_points' => 10,
+            'status' => 1,
+            'recorder_id' => $this->adminUser->id,
+        ]);
+
+        // Member already has an existing pending request for 400 baht held
+        \App\Models\KeptKaya\KpMoneyRequest::create([
+            'org_id_fk' => $this->org->id,
+            'user_id' => $member->id,
+            'amount' => 400,
+            'status' => 'pending',
+            'hold_status' => 'held',
+            'verification_code' => '123456',
+        ]);
+
+        // Min reserve is 300 default. With 1000 balance and 400 held, max withdrawable is 1000 - 400 - 300 = 300.
+        // Trying to withdraw 500 should fail validation
+        $failResponse = $this->post(route('keptkayas.withdraw.store'), [
+            'target_user_id' => $member->id,
+            'amount' => 500,
+        ]);
+        $failResponse->assertSessionHasErrors('amount');
+
+        // Withdrawing 200 should succeed
+        $withdrawToken = 'withdraw-token-abc';
+        $successResponse = $this->post(route('keptkayas.withdraw.store'), [
+            'target_user_id' => $member->id,
+            'amount' => 200,
+            'withdraw_token' => $withdrawToken,
+        ]);
+        $successResponse->assertStatus(302);
+
+        // Immediate retry with same token redirects to existing without creating duplicate
+        $retryResponse = $this->post(route('keptkayas.withdraw.store'), [
+            'target_user_id' => $member->id,
+            'amount' => 200,
+            'withdraw_token' => $withdrawToken,
+        ]);
+        $retryResponse->assertRedirect($successResponse->headers->get('Location'));
     }
 }
