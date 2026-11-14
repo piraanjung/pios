@@ -1,9 +1,9 @@
 # Git Workflow & Full Autonomous Automation Rules
 
 ## 1. Dedicated Task Branching
-- Always create and work on a dedicated task branch branched from the primary branch (`main`) before modifying code:
+- Always create and work on a dedicated task branch branched from the primary integration branch (`develop`) before modifying code:
   - Format: `feat/<name>`, `fix/<name>`, `chore/<name>`, `refactor/<name>`
-- Never commit directly to the primary branch without a task branch.
+- Never commit directly to `develop` or `main` without a task branch.
 
 ## 2. Autonomous Verification & Commit
 - Before committing, always run project verification tests and ensure all pass (`verification-before-completion`):
@@ -12,23 +12,24 @@
   ```
 - Stage changed files and commit using conventional commit format (e.g., `feat(...)`, `fix(...)`, `chore(...)`).
 
-## 3. Autonomous Push, MR/PR & Merge (Full Autonomous)
-- Once verification succeeds, autonomously execute the following without waiting for user approval:
+## 3. Autonomous Push & Merge to Develop (DO NOT Push to Main)
+- **CRITICAL RULE:** **DO NOT push directly to `main`**. The `main` branch is reserved strictly for production releases (`release/*` branched from `develop` into `main` for prod deployment).
+- Once verification succeeds, autonomously execute the following to integrate into `develop`:
   1. Push the task branch to remote `origin`:
      ```bash
      git push origin <task-branch>
      ```
-  2. Switch to primary branch (`main`):
+  2. Switch to the development branch (`develop`):
      ```bash
-     git checkout main
-     git pull origin main
+     git checkout develop
+     git pull origin develop
      ```
-  3. Merge the task branch into the primary branch:
+  3. Merge the task branch into `develop`:
      ```bash
-     git merge <task-branch> --no-ff -m "chore/merge: merge <task-branch> into main [skip ci]"
+     git merge <task-branch> --no-ff -m "chore/merge: merge <task-branch> into develop [skip ci]"
      ```
-  4. Push the updated primary branch to `origin`:
+  4. Push `develop` to `origin`:
      ```bash
-     git push origin main
+     git push origin develop
      ```
-- (ระบบทำงานแบบ Full Autonomous: สร้าง branch ใหม่จาก branch หลัก และเปิด MR จากนั้น merge เข้า branch หลัก และ push origin ทันทีโดยไม่ต้องรอถาม)
+- (ระบบทำงานแบบ Full Autonomous: สร้าง branch ใหม่จาก `develop` จากนั้น merge เข้า `develop` และ push `origin develop` ทันที — ห้าม push เข้า `main` โดยตรงเด็ดขาด)
