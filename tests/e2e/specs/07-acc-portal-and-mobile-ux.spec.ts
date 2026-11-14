@@ -20,14 +20,10 @@ test.describe('E2E Journey 07: Acc & Portal UI/UX, Multi-Device Session & Integr
     const accessResponse = await page.goto('/accessmenu');
     expect(accessResponse?.status()).toBe(200);
 
-    // 5. Verify Wheel Menu is visible initially or container is loaded
-    await expect(page.locator('#otp-connect')).toBeVisible();
-    await expect(page.locator('#toggleViewModeBtn')).toBeVisible();
+    // 5. Verify Top Navigation Bar is visible
+    await expect(page.locator('.top-navbar-portal')).toBeVisible();
 
-    // 6. Click Toggle View button to switch to Card Mode
-    await page.click('#toggleViewModeBtn');
-
-    // 7. Verify Card Mode container is visible with 8 government-friendly module cards
+    // 6. Verify Card Mode container is visible by default with 8 government-friendly module cards
     await expect(page.locator('#cardContainer')).toBeVisible();
     await expect(page.locator('#cardContainer').getByText('ลำดับที่ 1')).toBeVisible();
     await expect(page.locator('#cardContainer h4', { hasText: 'งานประปา' })).toBeVisible();
@@ -36,9 +32,18 @@ test.describe('E2E Journey 07: Acc & Portal UI/UX, Multi-Device Session & Integr
     await expect(page.locator('#cardContainer').getByText('ลำดับที่ 8')).toBeVisible();
     await expect(page.locator('#cardContainer h4', { hasText: 'ตั้งค่าระบบ' })).toBeVisible();
 
-    // 8. Toggle back to Wheel mode
-    await page.click('#toggleViewModeBtn');
-    await expect(page.locator('#cardContainer')).toHaveClass(/d-none/);
+    // 7. On Desktop viewports, test switching between Card Mode and Wheel Mode
+    const isDesktop = (page.viewportSize()?.width ?? 1440) >= 992;
+    if (isDesktop) {
+      await expect(page.locator('#toggleViewModeBtn')).toBeVisible();
+      await page.click('#toggleViewModeBtn');
+      await expect(page.locator('#cardContainer')).toHaveClass(/d-none/);
+      await expect(page.locator('#wheelContainer')).toBeVisible();
+
+      // Toggle back to Card mode
+      await page.click('#toggleViewModeBtn');
+      await expect(page.locator('#cardContainer')).not.toHaveClass(/d-none/);
+    }
   });
 
   test('E2E-02 [Desktop]: Tabwater Dashboard renders Soft UI metrics & charts without multi-tenancy error', async ({ page }) => {
@@ -147,6 +152,12 @@ test.describe('E2E Journey 07: Acc & Portal UI/UX, Multi-Device Session & Integr
     // Ensure the fake owes (09-69, 08-69) and fake 300 THB are completely gone!
     expect(bodyText).not.toContain('"invoice_period":"09-69"');
     expect(bodyText).not.toContain('"invoice_period":"08-69"');
+
+    // Verify overhauled meter reading form elements
+    await expect(page.locator('input[name="currentmeter"]')).toBeVisible();
+    await expect(page.locator('#last_meter_recording')).toBeVisible();
+    await expect(page.locator('#btnSubmit')).toBeVisible();
+    await expect(page.locator('#consumptionBox')).toBeVisible();
   });
 
   test('E2E-07 [Keptkayas Header & Layout]: Select Route renders Unified Header, Hamburger & Stepper', async ({ page }) => {

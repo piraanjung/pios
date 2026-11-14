@@ -4,13 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KU:PI-OS - Access Menu</title>
+    <title>{{ $orgInfos['org_name'] ?? 'PIOS' }} - เมนูรวมระบบงาน (Access Menu)</title>
 
     <!-- Fonts & Icons (ADR-0009 Kanit) -->
     @include('layouts.partials.head-fonts')
-    <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&display=swap" rel="stylesheet">
     <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
-    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 
     <!-- Soft UI Dashboard CSS -->
     <link id="pagestyle" href="{{ asset('soft-ui/assets/css/soft-ui-dashboard.css') }}" rel="stylesheet" />
@@ -19,769 +17,569 @@
     <style>
         body {
             font-family: 'Kanit', sans-serif !important;
-            background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
             min-height: 100vh;
-            overflow: hidden;
             margin: 0;
             padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            /* ขยับคอนเทนเนอร์หลักชิดขวา */
+            overflow-x: hidden;
         }
 
-        .centralized {
+        /* Top Navigation Bar */
+        .top-navbar-portal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            padding: 0.65rem 1.5rem;
+        }
+
+        /* Page Container */
+        .portal-content {
+            padding-top: 5.5rem;
+            padding-bottom: 3rem;
+            min-height: 100vh;
+        }
+
+        /* Card Mode Styling */
+        .module-card {
+            border-radius: 1.25rem;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            background: #ffffff;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+            border-color: rgba(33, 82, 255, 0.3);
+        }
+
+        .module-card-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
         }
 
-        /* Container หลัก จัดวางวงกลมชิดขอบฝั่งขวา */
-        .main-container {
+        /* Wheel Mode Styling */
+        .wheel-section {
+            min-height: calc(100vh - 7rem);
+            display: flex;
+            align-items: center;
+        }
+
+        .wheel-container {
             position: relative;
-            width: 420px;
-            height: 420px;
-            margin-right: 16rem;
-            /* เว้นระยะห่างจากขอบขวา */
+            width: 440px;
+            height: 440px;
+            margin: 0 auto;
         }
 
-        /* วงกลมหลักตรงกลาง */
-        .main-container .main-circle {
-            border: 8px solid rgba(255, 255, 255, 0.85);
-            border-radius: 50%;
-            box-sizing: border-box;
-            padding: 20px;
-            height: 100%;
-            width: 100%;
+        .wheel-center-circle {
             position: absolute;
-            top: 0;
-            left: 0;
-            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.06);
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(12px);
-            z-index: 1;
-        }
-
-        .main-container .main-circle .inner {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
             background: #ffffff;
-            border-radius: 50%;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.08);
-            box-sizing: border-box;
-            height: 100%;
-            width: 100%;
-            padding: 40px;
-            overflow: hidden;
+            border: 6px solid rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 10;
         }
 
-
-
-        /* โครงสร้างก้านหมุนเมนูวงกลมย่อย */
-        .main-container .bubble-container {
+        .wheel-bubble-arm {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            opacity: 0;
-            transition: transform 0.8s ease-in-out, opacity 1s ease;
             pointer-events: none;
-            z-index: 2;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-
-
-        .main-container .bubble-container a {
-            text-decoration: none;
+        .wheel-bubble-arm a {
             pointer-events: auto;
+            text-decoration: none;
         }
 
-        /* เมนูวงกลมย่อย */
-        .main-container .bubble-container .bubble {
-            border-radius: 50%;
-            /* border: 10px solid  #141727; */
-            box-sizing: border-box;
+        .wheel-bubble {
             position: absolute;
-            height: 160px;
-            width: 160px;
-            top: -160.5px;
-            left: 142.5px;
-            /* (420px / 2) - (135px / 2) */
-            transition: all 0.4s ease;
-            text-align: center;
-        }
-
-        .main-container .bubble-container .bubble .inner {
-            /* background: #ffffff; */
+            width: 120px;
+            height: 120px;
+            top: -60px;
+            left: calc(50% - 60px);
             border-radius: 50%;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-            box-sizing: border-box;
-            height: 100%;
-            width: 100%;
-            font-size: 20px;
-            font-weight: 700;
-            line-height: 1.25;
-            color: #feffff;
-            border: 3.5px solid #ffffff;
-            transition: all 0.3s ease;
+            border: 3px solid #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            display: flex;
             flex-direction: column;
-            padding: 10px;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            padding: 8px;
+            text-align: center;
+            transition: all 0.25s ease;
+            cursor: pointer;
         }
 
-        .bubble .inner:hover {
+        .wheel-bubble:hover {
             transform: scale(1.15) !important;
-            box-shadow: 0 20px 27px rgba(0, 0, 0, 0.2) !important;
-            color: #252f40;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2) !important;
         }
 
-        /* Soft UI Gradients */
-        .main-container .bubble-container.blue .bubble {
-            background: linear-gradient(310deg, #2152ff 0%, #21d4fd 100%);
+        .wheel-bubble i {
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
 
-        .main-container .bubble-container.cyan .bubble {
-            background: linear-gradient(310deg, #17ad37 0%, #98ec2d 100%);
-        }
-
-        .main-container .bubble-container.sage .bubble {
-            background: linear-gradient(310deg, #3a416f 0%, #141727 100%);
-        }
-
-        .main-container .bubble-container.green .bubble {
-            background: linear-gradient(310deg, #17ad37 0%, #98ec2d 100%);
-        }
-
-        .main-container .bubble-container.orange .bubble {
-            background: linear-gradient(310deg, #fbcf33 0%, #f53939 100%);
-        }
-
-        .main-container .bubble-container.purple .bubble {
-            background: linear-gradient(310deg, #7928ca 0%, #b07219 100%);
-        }
-
-        .main-container .bubble-container.dark-green .bubble {
-            background: linear-gradient(310deg, #097648 0%, #22c55e 100%);
-        }
-
-        .main-container .bubble-container.gold .bubble {
-            background: linear-gradient(310deg, #f59e0b 0%, #fbbf24 100%);
-        }
-
-        .main-container .bubble-container.admin .bubble {
-            background: linear-gradient(310deg, #ea0606 0%, #ff667c 100%);
-        }
-
-        /* ปุ่มออกจากระบบ / Brand Top-Left */
-        #otp-connect {
-            z-index: 999;
-            position: fixed;
-            top: 2.5rem;
-            left: 3rem;
-            font-family: "Bruno Ace SC", sans-serif;
-        }
-
-        /* ข้อความองค์กรลอยกลางอากาศ (ไร้กรอบพื้นหลัง) */
-        #org {
-            z-index: 998;
-            position: fixed;
-            bottom: 3.5rem;
-            left: 3rem;
-            pointer-events: none;
-        }
-
-        /* คืนค่าให้ปุ่มภายใน #org ให้สามารถกดคลิกได้ตามปกติ */
-        #org a,
-        #org button {
-            pointer-events: auto !important;
-        }
-
-        .org-type-floating {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #5974a2;
-            letter-spacing: 1px;
-            text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
-        }
-
-        .org-name-floating {
-            font-size: 6.8rem;
-            font-weight: 800;
-            color: #1e293b;
-            line-height: 1.15;
-            margin: 0.2rem 0;
-            text-shadow: 0 4px 20px rgba(255, 255, 255, 0.9), 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .org-address-floating {
-            font-size: 2rem;
+        .wheel-bubble span {
+            font-size: 0.85rem;
             font-weight: 600;
-            color: #64748b;
-            text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
+            line-height: 1.15;
+            color: #ffffff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
-        .a-disabled {
-            opacity: 0.3 !important;
-            filter: grayscale(100%);
-        }
+        /* Specific Gradients */
+        .grad-tabwater { background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%); }
+        .grad-recycle { background: linear-gradient(135deg, #16a34a 0%, #4ade80 100%); }
+        .grad-rvm { background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%); }
+        .grad-foodwaste { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        .grad-trash { background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%); }
+        .grad-welfare { background: linear-gradient(135deg, #7c3aed 0%, #c084fc 100%); }
+        .grad-inventory { background: linear-gradient(135deg, #334155 0%, #64748b 100%); }
+        .grad-admin { background: linear-gradient(135deg, #dc2626 0%, #f87171 100%); }
 
-        .a-disabled a {
-            pointer-events: none !important;
-        }
-
-        /* =========================================================
-           Responsive มือถือ & แท็บเล็ต
-           ========================================================= */
-
-        /* หน้าจอขนาดกลาง/โน้ตบุ๊กเล็ก */
-        @media (max-width: 1200px) and (min-width: 768px) {
-            .main-container {
-                margin-right: 4rem;
-                width: 360px;
-                height: 360px;
-            }
-
-            .main-container .bubble-container .bubble {
-                height: 115px;
-                width: 115px;
-                top: -57.5px;
-                left: 122.5px;
-            }
-
-            .org-name-floating {
-                font-size: 2.8rem;
-            }
-        }
-
-        /* หน้าจอมือถือ (< 768px) */
-        @media (max-width: 767px) {
-            body {
-                overflow-y: auto;
-                padding: 1.5rem 1rem 2.5rem 1rem;
-                display: block;
-            }
-
-            #otp-connect {
-                position: static !important;
-                margin-bottom: 1.5rem;
-            }
-
-            #org {
-                position: static !important;
-                margin-bottom: 1.5rem;
-            }
-
-            .org-type-floating {
-                font-size: 1.1rem;
-            }
-
-            .org-name-floating {
-                font-size: 2.2rem;
-            }
-
-            .org-address-floating {
-                font-size: 1rem;
-            }
-
-            .main-container {
-                width: 100% !important;
-                height: auto !important;
-                margin: 0 !important;
-            }
-
-            .main-circle {
+        @media (max-width: 991px) {
+            .wheel-section {
                 display: none !important;
             }
-
-            .mobile-grid-wrapper {
-                display: grid !important;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
+            #cardContainer {
+                display: block !important;
             }
-
-            .main-container .bubble-container {
-                position: static !important;
-                height: auto !important;
-                width: 100% !important;
-                opacity: 1 !important;
-                transform: none !important;
+            #toggleViewModeBtn {
+                display: none !important;
             }
-
-            .main-container .bubble-container .bubble {
-                position: static !important;
-                height: 195px !important;
-                width: 100% !important;
-                border-radius: 14px !important;
-                padding: 3px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            }
-
-            .main-container .bubble-container .bubble .inner {
-                border-radius: 12px !important;
-                font-size: 13px !important;
-                transform: none !important;
-            }
-        }
-
-        /* Card Mode for Non-Tech-Savvy Officers */
-        .hover-elevate {
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
-        .hover-elevate:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12) !important;
-        }
-        body.card-mode-active {
-            overflow-y: auto !important;
-            display: block !important;
-            min-height: 100vh;
-        }
-        body.card-mode-active #org {
-            display: none !important;
         }
     </style>
 </head>
 
 <body>
 
-    <!-- Header / Brand Section -->
-    <div id="otp-connect" class="wow fadeInDown" data-wow-delay="0.1s">
-        <div class="card card-body blur shadow-blur p-3 d-flex flex-row align-items-center gap-2">
-            <div>
-                <h3 class="font-weight-bolder text-gradient text-primary mb-0 me-2">{{ $orgInfos['org_code'] }}:PIOS</h3>
+    <!-- 1. Top Navigation Bar -->
+    <header class="top-navbar-portal">
+        <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <!-- Brand & Org -->
+            <div class="d-flex align-items-center gap-2">
+                <img src="{{ asset('logo/' . ($orgInfos['org_logo_img'] ?? 'ko_envsogo.png')) }}" alt="Logo" style="height: 38px; width: auto; object-fit: contain;">
+                <div>
+                    <h5 class="mb-0 font-weight-bolder text-dark lh-1">{{ $orgInfos['org_name'] ?? 'เทศบาลเมืองสมาร์ทซิตี้' }}</h5>
+                    <small class="text-secondary">{{ $orgInfos['org_code'] ?? 'PIOS' }}: ระบบบริหารจัดการเมืองอัจฉริยะ</small>
+                </div>
             </div>
-            <button id="toggleViewModeBtn" type="button" class="btn btn-sm btn-outline-primary mb-0 px-3">
-                <i class="fas fa-th-large me-1"></i> มุมมองการ์ด
-            </button>
-            <a href="{{ route('staff_accessmenu') }}" class="btn btn-sm btn-outline-info mb-0 px-3" title="สำหรับเจ้าหน้าที่ภาคสนาม">
-                <i class="fas fa-mobile-alt me-1"></i> ภาคสนาม
-            </a>
-            <form action="{{ route('logout') }}" method="POST" class="m-0">
-                @csrf
-                <button type="submit" class="btn btn-sm bg-gradient-danger mb-0 px-3">
-                    <i class="fas fa-sign-out-alt me-1"></i> ออกจากระบบ
+
+            <!-- View Switcher & Action Controls -->
+            <div class="d-flex align-items-center gap-2">
+                <!-- Mode Switcher (Desktop only) -->
+                <button id="toggleViewModeBtn" type="button" class="btn btn-sm btn-outline-primary mb-0 px-3 rounded-pill shadow-none">
+                    <i class="fas fa-th-large me-1"></i> มุมมองการ์ด
                 </button>
-            </form>
-        </div>
-    </div>
 
-    <!-- ข้อความเทศบาลตัวหนังสือลอยกลางอากาศ (ไร้กรอบพื้นหลัง) -->
-    <!-- ข้อความเทศบาลตัวหนังสือลอยกลางอากาศ -->
-    <!-- ข้อความเทศบาลตัวหนังสือลอยกลางอากาศ -->
-    <div id="org" class="wow fadeInUp" data-wow-delay="0.3s">
-        <div class="d-flex align-items-center gap-2">
-            <span class="org-type-floating">{{ $orgInfos['org_type_name'] }}</span>
+                <!-- Field Mode -->
+                <a href="{{ route('staff_accessmenu') }}" class="btn btn-sm btn-outline-info mb-0 px-3 rounded-pill shadow-none" title="สำหรับเจ้าหน้าที่ภาคสนามบนมือถือ">
+                    <i class="fas fa-mobile-alt me-1"></i> โหมดภาคสนาม
+                </a>
 
-            <!-- ปุ่มสลับ อปท. สำหรับ Super Admin (เพิ่ม style="pointer-events: auto;") -->
-            @hasrole('Super Admin')
-            <a href="{{ route('admin.org_selector') }}" class="btn btn-xs bg-gradient-info mb-0 rounded-pill px-3"
-                style="pointer-events: auto;">
-                <i class="fas fa-exchange-alt me-1"></i> สลับ อปท.
-            </a>
-            <a href="{{ route('admin.reset_org_context') }}"
-                class="btn btn-xs bg-gradient-secondary mb-0 rounded-pill px-2" style="pointer-events: auto;"
-                title="ออกจากสิทธิ์การจัดการ">
-                <i class="fas fa-power-off"></i>
-            </a>
-            @endhasrole
-        </div>
+                <!-- Super Admin Switcher -->
+                @hasrole('Super Admin')
+                <a href="{{ route('admin.org_selector') }}" class="btn btn-sm bg-gradient-secondary mb-0 px-3 rounded-pill" title="สลับองค์กร">
+                    <i class="fas fa-exchange-alt me-1"></i> สลับ อปท.
+                </a>
+                @endhasrole
 
-        <div class="org-name-floating">{{ $orgInfos['org_name'] }}</div>
-        <div class="org-address-floating">
-            <i class="fas fa-map-marker-alt me-1 text-primary"></i> ตำบล{{ $orgInfos['org_tambon'] }}
-            อำเภอ{{ $orgInfos['org_district'] }} จังหวัด{{ $orgInfos['org_province'] }}
-        </div>
-    </div>
-
-    <!-- Central Circular Menu Wheel (ขยับชิดฝั่งขวา) -->
-    <div class="main-container centralized">
-        <!-- วงกลมหลักตรงกลาง -->
-        <div class="main-circle">
-            <div class="inner centralized">
-                <img src="{{ asset('logo/' . $orgInfos['org_logo_img']) }}" class="img-fluid" style="width: 450px;" alt="Organization Logo">
+                <!-- User & Logout -->
+                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-sm bg-gradient-danger mb-0 px-3 rounded-pill shadow-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i> ออกจากระบบ
+                    </button>
+                </form>
             </div>
         </div>
+    </header>
 
-        <!-- Wrapper รวมเมนูโมดูล -->
-        <div class="mobile-grid-wrapper">
+    <!-- 2. Portal Content Area -->
+    <main class="portal-content">
+        <div class="container-fluid px-md-5">
 
-            <!-- 1. งานประปา -->
-            {{-- {{ auth()->user()->can('access tabwater') || auth()->user()->hasRole('Super Admin| Admin') ? '' :
-            'a-disabled' }} --}}
-            <div class="bubble-container blue ">
-                <a href="{{  route('dashboard') }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-tint mb-1 text-primary fs-5"></i>
-                            <span>งานประปา</span>
-                        </div>
-                    </div>
-                </a>
+            <!-- Hero Banner Section -->
+            <div class="text-center py-4 mb-3">
+                <span class="badge bg-primary px-3 py-2 rounded-pill font-weight-bold text-uppercase mb-2 shadow-sm">
+                    {{ $orgInfos['org_type_name'] ?? 'องค์กรปกครองส่วนท้องถิ่น' }}
+                </span>
+                <h1 class="font-weight-bolder text-dark mb-1 display-5">{{ $orgInfos['org_name'] ?? 'เทศบาลเมืองสมาร์ทซิตี้' }}</h1>
+                <p class="text-secondary fs-6 mb-2">
+                    <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                    ตำบล{{ $orgInfos['org_tambon'] ?? '-' }} อำเภอ{{ $orgInfos['org_district'] ?? '-' }} จังหวัด{{ $orgInfos['org_province'] ?? '-' }}
+                </p>
+                <p class="text-muted mx-auto" style="max-width: 650px;">
+                    ยินดีต้อนรับเจ้าหน้าที่ กรุณาเลือกระบบงานที่ต้องการปฏิบัติงานด้านล่าง
+                </p>
             </div>
 
-            <!-- 4. ธนาคารขยะรีไซเคิล -->
-            <div class="bubble-container green ">
-                <a href="{{ route('keptkayas.dashboard', 'recycle') }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-recycle mb-1 text-success fs-5"></i>
-                            <span>ธนาคาร<br>ขยะรีไซเคิล</span>
+            <!-- VIEW 1: Card Mode (Default & Primary View) -->
+            <div id="cardContainer">
+                <div class="row g-4 justify-content-center">
+
+                    <!-- 1. งานประปา -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-primary rounded-pill px-3 py-1 font-weight-bold">ลำดับที่ 1</span>
+                                <div class="module-card-icon grad-tabwater">
+                                    <i class="fas fa-tint text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">งานประปา</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                จัดการระบบน้ำประปา จดบันทึกเลขมิเตอร์ คำนวณค่าน้ำ รับชำระเงิน ออกใบแจ้งหนี้และใบเสร็จ
+                            </p>
+                            <a href="{{ route('dashboard') }}" class="btn btn-primary w-100 rounded-pill mb-0 mt-3 shadow-sm">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
                         </div>
                     </div>
-                </a>
+
+                    <!-- 2. ธนาคารขยะรีไซเคิล -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-success rounded-pill px-3 py-1 font-weight-bold">ลำดับที่ 2</span>
+                                <div class="module-card-icon grad-recycle">
+                                    <i class="fas fa-recycle text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">ธนาคารขยะรีไซเคิล</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                ออกหน่วยรับซื้อขยะ จัดการสมาชิก สมุดบัญชีเงินฝาก บันทึกแต้มสะสม และการถอนเงิน
+                            </p>
+                            <a href="{{ route('keptkayas.dashboard', 'recycle') }}" class="btn btn-success w-100 rounded-pill mb-0 mt-3 shadow-sm">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 3. ตู้คืนขวดอัตโนมัติ -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-info rounded-pill px-3 py-1 font-weight-bold">ลำดับที่ 3</span>
+                                <div class="module-card-icon grad-rvm">
+                                    <i class="fas fa-robot text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">ตู้คืนขวดอัตโนมัติ</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                ตรวจสอบสถานะตู้ RVM สถิติการคืนขวดพลาสติก/กระป๋อง และจัดการข้อมูลแต้มสะสม
+                            </p>
+                            <a href="{{ route('keptkayas.kiosks.dashboard') }}" class="btn btn-info w-100 rounded-pill mb-0 mt-3 shadow-sm text-white">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 4. ถังขยะเปียกครัวเรือน -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-success rounded-pill px-3 py-1 font-weight-bold" style="background-color: #059669 !important;">ลำดับที่ 4</span>
+                                <div class="module-card-icon grad-foodwaste">
+                                    <i class="fas fa-leaf text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">ถังขยะเปียก</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                ติดตามการจัดทำถังขยะเปียกลดโลกร้อน สถิติการลดคาร์บอนเครดิตระดับครัวเรือน
+                            </p>
+                            <a href="{{ auth()->user()->can('access food waste') || auth()->user()->hasRole('Super Admin') ? route('foodwaste.executive_dashboard') : 'javascript:void(0)' }}" class="btn btn-outline-success w-100 rounded-pill mb-0 mt-3">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 5. ค่าจัดการถังขยะรายปี -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 font-weight-bold">ลำดับที่ 5</span>
+                                <div class="module-card-icon grad-trash">
+                                    <i class="fas fa-trash-alt text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">ค่าจัดการถังขยะ</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                จัดเก็บและบันทึกค่าธรรมเนียมการเก็บขยะมูลฝอยประจำปีของแต่ละครัวเรือน
+                            </p>
+                            <a href="{{ route('annual_trash.index') }}" class="btn btn-warning w-100 rounded-pill mb-0 mt-3 shadow-sm text-white">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 6. กองทุนฌาปนกิจสงเคราะห์ -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge rounded-pill px-3 py-1 font-weight-bold text-white" style="background-color: #7c3aed !important;">ลำดับที่ 6</span>
+                                <div class="module-card-icon grad-welfare">
+                                    <i class="fas fa-hands-helping text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">กองทุนฌาปนกิจ</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                บริหารจัดการสมาชิกกองทุนฌาปนกิจสงเคราะห์ ตรวจสอบเงินสงเคราะห์และสิทธิประโยชน์
+                            </p>
+                            <a href="{{ route('admin.welfare.dashboard') }}" class="btn btn-outline-primary w-100 rounded-pill mb-0 mt-3" style="border-color: #7c3aed; color: #7c3aed;">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 7. คลังพัสดุ -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-secondary rounded-pill px-3 py-1 font-weight-bold">ลำดับที่ 7</span>
+                                <div class="module-card-icon grad-inventory">
+                                    <i class="fas fa-boxes text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">คลังพัสดุ</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                บันทึกรับพัสดุ ทะเบียนคุมทรัพย์สิน การเบิกจ่าย และตรวจนับสต็อกพัสดุคงเหลือ
+                            </p>
+                            <a href="{{ route('inventory.dashboard') }}" class="btn btn-secondary w-100 rounded-pill mb-0 mt-3 shadow-sm">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 8. ผู้ดูแลระบบ -->
+                    <div class="col-sm-6 col-md-4 col-xl-3">
+                        <div class="card h-100 module-card p-3 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <span class="badge bg-danger rounded-pill px-3 py-1 font-weight-bold">ลำดับที่ 8</span>
+                                <div class="module-card-icon grad-admin">
+                                    <i class="fas fa-user-shield text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <h4 class="font-weight-bolder text-dark mb-2">ตั้งค่าระบบ</h4>
+                            <p class="text-secondary small flex-grow-1">
+                                จัดการสิทธิ์เจ้าหน้าที่ ผู้ใช้งาน การตั้งค่าทั่วไป และการดูแลรักษาความปลอดภัย
+                            </p>
+                            <a href="{{ route('superadmin.dashboard') }}" class="btn btn-danger w-100 rounded-pill mb-0 mt-3 shadow-sm">
+                                เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
-            <!-- 7. ถังขยะเปียกจากครัวเรือน -->
-            <div class="bubble-container green">
-                <a
-                    href="{{ auth()->user()->can('access food waste') || auth()->user()->hasRole('Super Admin') ? route('foodwaste.executive_dashboard') : 'javascript:void(0)' }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-leaf mb-1 text-success fs-5"></i>
-                            <span>ถังขยะเปียก<br>จากครัวเรือน</span>
+            <!-- VIEW 2: Wheel Mode (Balanced 2-Column Desktop View) -->
+            <div id="wheelContainer" class="wheel-section d-none">
+                <div class="row align-items-center w-100">
+                    <!-- Left: Info Column -->
+                    <div class="col-lg-5 text-start pe-lg-4 mb-4 mb-lg-0">
+                        <div class="card border-0 shadow-sm p-4 rounded-3" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);">
+                            <span class="badge bg-primary px-3 py-2 rounded-pill font-weight-bold text-uppercase mb-2 align-self-start">
+                                {{ $orgInfos['org_type_name'] ?? 'อปท.' }}
+                            </span>
+                            <h2 class="font-weight-bolder text-dark mb-2">{{ $orgInfos['org_name'] }}</h2>
+                            <p class="text-secondary fs-6 mb-3">
+                                <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                ตำบล{{ $orgInfos['org_tambon'] }} อำเภอ{{ $orgInfos['org_district'] }} จังหวัด{{ $orgInfos['org_province'] }}
+                            </p>
+                            <hr class="horizontal dark my-2">
+                            <p class="text-muted small mb-3">
+                                💡 <strong>คำแนะนำ:</strong> คลิกเลือกไอคอนรอบวงล้อด้านขวาเพื่อเข้าสู่ระบบงานที่ต้องการ หรือกดปุ่ม <strong>"มุมมองการ์ด"</strong> ด้านบนเพื่อดูรายละเอียดของทุกระบบ
+                            </p>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-primary rounded-pill mb-0 px-3" onclick="$('#toggleViewModeBtn').click();">
+                                    <i class="fas fa-th-large me-1"></i> สลับเป็นมุมมองการ์ด
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </a>
+
+                    <!-- Right: Balanced Orbital Wheel -->
+                    <div class="col-lg-7 d-flex justify-content-center">
+                        <div class="wheel-container">
+                            <!-- Center Logo Circle -->
+                            <div class="wheel-center-circle">
+                                <img src="{{ asset('logo/' . ($orgInfos['org_logo_img'] ?? 'ko_envsogo.png')) }}" class="img-fluid" style="max-height: 140px; object-fit: contain;" alt="Org Logo">
+                            </div>
+
+                            <!-- 8 Orbital Bubbles -->
+                            <!-- 1. งานประปา -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ route('dashboard') }}">
+                                    <div class="wheel-bubble grad-tabwater">
+                                        <i class="fas fa-tint"></i>
+                                        <span>งานประปา</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- 2. ธนาคารขยะรีไซเคิล -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ route('keptkayas.dashboard', 'recycle') }}">
+                                    <div class="wheel-bubble grad-recycle">
+                                        <i class="fas fa-recycle"></i>
+                                        <span>ธนาคารขยะ</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- 3. ตู้คืนขวดอัตโนมัติ -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ route('keptkayas.kiosks.dashboard') }}">
+                                    <div class="wheel-bubble grad-rvm">
+                                        <i class="fas fa-robot"></i>
+                                        <span>ตู้คืนขวด</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- 4. ถังขยะเปียกครัวเรือน -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ auth()->user()->can('access food waste') || auth()->user()->hasRole('Super Admin') ? route('foodwaste.executive_dashboard') : 'javascript:void(0)' }}">
+                                    <div class="wheel-bubble grad-foodwaste">
+                                        <i class="fas fa-leaf"></i>
+                                        <span>ถังขยะเปียก</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- 5. ค่าจัดการถังขยะรายปี -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ route('annual_trash.index') }}">
+                                    <div class="wheel-bubble grad-trash">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>จัดการขยะ</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- 6. กองทุนฌาปนกิจสงเคราะห์ -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ route('admin.welfare.dashboard') }}">
+                                    <div class="wheel-bubble grad-welfare">
+                                        <i class="fas fa-hands-helping"></i>
+                                        <span>ฌาปนกิจ</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- 7. คลังพัสดุ -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ route('inventory.dashboard') }}">
+                                    <div class="wheel-bubble grad-inventory">
+                                        <i class="fas fa-boxes"></i>
+                                        <span>คลังพัสดุ</span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- 8. ผู้ดูแลระบบ -->
+                            <div class="wheel-bubble-arm">
+                                <a href="{{ route('superadmin.dashboard') }}">
+                                    <div class="wheel-bubble grad-admin">
+                                        <i class="fas fa-user-shield"></i>
+                                        <span>ตั้งค่าระบบ</span>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <!-- 2. ตู้คืนขวดอัตโนมัติ -->
-            <div class="bubble-container green">
-                <a href="{{ route('keptkayas.kiosks.dashboard') }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-robot mb-1 text-success fs-5"></i>
-                            <span>ตู้คืนขวด<br>อัตโนมัติ</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- 5. ค่าจัดการถังขยะรายปี -->
-            <div class="bubble-container dark-green ">
-                <a href="{{ route('annual_trash.index')  }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-trash-alt mb-1 text-warning fs-5"></i>
-                            <span>ค่าจัดการ<br>ถังขยะรายปี</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-
-
-
-
-
-
-
-            <!-- 6. กองทุนฌาปนกิจสงเคราะห์ -->
-            <div class="bubble-container purple">
-                <a href="{{ route('admin.welfare.dashboard') }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-hands-helping mb-1 fs-5" style="color: #7928ca;"></i>
-                            <span>กองทุน<br>ฌาปนกิจสงเคราะห์</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-
-
-
-
-            <!-- 9. ผู้ดูแลระบบ -->
-            <div class="bubble-container admin ">
-                <a href="{{ route('superadmin.dashboard') }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-user-shield mb-1 text-danger fs-5"></i>
-                            <span>ตั้งค่าระบบ</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            {{-- <div class="bubble-container">
-                <a href="javascript:void(0)">
-                    <div class="bubble centralized" style="opacity: 0">
-                        <div class="inner centralized">
-                            <i class="fas fa-user-shield mb-1 text-danger fs-5"></i>
-                            <span></span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="bubble-container">
-                <a href="javascript:void(0)">
-                    <div class="bubble centralized" style="opacity: 0">
-                        <div class="inner centralized">
-                            <i class="fas fa-user-shield mb-1 text-danger fs-5"></i>
-                            <span></span>
-                        </div>
-                    </div>
-                </a>
-            </div> --}}
-            <!-- 3. คลังพัสดุ -->
-            <div class="bubble-container sage ">
-                <a href="{{ route('inventory.dashboard') }}">
-                    <div class="bubble centralized">
-                        <div class="inner centralized">
-                            <i class="fas fa-boxes mb-1 text-dark fs-5"></i>
-                            <span>คลังพัสดุ</span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
 
         </div>
+    </main>
 
-    </div>
-
-    <!-- Card Mode Container for Non-Tech-Savvy Officers -->
-    <div id="cardContainer" class="container py-5 d-none" style="max-width: 1200px; margin-top: 5rem;">
-        <div class="text-center mb-5">
-            <span class="badge bg-gradient-primary px-3 py-2 text-uppercase mb-2">{{ $orgInfos['org_type_name'] }}</span>
-            <h1 class="font-weight-bolder text-dark mb-1">{{ $orgInfos['org_name'] }}</h1>
-            <p class="text-muted fs-6">
-                <i class="fas fa-map-marker-alt text-primary me-1"></i> ตำบล{{ $orgInfos['org_tambon'] }} อำเภอ{{ $orgInfos['org_district'] }} จังหวัด{{ $orgInfos['org_province'] }}
-            </p>
-            <p class="lead text-secondary mx-auto" style="max-width: 700px;">
-                ยินดีต้อนรับเจ้าหน้าที่ กรุณาเลือกเมนูระบบงานที่ต้องการปฏิบัติงานด้านล่าง
-            </p>
-        </div>
-
-        <div class="row g-4">
-            <!-- 1. งานประปา -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-primary rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 1</span>
-                            <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
-                                <i class="fas fa-tint text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">งานประปา</h4>
-                        <p class="text-muted small flex-grow-1">
-                            จัดการระบบน้ำประปา จดบันทึกเลขมิเตอร์ คำนวณค่าน้ำ รับชำระเงิน และออกใบแจ้งหนี้/ใบเสร็จ
-                        </p>
-                        <a href="{{ route('dashboard') }}" class="btn btn-primary w-100 mb-0 mt-3 rounded-pill">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. ธนาคารขยะรีไซเคิล -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-success rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 2</span>
-                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
-                                <i class="fas fa-recycle text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">ธนาคารขยะรีไซเคิล</h4>
-                        <p class="text-muted small flex-grow-1">
-                            รับซื้อขยะรีไซเคิล จัดการสมาชิก สมุดบัญชีเงินฝาก บันทึกแต้มสะสม และถอนเงิน
-                        </p>
-                        <a href="{{ route('keptkayas.dashboard', 'recycle') }}" class="btn btn-success w-100 mb-0 mt-3 rounded-pill">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. ตู้คืนขวดอัตโนมัติ -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-info rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 3</span>
-                            <div class="icon icon-shape bg-gradient-info shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
-                                <i class="fas fa-robot text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">ตู้คืนขวดอัตโนมัติ</h4>
-                        <p class="text-muted small flex-grow-1">
-                            ตรวจสอบสถานะเครื่อง RVM สถิติการคืนขวดพลาสติก/กระป๋อง และจัดการข้อมูลแต้ม
-                        </p>
-                        <a href="{{ route('keptkayas.kiosks.dashboard') }}" class="btn btn-info w-100 mb-0 mt-3 rounded-pill">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. ถังขยะเปียกครัวเรือน -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-success rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 4</span>
-                            <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
-                                <i class="fas fa-leaf text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">ถังขยะเปียก</h4>
-                        <p class="text-muted small flex-grow-1">
-                            ติดตามการจัดทำถังขยะเปียกลดโลกร้อน สถิติการลดคาร์บอนเครดิตระดับครัวเรือน
-                        </p>
-                        <a href="{{ auth()->user()->can('access food waste') || auth()->user()->hasRole('Super Admin') ? route('foodwaste.executive_dashboard') : 'javascript:void(0)' }}" class="btn btn-outline-success w-100 mb-0 mt-3 rounded-pill">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. ค่าจัดการถังขยะรายปี -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 5</span>
-                            <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
-                                <i class="fas fa-trash-alt text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">ค่าจัดการถังขยะ</h4>
-                        <p class="text-muted small flex-grow-1">
-                            จัดเก็บและบันทึกค่าธรรมเนียมการเก็บขยะมูลฝอยประจำปีของแต่ละครัวเรือน
-                        </p>
-                        <a href="{{ route('annual_trash.index') }}" class="btn btn-warning w-100 mb-0 mt-3 rounded-pill text-white">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 6. กองทุนฌาปนกิจสงเคราะห์ -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-dark rounded-pill px-3 py-2 font-weight-bold" style="background-color: #7928ca !important;">ลำดับที่ 6</span>
-                            <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md centralized" style="width: 48px; height: 48px; background: linear-gradient(310deg, #7928ca 0%, #b07219 100%);">
-                                <i class="fas fa-hands-helping text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">กองทุนฌาปนกิจ</h4>
-                        <p class="text-muted small flex-grow-1">
-                            บริหารจัดการสมาชิกกองทุนฌาปนกิจสงเคราะห์ ตรวจสอบเงินสงเคราะห์และสิทธิประโยชน์
-                        </p>
-                        <a href="{{ route('admin.welfare.dashboard') }}" class="btn btn-outline-dark w-100 mb-0 mt-3 rounded-pill">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 7. คลังพัสดุ -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-secondary rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 7</span>
-                            <div class="icon icon-shape bg-gradient-secondary shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
-                                <i class="fas fa-boxes text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">คลังพัสดุ</h4>
-                        <p class="text-muted small flex-grow-1">
-                            ระบบบันทึกรับพัสดุ ทะเบียนคุมทรัพย์สิน การเบิกจ่าย และตรวจนับสต็อกพัสดุคงเหลือ
-                        </p>
-                        <a href="{{ route('inventory.dashboard') }}" class="btn btn-secondary w-100 mb-0 mt-3 rounded-pill">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 8. ผู้ดูแลระบบ -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 border-radius-xl hover-elevate transition-all">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-danger rounded-pill px-3 py-2 font-weight-bold">ลำดับที่ 8</span>
-                            <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-md centralized" style="width: 48px; height: 48px;">
-                                <i class="fas fa-user-shield text-white fs-5"></i>
-                            </div>
-                        </div>
-                        <h4 class="font-weight-bolder text-dark mb-1">ตั้งค่าระบบ</h4>
-                        <p class="text-muted small flex-grow-1">
-                            จัดการสิทธิ์เจ้าหน้าที่ ผู้ใช้งาน การตั้งค่าทั่วไป และการดูแลรักษาความปลอดภัยระบบ
-                        </p>
-                        <a href="{{ route('superadmin.dashboard') }}" class="btn btn-danger w-100 mb-0 mt-3 rounded-pill">
-                            เข้าสู่ระบบงาน <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Core JS Files -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Core Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="{{ asset('soft-ui/assets/js/core/popper.min.js') }}"></script>
     <script src="{{ asset('soft-ui/assets/js/core/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('Applight/js/wow.min.js') }}"></script>
 
-    <!-- Script คำนวณองศากระจายแบบวงกลม 360 องศารอบโลโก้ และระบบสลับมุมมอง -->
     <script>
-        new WOW().init();
-
         $(document).ready(function () {
-            function renderWheelLayout() {
-                if ($(window).width() >= 768) {
-                    var bubbleList = $('.bubble-container');
-                    const bubbleCount = bubbleList.length;
+            function renderWheel() {
+                const arms = $('.wheel-bubble-arm');
+                const count = arms.length;
+                const startDeg = -90; // Start at top (12 o'clock)
+                const step = 360 / count;
 
-                    const startDeg = -90; // เริ่มจากด้านบนสุด
-                    const degStep = 360 / bubbleCount;
-
-                    $('.bubble-container').each((index) => {
-                        const deg = startDeg + (index * degStep);
-                        const invertDeg = deg * -1;
-
-                        $(bubbleList[index]).css({
-                            'transform': `rotate(${deg}deg)`,
-                            'opacity': '1'
-                        });
-                        $(bubbleList[index]).find('.bubble').css('transform', `rotate(${invertDeg}deg)`);
+                arms.each(function (index) {
+                    const deg = startDeg + (index * step);
+                    const invertDeg = -deg;
+                    $(this).css({
+                        'transform': `rotate(${deg}deg)`,
+                        'opacity': '1'
                     });
-                }
+                    $(this).find('.wheel-bubble').css('transform', `rotate(${invertDeg}deg)`);
+                });
             }
 
-            function setViewMode(mode) {
-                if (mode === 'card') {
-                    $('body').addClass('card-mode-active');
-                    $('.main-container').addClass('d-none');
-                    $('#cardContainer').removeClass('d-none');
-                    $('#toggleViewModeBtn').html('<i class="fas fa-circle-notch me-1"></i> มุมมองวงล้อ');
-                    localStorage.setItem('accessmenu_view_mode', 'card');
-                } else {
-                    $('body').removeClass('card-mode-active');
-                    $('.main-container').removeClass('d-none');
+            function setMode(mode) {
+                if (mode === 'wheel' && $(window).width() >= 992) {
                     $('#cardContainer').addClass('d-none');
+                    $('#wheelContainer').removeClass('d-none');
                     $('#toggleViewModeBtn').html('<i class="fas fa-th-large me-1"></i> มุมมองการ์ด');
-                    localStorage.setItem('accessmenu_view_mode', 'wheel');
-                    renderWheelLayout();
+                    localStorage.setItem('pios_portal_mode', 'wheel');
+                    setTimeout(renderWheel, 50);
+                } else {
+                    $('#cardContainer').removeClass('d-none');
+                    $('#wheelContainer').addClass('d-none');
+                    $('#toggleViewModeBtn').html('<i class="fas fa-circle-notch me-1"></i> มุมมองวงล้อ');
+                    localStorage.setItem('pios_portal_mode', 'card');
                 }
             }
 
             $('#toggleViewModeBtn').on('click', function () {
-                const current = localStorage.getItem('accessmenu_view_mode') || 'wheel';
-                setViewMode(current === 'wheel' ? 'card' : 'wheel');
+                const current = localStorage.getItem('pios_portal_mode') || 'card';
+                setMode(current === 'card' ? 'wheel' : 'card');
             });
 
-            const savedMode = localStorage.getItem('accessmenu_view_mode') || 'wheel';
-            setViewMode(savedMode);
+            // Default to 'card' mode as requested for better usability
+            const initialMode = localStorage.getItem('pios_portal_mode') || 'card';
+            setMode(initialMode);
 
             $(window).on('resize', function () {
-                if ((localStorage.getItem('accessmenu_view_mode') || 'wheel') === 'wheel') {
-                    renderWheelLayout();
+                if ($(window).width() < 992) {
+                    setMode('card');
+                } else if (localStorage.getItem('pios_portal_mode') === 'wheel') {
+                    renderWheel();
                 }
             });
         });

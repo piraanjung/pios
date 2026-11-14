@@ -45,12 +45,11 @@ async function capture() {
   // --- 2. Desktop: AccessMenu Card Mode & Wheel Mode ---
   console.log('Capturing: AccessMenu Card Mode (Desktop)...');
   await desktopPage.goto(`${baseUrl}/accessmenu`, { waitUntil: 'networkidle' });
-  // Ensure Card Mode is toggled
+  // Ensure Card Mode is active
   const cardContainer = desktopPage.locator('#cardContainer');
-  const isCardVisible = await cardContainer.isVisible();
-  if (!isCardVisible) {
+  if (await cardContainer.isHidden()) {
     await desktopPage.click('#toggleViewModeBtn');
-    await desktopPage.waitForTimeout(500);
+    await desktopPage.waitForTimeout(400);
   }
   const file07 = path.join(outputDir, '07-accessmenu-card-mode-desktop.png');
   await desktopPage.screenshot({ path: file07, fullPage: false });
@@ -58,7 +57,7 @@ async function capture() {
 
   console.log('Capturing: AccessMenu Wheel Mode (Desktop)...');
   await desktopPage.click('#toggleViewModeBtn');
-  await desktopPage.waitForTimeout(500);
+  await desktopPage.waitForTimeout(600);
   const file08 = path.join(outputDir, '08-accessmenu-wheel-mode-desktop.png');
   await desktopPage.screenshot({ path: file08, fullPage: false });
   saveBoth(file08, '08-accessmenu-wheel-mode-desktop.png');
@@ -97,16 +96,26 @@ async function capture() {
   await mobilePage.screenshot({ path: file06b, fullPage: false });
   saveBoth(file06b, '06b-keptkayas-mobile-sidebar-open.png');
 
+  // Close sidebar
+  const closeBtn = mobilePage.locator('#iconSidenav');
+  if (await closeBtn.isVisible()) {
+    await closeBtn.click();
+    await mobilePage.waitForTimeout(400);
+  }
+
   // --- 6. Mobile: Meter Reading Screen ---
-  console.log('Capturing: Acc Mobile Meter Reading...');
+  console.log('Capturing: Acc Mobile Meter Reading with live preview...');
   await mobilePage.goto(`${baseUrl}/tabwater/staff/mobile/1/meter_reading`, { waitUntil: 'networkidle' });
+  // Enter a valid current reading (115) to showcase live calculation preview (+15.00 หน่วย)
+  await mobilePage.fill('#currentmeter', '115');
+  await mobilePage.waitForTimeout(400);
   const file10 = path.join(outputDir, '10-acc-meter-reading-mobile.png');
   await mobilePage.screenshot({ path: file10, fullPage: true });
   saveBoth(file10, '10-acc-meter-reading-mobile.png');
 
   await mobileCtx.close();
   await browser.close();
-  console.log('Successfully captured all E2E screenshots!');
+  console.log('Successfully captured all redesigned E2E screenshots!');
 }
 
 capture().catch(err => {

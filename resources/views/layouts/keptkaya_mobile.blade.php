@@ -16,8 +16,7 @@
     <!-- Fonts & Icons (ADR-0009 Kanit) -->
     @include('layouts.partials.head-fonts')
     <link href="{{ asset('css/tokens.css') }}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     {{-- DataTables CSS --}}
     <link rel="stylesheet" href="https://cdn.datatables.net/2.3.0/css/dataTables.dataTables.css">
@@ -116,22 +115,24 @@
             </button>
         </div>
     </div>
-    <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3"
-        id="sidenav-main">
-        <div class="sidenav-header">
-            <i class="fas fa-times p-3 cursor-pointer text-secondary opacity-5 position-absolute end-0 top-0 d-none d-xl-none"
-                aria-hidden="true" id="iconSidenav"></i>
-            <a class="navbar-brand m-0" href="{{ route('keptkayas.dashboard') }}">
-                <img src="{{ asset('logo/ko_envsogo.png') }}" class="navbar-brand-img h-100" alt="main_logo" style="max-height: 2rem;">
-                <span class="ms-1 font-weight-bold">EnvSoGo::Kept Kaya</span>
+    <aside class="sidenav navbar navbar-vertical navbar-expand-xs border-0 border-radius-xl my-3 fixed-start ms-3 bg-white shadow-xl"
+        id="sidenav-main" style="z-index: 1050;">
+        <div class="sidenav-header d-flex align-items-center justify-content-between p-3">
+            <a class="navbar-brand m-0 d-flex align-items-center" href="{{ route('keptkayas.dashboard') }}">
+                <img src="{{ asset('logo/ko_envsogo.png') }}" class="navbar-brand-img h-100 me-2" alt="main_logo" style="max-height: 2.2rem;">
+                <span class="ms-1 font-weight-bold text-dark fs-6">EnvSoGo::Kept Kaya</span>
             </a>
+            <i class="fas fa-times cursor-pointer text-secondary opacity-8 d-xl-none fs-5 p-2"
+                aria-hidden="true" id="iconSidenav" title="ปิดเมนู"></i>
         </div>
-        <hr class="horizontal dark mt-0">
-        <div class="collapse navbar-collapse  w-auto " id="sidenav-collapse-main">
+        <hr class="horizontal dark mt-0 mb-2">
+        <div class="collapse navbar-collapse w-auto" id="sidenav-collapse-main">
             @include('layouts.keptkaya_mobile_navigation')
         </div>
-
     </aside>
+
+    <!-- Mobile Sidenav Backdrop -->
+    <div id="sidenavBackdrop" class="d-none" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); z-index: 1040; backdrop-filter: blur(4px);"></div>
     <main class="main-content position-relative max-height-vh-100 h-100 border-radius-lg">
         @include('layouts.partials.unified-header')
 
@@ -155,8 +156,6 @@
             @yield('content')
         </div>
     </main>
-    <script src="https://code.jquery.com/jquery-1.12.4.js"
-        integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script src="{{ asset('soft-ui/assets/js/core/popper.min.js') }}"></script>
@@ -170,13 +169,44 @@
 
     <script>
         $(document).ready(function () {
+            // Sidenav mobile backdrop toggle
+            const body = document.querySelector('body');
+            const backdrop = document.getElementById('sidenavBackdrop');
+            const hamburger = document.getElementById('iconNavbarSidenav');
+            const closeBtn = document.getElementById('iconSidenav');
+
+            function syncBackdrop() {
+                if (body.classList.contains('g-sidenav-pinned')) {
+                    backdrop.classList.remove('d-none');
+                } else {
+                    backdrop.classList.add('d-none');
+                }
+            }
+
+            if (hamburger) {
+                hamburger.addEventListener('click', function () {
+                    setTimeout(syncBackdrop, 50);
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function () {
+                    body.classList.remove('g-sidenav-pinned');
+                    syncBackdrop();
+                });
+            }
+
+            if (backdrop) {
+                backdrop.addEventListener('click', function () {
+                    body.classList.remove('g-sidenav-pinned');
+                    syncBackdrop();
+                });
+            }
+
             setTimeout(() => {
                 $('.alert').toggle('slow')
             }, 3000);
 
-        })
-
-        $(document).ready(function () {
             $('.js-example-basic-single').select2();
         });
     </script>
