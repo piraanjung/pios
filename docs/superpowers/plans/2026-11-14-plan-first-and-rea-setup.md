@@ -29,13 +29,13 @@
 - Modify: `GEMINI.md`
 - Modify: `tests/Feature/SecurityAndRuntimeHotfixesTest.php`
 
-- [ ] **Step 1: Write the failing test in `tests/Feature/SecurityAndRuntimeHotfixesTest.php` verifying the Plan-First rule files and clauses exist**
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 1: Write the failing test in `tests/Feature/SecurityAndRuntimeHotfixesTest.php` verifying the Plan-First rule files and clauses exist**
+- [x] **Step 2: Run test to verify it fails**
   Run: `/opt/homebrew/bin/php artisan test --filter=SecurityAndRuntimeHotfixesTest`
-- [ ] **Step 3: Create `.agents/rules/plan-first-gate.md` and update `.agents/rules/autonomous-editing.md` and `GEMINI.md`**
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 3: Create `.agents/rules/plan-first-gate.md` and update `.agents/rules/autonomous-editing.md` and `GEMINI.md`**
+- [x] **Step 4: Run test to verify it passes**
   Run: `/opt/homebrew/bin/php artisan test --filter=SecurityAndRuntimeHotfixesTest`
-- [ ] **Step 5: Commit rule changes**
+- [x] **Step 5: Commit rule changes**
 
 ### Task 2: Upgrade Node Runtime & Install `rea-agents` CLI, Skill, and MCP Server
 
@@ -43,7 +43,7 @@
 - Create: `~/.gemini/config/skills/reverse-engineer-anything/SKILL.md`
 - Modify: `~/.gemini/config/mcp_config.json`
 
-- [ ] **Step 1: Upgrade Homebrew `node` / `node@22` to satisfy `^22.23.4 || >=26.12.1` and install `rea-agents@latest`**
-- [ ] **Step 2: Run `rea-agents setup` / install `reverse-engineer-anything` skill into `~/.gemini/config/skills/reverse-engineer-anything/`**
-- [ ] **Step 3: Configure `rea` MCP server in `~/.gemini/config/mcp_config.json` with explicit Node path**
-- [ ] **Step 4: Verify CLI, Skill file, and MCP JSON handshake**
+- [x] **Step 1: Upgrade Homebrew `node` / `node@22` to satisfy `^22.23.4 || >=26.12.1` and install `rea-agents@latest`**
+- [x] **Step 2: Run `rea-agents setup` / install `reverse-engineer-anything` skill into `~/.gemini/config/skills/reverse-engineer-anything/`**
+- [x] **Step 3: Configure `rea` MCP server in `~/.gemini/config/mcp_config.json` with explicit Node path**
+- [x] **Step 4: Verify CLI, Skill file, and MCP JSON handshake**
