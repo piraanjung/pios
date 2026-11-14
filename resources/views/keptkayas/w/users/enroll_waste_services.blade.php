@@ -25,7 +25,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('users.enroll.store') }}" method="POST">
+                    <form action="{{ route('keptkayas.users.enroll.store') }}" method="POST">
                         @csrf
 
                         <div class="mb-4">

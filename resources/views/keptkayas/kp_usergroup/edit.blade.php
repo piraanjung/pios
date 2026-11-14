@@ -13,7 +13,7 @@
         <div class="col-12">
             <div class="card card-small mb-4">
                 <div class="card-body">
-                    <form action="{{ route('admin.kp_usergroup.update', $kp_usergroup) }}" method="POST">
+                    <form action="{{ route('keptkayas.kp_usergroup.update', $kp_usergroup) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="col-sm-12 col-md-10">

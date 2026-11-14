@@ -17,7 +17,7 @@ class CartController extends Controller
 
     public function create(Request $request)
     {
-        $members = UserWastePreference::where('is_recycle_bank', "1")->get();
+        $members = UserWastePreference::where('is_waste_bank', "1")->get();
         return view('keptkayas.tbank.cart.create', compact('members'));
     }
 
@@ -40,7 +40,7 @@ class CartController extends Controller
         }
         session()->put('cart', $cart);
 
-        return redirect()->route('items.buy_items')->with('success', 'items add to cart successfully!');
+        return redirect()->route('keptkayas.tbank.items.buy_items')->with('success', 'items add to cart successfully!');
     }
 
     public function cartLists($user_id)

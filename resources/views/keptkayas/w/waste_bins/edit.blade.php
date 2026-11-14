@@ -11,8 +11,7 @@
                     <h6>แก้ไขข้อมูลถังขยะ: {{ $wasteBin->bin_code ?? 'N/A' }} สำหรับ {{ $wasteBin->user->firstname }}</h6>
                 </div>
                 <div class="card-body">
-                    <form action="" method="POST">
-                        {{-- {{ route('waste_bins.update', $wasteBin->id) }} --}}
+                    <form action="{{ route('keptkayas.waste_bins.update', $wasteBin->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="mb-3">

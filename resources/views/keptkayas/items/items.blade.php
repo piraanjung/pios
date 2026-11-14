@@ -138,7 +138,7 @@
                     <div class="modal-footer">
                         <div class="row">
                             <div class="col-lg-12 col-sm-12 col-12 text-center checkout">
-                                <a href="{{ route('cart.cart_lists', $member->id) }}" class="btn btn-primary btn-block">View all</a>
+                                <a href="{{ route('keptkayas.tbank.cart.cart_lists', $member->id) }}" class="btn btn-primary btn-block">View all</a>
                             </div>
                         </div>
                     </div>

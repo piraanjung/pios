@@ -245,7 +245,7 @@
                     </li>
 
                     <li class="nav-item  ">
-                        <a class="nav-link @yield('nav-cart')" href="{{ route('keptkayas.recycle-bank.members') }}">
+                        <a class="nav-link @yield('nav-cart')" href="{{ route('keptkayas.recycle-bank.members.index') }}">
                             <div
                                 class="icon icon-shape icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                                 <i class="fa fa-shopping-cart text-danger text-gradient text-lg"></i>
@@ -542,13 +542,15 @@
                     </li>
 
     <li class="nav-item">
-        <a href="{{ route('logout') }}" class="nav-link active mt-4" style="border: 1px solid red">
+        <form method="POST" action="{{ route('logout') }}" id="logout-form-annual" class="d-none">
+            @csrf
+        </form>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form-annual').submit();" class="nav-link active mt-4" style="border: 1px solid red">
             <div
-                class="fab fa-ubuntu icon-sm shadow border-radius-md bg-danger text-center d-flex align-items-center justify-content-center  me-2">
+                class="fas fa-sign-out-alt icon-sm shadow border-radius-md bg-danger text-white text-center d-flex align-items-center justify-content-center me-2">
             </div>
-            <span class="nav-link-text ms-1 text-danger">Log Out</span>
+            <span class="nav-link-text ms-1 text-danger">ออกจากระบบ (Log Out)</span>
         </a>
-
     </li>
 
     {{-- @endcan --}}

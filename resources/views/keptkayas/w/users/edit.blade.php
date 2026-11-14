@@ -11,8 +11,7 @@
                     <h6>แก้ไขข้อมูลผู้ใช้งาน: {{ $user->firstname }} {{ $user->lastname }}</h6>
                 </div>
                 <div class="card-body">
-                    <form action="" method="POST">
-                        {{-- {{ route('users.update', $user->id) }} --}}
+                    <form action="{{ route('keptkayas.users.update', $user->id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="row">
@@ -117,8 +116,7 @@
                         </div>
 
                         <button type="submit" class="btn bg-gradient-primary">บันทึกการเปลี่ยนแปลง</button>
-                        <a href="" class="btn btn-secondary">ยกเลิก</a>
-                        {{-- {{ route('users.index') }} --}}
+                        <a href="{{ route('keptkayas.users.index') }}" class="btn btn-secondary">ยกเลิก</a>
                     </form>
                 </div>
             </div>

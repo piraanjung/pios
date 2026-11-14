@@ -7,7 +7,7 @@
     จัดการอัตราค่าบริการ
 @endsection
 @section('nav-main')
-    <a href="{{ route('keptkayas.payrate_per_months.index') }}">อัตราค่าบริการรายปี</a>
+    <a href="{{ route('keptkayas.wbin_payrate_per_months.index') }}">อัตราค่าบริการรายปี</a>
 @endsection
 @section('nav-current')
     แก้ไขอัตราค่าบริการ
@@ -44,7 +44,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('keptkayas.payrate_per_months.update', $payrate->id) }}" method="POST">
+                    <form action="{{ route('keptkayas.wbin_payrate_per_months.update', $payrate->id) }}" method="POST">
                         @csrf
                         @method('PUT') {{-- สำคัญมากสำหรับการอัปเดต --}}
 
@@ -98,7 +98,7 @@
                         </div>
                         <div class="d-flex justify-content-end">
                             <button type="submit" class="btn btn-primary me-2">บันทึกการแก้ไข</button>
-                            <a href="{{ route('keptkayas.payrate_per_months.index') }}" class="btn btn-secondary">ยกเลิก</a>
+                            <a href="{{ route('keptkayas.wbin_payrate_per_months.index') }}" class="btn btn-secondary">ยกเลิก</a>
                         </div>
                     </form>
                 </div>

@@ -152,6 +152,8 @@ Route::middleware(['auth'])->prefix('keptkayas')->name('keptkayas.')->group(func
     // 5. User & Waste Bin Management
     Route::resource('users', UserWasteController::class)->except(['show']);
     Route::get('/waste_bin_users', [UserWasteController::class, 'waste_bin_users'])->name('waste_bin_users');
+    Route::get('/users/eligible-waste-services', [UserWasteController::class, 'showEligibleForWasteServices'])->name('users.eligible_waste_services');
+    Route::post('/users/enroll', [UserWasteController::class, 'enrollInWasteServices'])->name('users.enroll.store');
     Route::get('/users/search/{query}', [UserWasteController::class, 'search'])->name('users.search');
     Route::post('/waste-service-preferences', [UserWasteController::class, 'updateWasteServicePreferences'])->name('updateWasteServicePreferences');
 

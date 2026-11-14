@@ -34,7 +34,7 @@
                                     </div>
                                 </div>
                                 <div class="col-4 text-end">
-                                    <a href="{{route('items.buy_items',$item->user_id)}}" class="btn btn-info">รับซื้อขยะ</a>
+                                    <a href="{{route('keptkayas.tbank.items.buy_items',$item->user_id)}}" class="btn btn-info">รับซื้อขยะ</a>
 
                                 </div>
                             </div>
