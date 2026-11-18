@@ -15,6 +15,7 @@
 | [0007](0007-comprehensive-testing-strategy-and-qa-pyramid.md) | การออกแบบสถาปัตยกรรมการทดสอบระบบแบบครบวงจร (Comprehensive Testing Strategy & QA Pyramid) | 2026-11-05 | **Accepted** |
 | [0008](0008-standardized-api-response-envelope.md) | การกำหนดมาตรฐานโครงสร้างการตอบกลับของ API (Standardized API Response Envelope Pattern) | 2026-11-05 | **Accepted** |
 | [0009](0009-standardizing-typography-with-kanit-font.md) | การกำหนดมาตรฐานระบบตัวอักษรของโปรเจกต์ด้วยฟอนต์ Kanit (Standardizing Typography with Kanit Font) | 2026-11-05 | **Proposed** |
+| [0010](0010-integrate-claude-bughunter-security-framework.md) | การผสานรวม Claude-BugHunter Security Framework เข้ากับวงจรการพัฒนา Superpowers | 2026-11-18 | **Accepted** |
 
 ---
 
