@@ -1,40 +1,50 @@
 # PIOS Project — Rules for AI Agents (AGENTS.md)
 
-Ref: [obra/superpowers](https://github.com/obra/superpowers)
+Ref: [obra/superpowers](https://github.com/obra/superpowers) · [elementalsouls/Claude-BugHunter](https://github.com/elementalsouls/Claude-BugHunter)
 
 This file sets the standard operational rules for all AI agents working on the **PIOS Smart City** repository. Every agent session MUST strictly adhere to these guidelines.
 
 ---
 
-## 1. Mandatory Workflow: Superpowers Exclusively
+## 1. Mandatory Workflow: Superpowers + Claude-BugHunter
 
-All AI agents working on this repository **MUST EXCLUSIVELY USE THE SUPERPOWERS METHODOLOGY AND SKILLS FRAMEWORK**. No improvised, ad-hoc, or non-superpowers workflows are permitted.
+All AI agents working on this repository **MUST EXCLUSIVELY USE THE SUPERPOWERS METHODOLOGY PAIRED WITH THE CLAUDE-BUGHUNTER SECURITY FRAMEWORK**. No improvised, ad-hoc, or unverified workflows are permitted.
 
 > [!IMPORTANT]
-> **Extremely Important Rule (`superpowers:using-superpowers` & Universal Plan-First Hard Gate):**
-> 1. If you think there is even a 1% chance a Superpowers skill applies to what you are doing, you **ABSOLUTELY MUST** invoke the skill. This is not negotiable. Check and invoke relevant skills **BEFORE** any response, file change, or action.
-> 2. **Universal Plan-First Hard Gate (`.agents/rules/plan-first-gate.md`):** You MUST ALWAYS present a clear plan and **WAIT FOR EXPLICIT USER APPROVAL** before editing any files, fixing any bugs, running database migrations, or installing packages. Never skip planning!
+> **Extremely Important Rule (`superpowers:using-superpowers` & `claude-bughunter`):**
+> If you think there is even a 1% chance a Superpowers or Claude-BugHunter skill applies to what you are doing, you **ABSOLUTELY MUST** invoke the skill. This is not negotiable. Check and invoke relevant skills **BEFORE** any response, file change, or action.
 
-### 1.1 Superpowers End-to-End Development Lifecycle
+> [!CAUTION]
+> **UNIVERSAL PLAN-FIRST HARD GATE (Applies to ALL Tasks: Features, Bugfixes, Refactors, UI/UX, Config):**
+> The agent **MUST NEVER** immediately edit files, apply fixes, or run state-changing commands upon receiving a request—even for bug reports or small fixes.
+> Every single task MUST follow this strict sequence:
+> 1. **Investigate & Diagnose (Read-Only):** Explore the codebase, reproduce or trace the root cause (`systematic-debugging` / `brainstorming`).
+> 2. **Present Plan (`writing-plans`):** Present the root cause analysis, proposed approach, and step-by-step implementation plan to the user.
+> 3. **Wait for Explicit Approval:** **STOP and wait** for the user to explicitly approve the plan (e.g., "approve", "ลุยเลย", "ตกลง", "ทำเลย").
+> 4. **Execute Plan:** Only after user approval may the agent modify code, run tests, commit, and merge.
+
+### 1.1 End-to-End Development & Security Lifecycle
 
 ```mermaid
 flowchart TD
-    A["1. using-superpowers (Triage & Intent)"] --> B["2. brainstorming (Clarify, Size, Design Doc)"]
-    B --> C["Design Approval Gate"]
-    C --> D["3. using-git-worktrees / Branching (Dedicated Branch)"]
-    D --> E["4. writing-plans (Bite-sized Tasks 2-5m)"]
-    E --> F["5. subagent-driven-development / executing-plans"]
-    F --> G["6. test-driven-development (RED-GREEN-REFACTOR)"]
-    G --> H["7. requesting-code-review & receiving-code-review"]
-    H --> I["8. verification-before-completion (Evidence)"]
-    I --> J["9. finishing-a-development-branch (Autonomous Push & Merge)"]
+    A["1. using-superpowers (Triage & Intent)"] --> B["2. brainstorming / systematic-debugging (Read-Only Investigation)"]
+    B --> C["3. writing-plans (Present Plan to User)"]
+    C --> D{"4. HARD GATE: User Approves Plan?"}
+    D -- "No / Revise" --> C
+    D -- "Yes (Approved)" --> E["5. using-git-worktrees / Branching (Dedicated Branch)"]
+    E --> F["6. subagent-driven-development / executing-plans"]
+    F --> G["7. test-driven-development (RED-GREEN-REFACTOR)"]
+    G --> H["8. requesting-code-review & receiving-code-review"]
+    H --> S["9. claude-bughunter (hunt-* Audit, 7-Question Gate & evidence-hygiene)"]
+    S --> I["10. verification-before-completion (Evidence)"]
+    I --> J["11. finishing-a-development-branch (Autonomous Push & Merge)"]
 ```
 
 ---
 
-## 2. Superpowers Skills Matrix & Triggers
+## 2. Superpowers & Claude-BugHunter Skills Matrix
 
-| Stage / Problem | Mandatory Superpowers Skill | Trigger & Required Behavior |
+| Stage / Problem | Mandatory Skill | Trigger & Required Behavior |
 | :--- | :--- | :--- |
 | **Session Start / Triage** | `using-superpowers` | Check for applicable skills before asking questions, exploring files, or writing code. Announce `"Using [skill] to [purpose]"`. |
 | **New Features / Architecture / UI** | `brainstorming` | **HARD GATE:** Understand true goal, explore codebase, lay out 2-3 approaches with tradeoffs, size the work, draft design doc. **Nothing gets built until user approves.** |
@@ -44,6 +54,7 @@ flowchart TD
 | **Coding & Changes** | `test-driven-development` | **RED-GREEN-REFACTOR:** Write failing test first, watch it fail, write minimal code, watch it pass, refactor, commit. Code written before tests must be deleted. |
 | **Bugs / Test Failures** | `systematic-debugging` | **HARD GATE:** 4-phase root cause analysis before proposing fixes. Present root cause & fix plan to the user and wait for approval before modifying code. No speculative fixes. |
 | **Code Review & Quality Gate** | `requesting-code-review` & `receiving-code-review` | Rigorous verification against spec. Verify suggestions technically before implementing. |
+| **Security Audit & Bug Hunting** | `claude-bughunter` (`bb-methodology`, `hunt-*`, `triage-validation`, `evidence-hygiene`) | Audit Multi-Tenant boundaries, Eloquent queries, Blade templates, CSRF/Auth, and file uploads against `hunt-*` skills; apply the 7-Question Gate and secret hygiene. |
 | **Pre-Completion Proof** | `verification-before-completion` | **Evidence before assertions:** Run verification test commands (e.g. `php artisan test`) and verify passing output before claiming work is complete. |
 | **Task / Branch Completion** | `finishing-a-development-branch` | Run full test suite, commit with conventional commit, push branch, merge into primary branch, and push primary branch to origin. |
 | **Parallel Tasks** | `dispatching-parallel-agents` | For 2+ independent tasks that share no mutable state. |
@@ -66,6 +77,8 @@ The detailed modular rules located in `.agents/rules/` are active and mandatory:
    - **DO NOT push to `main` directly.** The `main` branch is reserved strictly for production release deployments via `release/*` branches from `develop`.
 4. **Architecture Decision Records (`.agents/rules/adr-tracking.md`):**
    - Before writing any ADR in `docs/adr/`, ALWAYS read `docs/adr/template.md` and strictly follow its pattern. Maintain the index table in `docs/adr/README.md`.
+5. **Security & Vulnerability Hunting (`.agents/rules/security-bughunter.md`):**
+   - Enforce `Claude-BugHunter` (`hunt-*`, `triage-validation`, `evidence-hygiene`) across all Laravel controllers, VSA features, multi-tenant connections, and Blade views.
 
 ---
 
@@ -83,3 +96,16 @@ The detailed modular rules located in `.agents/rules/` are active and mandatory:
   - Ensure Multi-Tenancy isolation is respected across all models and queries.
 - **Verification Commands:**
   - Unit/Feature testing: `php artisan test` (or inside container: `docker exec pios_app php artisan test`).
+
+---
+
+## 5. Claude-BugHunter Attack-Surface Mapping for `pios`
+
+When touching any of the following subsystems, invoke the mapped `claude-bughunter` skills:
+
+| Subsystem / Module | Mandatory `claude-bughunter` Skills | Security Focus |
+| :--- | :--- | :--- |
+| **Multi-Tenancy & Citizen Records (`SetTenantConnection`, `app/Features`, `app/Http/Controllers`)** | `hunt-idor`, `hunt-auth-bypass` | Prevent cross-organization and cross-citizen IDOR (enforce `org_id` & ownership checks per ADR-0003). |
+| **Eloquent / Raw SQL & Form Requests (`app/Models`, `database/`)** | `hunt-sqli`, `hunt-mass-assignment` | Use bound parameters on raw SQL expressions, enforce `$fillable` / strict FormRequest validation. |
+| **Blade Templates, LINE LIFF & Kiosk Views (`resources/views`)** | `hunt-xss`, `hunt-csrf` | Escape untrusted output (`{{ }}`), enforce `@csrf` on state-changing forms, validate LIFF tokens. |
+| **Uploads & Notifications (`public/uploads`, `storage/`)** | `hunt-file-upload`, `hunt-path-traversal`, `evidence-hygiene` | Validate image MIME/extensions, prevent executable uploads, keep `.env` and citizen PII out of Git (ADR-0006). |
